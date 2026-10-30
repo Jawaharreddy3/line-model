@@ -34,7 +34,7 @@ line-model/
 ├── fault_simulation.py      # 6 canonical fault scenarios, cascaded ABCD & unclipped noise modeling
 ├── diagnosis.py             # Rule-based fault classifier, DC phase intercept & IFFT localization (Member 3)
 ├── matching.py              # Quarter-wave transformer design & contiguous bandwidth evaluator (Member 3)
-├── app.py                   # Streamlit web dashboard with 8 dedicated interactive views (Member 4)
+├── app.py                   # Streamlit web dashboard with 7 dedicated interactive views (Member 4)
 ├── reproducible_examples.py # Script generating publication figures (F1-F4) & terminal report
 ├── core/                    # Advanced academic diagnostic & signal processing engine
 │   ├── signal_analysis.py   # Spectral feature extraction & S11 metrics
