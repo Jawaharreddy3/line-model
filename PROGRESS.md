@@ -19,7 +19,7 @@
 | **Phase 1** | Member 2: Measurements Module | `measurements.py`, `test_measurements.py` | **COMPLETED** | 36 / 36 (27 core + 9 measurements) |
 | **Phase 2** | Dedicated 6-Scenario Fault Simulation | `fault_simulation.py`, `test_fault_simulation.py` | **COMPLETED** | 46 / 46 (27 core + 9 measurements + 10 simulation) |
 | **Phase 3** | Member 3: Quarter-Wave Impedance Matching Studio | `matching.py`, `test_matching.py` | **COMPLETED** | 52 / 52 (27 core + 9 measurements + 10 sim + 6 matching) |
-| **Phase 4** | Member 3: Diagnosis & IFFT Fault Localization | `diagnosis.py`, `test_diagnosis.py` | PENDING | — |
+| **Phase 4** | Member 3: Diagnosis & IFFT Fault Localization | `diagnosis.py`, `test_diagnosis.py` | **COMPLETED** | 62 / 62 (27 core + 9 meas + 10 sim + 6 match + 10 diag) |
 | **Phase 5** | Member 4: Interactive Streamlit Web UI | `app.py` | PENDING | — |
 | **Phase 6** | End-to-End System Integration & Master Verification | Unified test suite, benchmark validation report | PENDING | — |
 
@@ -58,6 +58,21 @@
   - Usable bandwidth ($\text{RL} \ge 20\text{ dB}$) evaluated across frequencies.
   - Return contract compliance (`before`, `after`, `Zt`, `length_m`, `f_design`, `bandwidth_hz`, `rl_threshold`, `at_f_design`).
 
+### Checkpoint: Phase 4 (`diagnosis.py`)
+- **Command:** `python -m pytest -v`
+- **Result:** 62 passed in 0.50s (100% pass)
+- **Verified items:**
+  - `classify(sweep_dict, Z0)`: strictly returns one of 5 frozen labels: `"healthy"`, `"open"`, `"short"`, `"mismatch"`, `"unknown"`.
+  - Rich diagnostic metadata exposed via `DiagnosisResult` attributes (`subtype`, `confidence`, `features`, `explanation`, `rules_fired`).
+  - Decision tree rules validated for:
+    - `"healthy"` (matched $50\,\Omega$ load)
+    - `"mismatch"` (resistive mismatch, series $L$ discontinuity, shunt $C$ discontinuity)
+    - `"open"` (open circuit termination)
+    - `"short"` (short circuit termination)
+  - `estimate_distance(sweep_dict, vf, fault_class)`: returns `None` for healthy lines.
+  - TDR fault distance verified against known simulation positions ($0.3\text{ m}$, $0.7\text{ m}$, $1.2\text{ m}$, and intermediate $0.45\text{ m}$) within theoretical physical range resolution $\Delta R = v_p / (2 B)$.
+  - Frequency spacing uniformity check and linear resampling for non-uniform sweeps.
+
 ---
 
 ## 4. Known Bugs & Caveats
@@ -66,4 +81,4 @@
 ---
 
 ## 5. Next Immediate Step
-- Execute Phase 4: Member 3 Diagnosis & IFFT Fault Localization (`diagnosis.py` and `test_diagnosis.py`), enforcing the 5 frozen public return labels (`"healthy"`, `"open"`, `"short"`, `"mismatch"`, `"unknown"`), uniform frequency grid validation, and IFFT pseudo-time reflectometry distance estimation.
+- Execute Phase 5: Member 4 Interactive Streamlit Web UI (`app.py`), integrating sidebar parameter controls, preset fault selectors, multi-panel frequency sweeps, normalized Smith charts, live fault classification with confidence indicators, physical distance readout, and quarter-wave matching studio.
