@@ -19,8 +19,8 @@
 | `measurements.py`| `smith_plot(gamma_array, ax=None, **kw)`| matplotlib `Axes` | **Verified** | Constant $r, x$ grid overlay |
 | `diagnosis.py` | `classify(sweep_dict, Z0)` | `"healthy"`, `"open"`, `"short"`, `"mismatch"`, `"unknown"` | To Implement | Exact 5 frozen labels |
 | `diagnosis.py` | `estimate_distance(sweep_dict, vf, fault_class)` | float [m] or `None` | To Implement | IFFT TDR peak method; `None` if healthy |
-| `matching.py` | `design_quarter_wave(Z0, RL, f, vf)` | dict: `Zt`, `length_m` | To Implement | Exact matching at $f_0$ |
-| `matching.py` | `compare_matching(Z0, ZL, f_array, ...)` | dict: before / after sweep results | To Implement | Bandwidth ($\text{RL} \ge 20\text{ dB}$) |
+| `matching.py` | `design_quarter_wave(Z0, RL, f, vf)` | dict: `Zt`, `length_m` | **Verified** | Exact matching at $f_0$ |
+| `matching.py` | `compare_matching(Z0, ZL, f_array, ...)` | dict: before / after sweep results | **Verified** | Bandwidth ($\text{RL} \ge 20\text{ dB}$) |
 | `app.py` | Streamlit Dashboard | Web Application | To Implement | Uses only modular interfaces |
 
 ---

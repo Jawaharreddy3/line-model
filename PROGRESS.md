@@ -18,7 +18,7 @@
 | **Phase 0** | Baseline Audit, Recovery Protocol & Environment Setup | `PROGRESS.md`, `IMPLEMENTATION_STATUS.md`, `TECHNICAL_DECISIONS.md`, `.gitignore` | **COMPLETED** | 27 / 27 (`test_line_model.py`) |
 | **Phase 1** | Member 2: Measurements Module | `measurements.py`, `test_measurements.py` | **COMPLETED** | 36 / 36 (27 core + 9 measurements) |
 | **Phase 2** | Dedicated 6-Scenario Fault Simulation | `fault_simulation.py`, `test_fault_simulation.py` | **COMPLETED** | 46 / 46 (27 core + 9 measurements + 10 simulation) |
-| **Phase 3** | Member 3: Quarter-Wave Impedance Matching Studio | `matching.py`, `test_matching.py` | PENDING | — |
+| **Phase 3** | Member 3: Quarter-Wave Impedance Matching Studio | `matching.py`, `test_matching.py` | **COMPLETED** | 52 / 52 (27 core + 9 measurements + 10 sim + 6 matching) |
 | **Phase 4** | Member 3: Diagnosis & IFFT Fault Localization | `diagnosis.py`, `test_diagnosis.py` | PENDING | — |
 | **Phase 5** | Member 4: Interactive Streamlit Web UI | `app.py` | PENDING | — |
 | **Phase 6** | End-to-End System Integration & Master Verification | Unified test suite, benchmark validation report | PENDING | — |
@@ -47,6 +47,17 @@
   - Reactive frequency trend verification: $\Delta |\Gamma| / \Delta f > 0$ for $L$ and $C$.
   - Noise injection bounded to physically passive reflection space ($|\Gamma| \le 1.0$).
 
+### Checkpoint: Phase 3 (`matching.py`)
+- **Command:** `python -m pytest -v`
+- **Result:** 52 passed in 0.46s (100% pass)
+- **Verified items:**
+  - `design_quarter_wave(Z0, RL, f, vf)`: exact verification against `HAND_CALCULATIONS.md` ($50 \to 200\,\Omega \implies Z_t=100\,\Omega, l_t \approx 0.75\text{ m}$).
+  - Exact match verification at $f_{\text{design}}$: $\Gamma(f_0) = 0$, $\text{VSWR}(f_0) = 1.0$, $\text{RL}(f_0) = \infty$.
+  - Clear semantic and numerical distinction between load resistance $R_L$ ($\Omega$) and return loss $\text{RL}$ ($\text{dB}$).
+  - Strict validation: complex load impedances and non-positive resistances rejected with descriptive `ValueError`.
+  - Usable bandwidth ($\text{RL} \ge 20\text{ dB}$) evaluated across frequencies.
+  - Return contract compliance (`before`, `after`, `Zt`, `length_m`, `f_design`, `bandwidth_hz`, `rl_threshold`, `at_f_design`).
+
 ---
 
 ## 4. Known Bugs & Caveats
@@ -55,4 +66,4 @@
 ---
 
 ## 5. Next Immediate Step
-- Execute Phase 3: Member 3 Quarter-Wave Impedance Matching Studio (`matching.py` and `test_matching.py`), including exact design frequency matching, load resistance $R_L$ vs return loss $\text{RL}_{\text{dB}}$ distinction, and bandwidth evaluation ($\text{RL} \ge 20\text{ dB}$).
+- Execute Phase 4: Member 3 Diagnosis & IFFT Fault Localization (`diagnosis.py` and `test_diagnosis.py`), enforcing the 5 frozen public return labels (`"healthy"`, `"open"`, `"short"`, `"mismatch"`, `"unknown"`), uniform frequency grid validation, and IFFT pseudo-time reflectometry distance estimation.
