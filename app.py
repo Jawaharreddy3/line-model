@@ -837,10 +837,10 @@ the sweep bandwidth.  This is presented as a visualisation aid, not as a separat
         st.write(f"- **Unambiguous Range (R_max):** `{res_info['unambig_range_m']:.2f} m`")
 
         st.info(
-            "ℹ️ **Physical Principle:** Zero-padding interpolates the peak centroid between FFT bins, "
-            "but does not improve the physical Rayleigh resolution limit ($\Delta R = \frac{v_p}{2B}$). "
-            "Two discontinuities closer than ΔR cannot be resolved as separate peaks. "
-            "Additionally, reactive discontinuities introduce frequency-dependent phase shifts that slightly bias phase-slope estimation."
+            r"ℹ️ **Physical Principle:** Zero-padding interpolates the peak centroid between FFT bins, "
+            r"but does not improve the physical Rayleigh resolution limit ($\Delta R = \frac{v_p}{2B}$). "
+            r"Two discontinuities closer than $\Delta R$ cannot be resolved as separate peaks. "
+            r"Additionally, reactive discontinuities introduce frequency-dependent phase shifts that slightly bias phase-slope estimation."
         )
 
         for w in loc_dual["warnings"]:
