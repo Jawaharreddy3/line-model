@@ -699,13 +699,13 @@ elif nav_section == "3. Signal Analysis & Smith Chart":
             plt.close(fig_sm)
         with col_sm2:
             st.markdown(r"""
-            **Smith Chart Interpretation Guide:**
-            - **Center (1.0, 0.0):** Perfectly matched load ($Z = Z_0$).
-            - **Right Edge (+1.0, 0.0):** Open circuit ($Z \to \infty$).
-            - **Left Edge (-1.0, 0.0):** Short circuit ($Z \to 0$).
-            - **Upper Half ($\text{Im} > 0$):** Inductive impedance.
-            - **Lower Half ($\text{Im} < 0$):** Capacitive impedance.
-            - **Clockwise Rotation:** Moving toward generator (increasing distance from load).
+            **Smith chart reference points:**
+            - **Centre ($\Gamma = 0$):** Matched load, $Z = Z_0$.
+            - **Right edge ($\Gamma = +1$):** Open circuit, $Z \to \infty$.
+            - **Left edge ($\Gamma = -1$):** Short circuit, $Z \to 0$.
+            - **Upper half ($\operatorname{Im}(Z) > 0$):** Inductive impedance.
+            - **Lower half ($\operatorname{Im}(Z) < 0$):** Capacitive impedance.
+            - **Rotation:** The locus shows how the reflection phase changes across the frequency sweep.
             """)
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -838,7 +838,7 @@ the sweep bandwidth.  This is presented as a visualisation aid, not as a separat
 
         st.info(
             "ℹ️ **Physical Principle:** Zero-padding interpolates the peak centroid between FFT bins, "
-            "but does NOT improve the physical Rayleigh resolution limit (ΔR = vp / 2B). "
+            "but does not improve the physical Rayleigh resolution limit ($\Delta R = \frac{v_p}{2B}$). "
             "Two discontinuities closer than ΔR cannot be resolved as separate peaks. "
             "Additionally, reactive discontinuities introduce frequency-dependent phase shifts that slightly bias phase-slope estimation."
         )
@@ -856,7 +856,7 @@ the sweep bandwidth.  This is presented as a visualisation aid, not as a separat
 # ─────────────────────────────────────────────────────────────────────────────
 elif nav_section == "6. Quarter-Wave Matching Studio":
     st.header("6. Quarter-Wave Impedance Matching Studio")
-    st.caption("Synthesis and passband evaluation of quarter-wave transformers (Zt = sqrt(Z0 * RL)).")
+    st.caption(r"Synthesis and passband evaluation of quarter-wave transformers using $Z_t = \sqrt{Z_0 R_L}$.")
 
     is_real = isinstance(ZL_val, complex) and np.isfinite(ZL_val.real) and ZL_val.real > 0 and abs(ZL_val.imag) < 1e-5
 
@@ -882,7 +882,7 @@ elif nav_section == "6. Quarter-Wave Matching Studio":
 
             f0_rl = match_res["at_f_design"]["rl_db"]
             st.metric("Return loss at design frequency f₀", "∞ dB (Exact)" if np.isinf(f0_rl) else f"{f0_rl:.1f} dB")
-            st.caption("Note: Load resistance RL [Ω] is the physical termination, while Return Loss [dB] evaluates reflected power.")
+            st.caption("Note: Load resistance Rₗ (Ω) is the physical termination; return loss (dB) measures reflected power.")
 
         with match_col2:
             st.subheader("Performance Comparison (Before vs After)")
