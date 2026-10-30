@@ -12,11 +12,11 @@
 | `line_model.py` | `input_impedance_at_freq(Z0, ZL, f, length, vf=1.0)` | $Z_{\text{in}}$ (complex) | **Verified** | Frequency sweep wrapper |
 | `line_model.py` | `quarter_wave_zin(Z0, ZL)` | $Z_0^2 / Z_L$ | **Verified** | Analytic cross-check |
 | `line_model.py` | `quarter_wave_impedance(Zline, R_load)` | $Z_t = \sqrt{Z_{\text{line}} R}$ | **Verified** | Real load required |
-| `measurements.py`| `reflection_coefficient(Z, Z0)` | $\Gamma = (Z-Z_0)/(Z+Z_0)$ | To Implement | Vectorized, handles `inf` |
-| `measurements.py`| `vswr(gamma)` | $(1+|\Gamma|)/(1-|\Gamma|)$ | To Implement | Returns `np.inf` when $|\Gamma| \ge 1$ |
-| `measurements.py`| `return_loss_db(gamma)` | $-20\log_{10}(|\Gamma|)$ | To Implement | Returns `np.inf` when $\Gamma = 0$ |
-| `measurements.py`| `sweep(Z0, ZL, length, f_array, vf)` | dict: `f`, `zin`, `gamma`, `vswr`, `rl_db` | To Implement | Must match contract keys |
-| `measurements.py`| `smith_plot(gamma_array, ax=None, **kw)`| matplotlib `Axes` | To Implement | Constant $r, x$ grid overlay |
+| `measurements.py`| `reflection_coefficient(Z, Z0)` | $\Gamma = (Z-Z_0)/(Z+Z_0)$ | **Verified** | Vectorized, handles `inf` |
+| `measurements.py`| `vswr(gamma)` | $(1+|\Gamma|)/(1-|\Gamma|)$ | **Verified** | Returns `np.inf` when $|\Gamma| \ge 1$ |
+| `measurements.py`| `return_loss_db(gamma)` | $-20\log_{10}(|\Gamma|)$ | **Verified** | Returns `np.inf` when $\Gamma = 0$ |
+| `measurements.py`| `sweep(Z0, ZL, length, f_array, vf)` | dict: `f`, `zin`, `gamma`, `vswr`, `rl_db` | **Verified** | Matches contract keys |
+| `measurements.py`| `smith_plot(gamma_array, ax=None, **kw)`| matplotlib `Axes` | **Verified** | Constant $r, x$ grid overlay |
 | `diagnosis.py` | `classify(sweep_dict, Z0)` | `"healthy"`, `"open"`, `"short"`, `"mismatch"`, `"unknown"` | To Implement | Exact 5 frozen labels |
 | `diagnosis.py` | `estimate_distance(sweep_dict, vf, fault_class)` | float [m] or `None` | To Implement | IFFT TDR peak method; `None` if healthy |
 | `matching.py` | `design_quarter_wave(Z0, RL, f, vf)` | dict: `Zt`, `length_m` | To Implement | Exact matching at $f_0$ |

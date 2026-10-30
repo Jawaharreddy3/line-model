@@ -16,10 +16,10 @@
 | Phase | Description | Deliverables | Status | Tests Passed |
 |---|---|---|---|---|
 | **Phase 0** | Baseline Audit, Recovery Protocol & Environment Setup | `PROGRESS.md`, `IMPLEMENTATION_STATUS.md`, `TECHNICAL_DECISIONS.md`, `.gitignore` | **COMPLETED** | 27 / 27 (`test_line_model.py`) |
-| **Phase 1** | Member 2: Measurements Module | `measurements.py`, `test_measurements.py` | PENDING | — |
+| **Phase 1** | Member 2: Measurements Module | `measurements.py`, `test_measurements.py` | **COMPLETED** | 36 / 36 (27 core + 9 measurements) |
 | **Phase 2** | Dedicated 6-Scenario Fault Simulation | `fault_simulation.py`, `test_fault_simulation.py` | PENDING | — |
-| **Phase 3** | Member 3: Diagnosis & IFFT Fault Localization | `diagnosis.py`, `test_diagnosis.py` | PENDING | — |
-| **Phase 4** | Member 3: Quarter-Wave Impedance Matching Studio | `matching.py`, `test_matching.py` | PENDING | — |
+| **Phase 3** | Member 3: Quarter-Wave Impedance Matching Studio | `matching.py`, `test_matching.py` | PENDING | — |
+| **Phase 4** | Member 3: Diagnosis & IFFT Fault Localization | `diagnosis.py`, `test_diagnosis.py` | PENDING | — |
 | **Phase 5** | Member 4: Interactive Streamlit Web UI | `app.py` | PENDING | — |
 | **Phase 6** | End-to-End System Integration & Master Verification | Unified test suite, benchmark validation report | PENDING | — |
 
@@ -27,33 +27,22 @@
 
 ## 3. Test Verification History
 
-### Checkpoint: Phase 0 (Baseline Audit)
-- **Command:** `python -m pytest test_line_model.py -v`
-- **Result:** 27 passed in 0.12s
+### Checkpoint: Phase 1 (`measurements.py`)
+- **Command:** `python -m pytest -v`
+- **Result:** 36 passed in 0.46s (100% pass)
 - **Verified items:**
-  - `test_wavelength_and_beta`
-  - `test_matched_line_is_Z0_for_any_length` (6 parameter checks)
-  - `test_short_circuit` (5 parameter checks)
-  - `test_open_circuit` (5 parameter checks)
-  - `test_quarter_wave_inversion`
-  - `test_quarter_wave_short_is_open_and_vice_versa`
-  - `test_half_wave_repeats_load`
-  - `test_matches_textbook_formula_complex_load`
-  - `test_load_reflection_values`
-  - `test_array_inputs`
-  - `test_frequency_sweep_shape`
-  - `test_lossless_passivity_gamma_magnitude_constant`
-  - `test_invalid_inputs`
-  - `test_quarter_wave_transformer_value`
+  - `reflection_coefficient(Z, Z0)`: matched line ($\Gamma=0$), short ($\Gamma=-1$), open ($\Gamma=+1$), $100\,\Omega$ load ($\Gamma=1/3$), vectorized array inputs.
+  - `vswr(gamma)`: matched line ($\text{VSWR}=1.0$), $100\,\Omega$ load ($\text{VSWR}=2.0$), singular total reflections ($\text{VSWR}=\infty$), active load rejection ($|\Gamma| > 1$).
+  - `return_loss_db(gamma)`: matched line ($\text{RL}=\infty$ with no divide-by-zero warning), $100\,\Omega$ load ($\text{RL} \approx 9.542\text{ dB}$), short/open ($\text{RL}=0\text{ dB}$).
+  - `sweep(Z0, ZL, length, f_array, vf)`: exact contract keys (`f`, `zin`, `gamma`, `vswr`, `rl_db`), correct output dimensions and frequency consistency.
+  - `smith_plot(gamma_array, ax, **kw)`: headless Matplotlib axes generation, constant resistance and reactance grid circles, line styling.
 
 ---
 
 ## 4. Known Bugs & Caveats
-- None identified in the existing codebase.
-- Note on Open Circuit: `line_model.py` uses `ZL = np.inf`; all subsequent modules must preserve exact analytic handling of `np.inf` rather than substituting finite values like $10^9\,\Omega$.
+- None.
 
 ---
 
 ## 5. Next Immediate Step
-- Awaiting the master implementation specification from user.
-- Upon receipt: Execute Phase 1 (`measurements.py` and `test_measurements.py`) following the master specification.
+- Execute Phase 2: Dedicated 6-Scenario Fault Simulation (`fault_simulation.py` and `test_fault_simulation.py`), incorporating 2-port ABCD cascading for series inductive and shunt capacitive discontinuities, plus boundary fault types (`healthy`, `mismatch`, `open`, `short`, `series_L`, `shunt_C`).
