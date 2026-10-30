@@ -82,7 +82,17 @@ def compute_spectral_features(gamma, freqs):
         phase_rad = np.array([])
         phase_deg = np.array([])
 
-    slope = phase_slope_rad_per_hz(phase_rad, f) if N > 1 else 0.0
+    slope = 0.0
+    phi0 = 0.0
+    cos_phi0 = 0.0
+    if N > 1:
+        try:
+            pfit = np.polyfit(f, phase_rad, 1)
+            slope = float(pfit[0])
+            phi0 = float(pfit[1])
+            cos_phi0 = float(np.cos(phi0))
+        except Exception:
+            slope = phase_slope_rad_per_hz(phase_rad, f)
 
     return {
         "mag": mag,
@@ -92,6 +102,8 @@ def compute_spectral_features(gamma, freqs):
         "mag_std": mag_std,
         "trend": trend,
         "phase_slope": slope,
+        "phi0": phi0,
+        "cos_phi0": cos_phi0,
         "is_passive": is_passive,
     }
 
@@ -117,7 +129,7 @@ def phase_slope_rad_per_hz(phase_unwrapped, freqs):
     return float(pfit[0])
 
 
-def add_measurement_noise(gamma, noise_std, rng=None, clip_passive=True):
+def add_measurement_noise(gamma, noise_std, rng=None, clip_passive=False):
     """
     Add complex zero-mean Gaussian noise to reflection coefficient array.
 
@@ -126,7 +138,8 @@ def add_measurement_noise(gamma, noise_std, rng=None, clip_passive=True):
     gamma        : complex array of reflection coefficients
     noise_std    : standard deviation of complex noise
     rng          : np.random.Generator (optional)
-    clip_passive : if True, clip |Gamma| <= 1.0 to preserve passivity
+    clip_passive : if True, clip |Gamma| <= 1.0; if False (recommended per VNA metrology),
+                   preserves unclipped noisy samples exceeding unity.
 
     Returns
     -------
