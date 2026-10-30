@@ -21,7 +21,7 @@
 | `diagnosis.py` | `estimate_distance(sweep_dict, vf, fault_class)` | float [m] or `None` | **Verified** | IFFT TDR peak method; `None` if healthy |
 | `matching.py` | `design_quarter_wave(Z0, RL, f, vf)` | dict: `Zt`, `length_m` | **Verified** | Exact matching at $f_0$ |
 | `matching.py` | `compare_matching(Z0, ZL, f_array, ...)` | dict: before / after sweep results | **Verified** | Bandwidth ($\text{RL} \ge 20\text{ dB}$) |
-| `app.py` | Streamlit Dashboard | Web Application | To Implement | Uses only modular interfaces |
+| `app.py` | Streamlit Dashboard | Web Application | **Verified** | Uses only modular interfaces |
 
 ---
 

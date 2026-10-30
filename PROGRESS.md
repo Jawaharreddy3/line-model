@@ -20,7 +20,7 @@
 | **Phase 2** | Dedicated 6-Scenario Fault Simulation | `fault_simulation.py`, `test_fault_simulation.py` | **COMPLETED** | 46 / 46 (27 core + 9 measurements + 10 simulation) |
 | **Phase 3** | Member 3: Quarter-Wave Impedance Matching Studio | `matching.py`, `test_matching.py` | **COMPLETED** | 52 / 52 (27 core + 9 measurements + 10 sim + 6 matching) |
 | **Phase 4** | Member 3: Diagnosis & IFFT Fault Localization | `diagnosis.py`, `test_diagnosis.py` | **COMPLETED** | 62 / 62 (27 core + 9 meas + 10 sim + 6 match + 10 diag) |
-| **Phase 5** | Member 4: Interactive Streamlit Web UI | `app.py` | PENDING | — |
+| **Phase 5** | Member 4: Interactive Streamlit Web UI | `app.py`, `test_app.py` | **COMPLETED** | 64 / 64 (all modules passing) |
 | **Phase 6** | End-to-End System Integration & Master Verification | Unified test suite, benchmark validation report | PENDING | — |
 
 ---
@@ -73,6 +73,19 @@
   - TDR fault distance verified against known simulation positions ($0.3\text{ m}$, $0.7\text{ m}$, $1.2\text{ m}$, and intermediate $0.45\text{ m}$) within theoretical physical range resolution $\Delta R = v_p / (2 B)$.
   - Frequency spacing uniformity check and linear resampling for non-uniform sweeps.
 
+### Checkpoint: Phase 5 (`app.py`)
+- **Command:** `python -m pytest -v`
+- **Result:** 64 passed in 1.96s (100% pass)
+- **Verified items:**
+  - Streamlit dashboard (`app.py`) clean import and execution without error.
+  - Interactive parameter controls for $Z_0$, line length, $\text{vf}$, frequency sweep range, and 6 fault presets.
+  - Multi-tab visualization:
+    - Tab 1: Frequency sweeps ($|\Gamma|$, VSWR, Return Loss with benchmark threshold lines).
+    - Tab 2: Normalized Smith Chart with constant resistance and reactance circles.
+    - Tab 3: Time-Domain Reflectometry (IFFT echo profile) with peak fault marker and range resolution.
+    - Tab 4: Quarter-wave matching studio with before/after comparison curves and passband bandwidth.
+    - Tab 5: Benchmark verification against all 7 scenarios in `HAND_CALCULATIONS.md`.
+
 ---
 
 ## 4. Known Bugs & Caveats
@@ -81,4 +94,4 @@
 ---
 
 ## 5. Next Immediate Step
-- Execute Phase 5: Member 4 Interactive Streamlit Web UI (`app.py`), integrating sidebar parameter controls, preset fault selectors, multi-panel frequency sweeps, normalized Smith charts, live fault classification with confidence indicators, physical distance readout, and quarter-wave matching studio.
+- Execute Phase 6: End-to-End System Integration & Master Verification, including reproducible examples script (`reproducible_examples.py`), complete documentation updates, and master benchmark report.
