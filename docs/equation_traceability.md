@@ -70,7 +70,7 @@
 1. **Mathematical Form:**
    $$\beta = \omega\sqrt{L'C'} = \frac{2\pi f}{v_p} = \frac{2\pi}{\lambda}$$
 2. **Academic Source:** Pozar (4th ed.), Section 2.1, Eq. (2.11), p. 52.
-3. **Assumptions:** Lossless transmission line ($\alpha = 0$). Non-dispersive dielectric.
+3. **Assumptions:** Lossless transmission line baseline ($\alpha = 0$). Non-dispersive dielectric medium ($\varepsilon_r = \text{const}$). Note: Setting $\alpha = 0$ is an intentional simplifying baseline assumption per the EC-3104 syllabus and `INTERFACES.md` contract; real RG-58 cable experiences conductor skin-effect and dielectric losses reaching $\alpha \approx 1.6 - 2.0\text{ dB/m}$ at $5\text{ GHz}$.
 4. **Unit Consistency:** $[f] = \text{s}^{-1}$, $[v_p] = \text{m/s} \implies [\beta] = \text{rad/m}$.
 5. **Reference Plane:** Rate of phase rotation per unit length.
 6. **Phasor / Time Convention:** For $e^{j\omega t}$, wave traveling in $+z$ direction propagates as $e^{-j\beta z}$.
@@ -246,8 +246,12 @@
 1. **Mathematical Form:**
    $$h(n) = \frac{1}{N} \sum_{k=0}^{N-1} \left[ \Gamma(f_k) \cdot w_k \right] e^{+j \frac{2\pi k n}{N_{\text{pad}}}}$$
    $$d = \frac{v_p \cdot t_{\text{peak}}}{2} = \frac{c_0 \cdot \text{vf} \cdot n_{\text{peak}}}{2 N_{\text{pad}} \Delta f}$$
-2. **Academic Source:** Keysight Technologies AN 5989-5723EN, pp. 6-10; Pozar (4th ed.), Sec. 2.9.
-3. **Assumptions:** Uniform frequency step $\Delta f = \text{const}$. Hann window $w_k$ to suppress sidelobes. Causal peak detection ($n \ge 3$ to skip port DC feed).
+2. **Academic Source:** Keysight Technologies AN 5989-5723EN, pp. 6–10; Pozar (4th ed.), Sec. 2.9; Chang et al. (2026).
+3. **Assumptions:**
+   - Uniform frequency grid: Frequency step $\Delta f = (f_{\text{max}} - f_{\text{min}})/(N - 1)$ must be strictly uniform. If non-uniform data is received, it must be validated and resampled.
+   - Spectral windowing: Hann window $w_k = 0.5 [1 - \cos(2\pi k / (N - 1))]$ is applied to suppress truncation sidelobes from $-13\text{ dB}$ (rectangular) down to $-31.5\text{ dB}$, preventing spectral leakage from masking small nearby defects.
+   - Zero-padding: The sequence is zero-padded from $N$ to $N_{\text{pad}} = 2^{\lceil \log_2(4N) \rceil}$ power-of-two bins. This acts as bandlimited sinc interpolation in the time domain, eliminating peak-detection scallop loss without altering the physical two-fault Rayleigh resolution.
+   - Peak detection: Causal search index $n \ge 3$ excludes the zero-distance direct port feedthrough spike.
 4. **Unit Consistency:** $[t] = \text{s}$, $[v_p] = \text{m/s} \implies [d] = \text{m}$.
 5. **Implementation:** `diagnosis.py:_compute_ifft_distance` and `core/fault_location.py:compute_ifft_tdr`.
 6. **Test Coverage:** Verified in `test_diagnosis.py:test_estimate_distance_against_known_fault_positions` for lengths $0.3\text{ m}, 0.7\text{ m}, 1.2\text{ m}$ (errors $< 1.5\Delta R$).
@@ -258,19 +262,25 @@
 1. **Mathematical Form:**
    $$\phi(f) = \text{unwrap}(\angle \Gamma(f)) = \phi_0 - \frac{4\pi d}{v_p} f$$
    $$\text{slope} = \frac{d\phi}{df} = -\frac{4\pi d}{v_p} \implies d = -\frac{v_p}{4\pi} \frac{d\phi}{df}$$
-2. **Academic Source:** Song et al. (2009), Eq. (5); Furse et al. (2021).
-3. **Assumptions:** Dominant single reflection. Biased when discontinuity introduces internal frequency-dependent phase (e.g., reactive series L or shunt C).
+2. **Academic Source:** Song et al. (2009), Eq. (5); Furse et al. (2021); Liu et al. (2024).
+3. **Assumptions:** Single dominant reflection. Discontinuities with frequency-dependent phase characteristics (such as series inductance or shunt capacitance) introduce systematic slope bias, making phase-slope a secondary cross-check rather than primary location for reactive faults.
 4. **Implementation:** `core/fault_location.py:compute_phase_slope_distance`.
 5. **Test Coverage:** Verified in `test_location.py` dual-method comparison.
 
 ---
 
-### EQ-18: Physical Rayleigh Range Resolution ($\Delta R$)
+### EQ-18: Physical Rayleigh Range Resolution ($\Delta R$) vs Display Sampling Step ($\delta d$)
 1. **Mathematical Form:**
-   $$\Delta R = \frac{v_p}{2 B} = \frac{c_0 \cdot \text{vf}}{2 (f_{\text{max}} - f_{\text{min}})}$$
-2. **Academic Source:** Keysight AN 5989-5723EN, p. 9; Anritsu AN 11410-00373, p. 4.
-3. **Assumptions:** Fundamental physical bandwidth limit. Two discontinuities separated by $< \Delta R$ cannot be separated.
-4. **Unit Consistency:** $[v_p] = \text{m/s}$, $[B] = \text{s}^{-1} \implies [\Delta R] = \text{m}$.
+   $$\Delta R_{\text{nom}} = \frac{v_p}{2 B} = \frac{c_0 \cdot \text{vf}}{2 (f_{\text{max}} - f_{\text{min}})}$$
+   $$\Delta R_{\text{eff}} \approx K_w \Delta R_{\text{nom}} \approx 1.50 \cdot \frac{v_p}{2 B} \quad (\text{Hann window})$$
+   $$\delta d = \frac{v_p}{2 N_{\text{pad}} \Delta f} = \frac{R_{\text{max}}}{N_{\text{pad}}}$$
+2. **Academic Source:** Keysight AN 5989-5723EN, p. 9; Anritsu AN 11410-00373, p. 4; Harris (1978).
+3. **Physical Distinction:**
+   - **Nominal Bandwidth Resolution ($\Delta R_{\text{nom}}$):** The fundamental physical limit set by the measured bandwidth $B$. Two equal-magnitude point discontinuities closer than $\Delta R_{\text{nom}}$ cannot be resolved under an unwindowed Dirichlet kernel.
+   - **Effective Windowed Resolution ($\Delta R_{\text{eff}}$):** Tapering with a Hann window broadens the mainlobe width by factor $K_w \approx 1.50$ (from $0.89/B$ to $1.44/B$ at the $-3\text{ dB}$ points), trading two-point separation for $-31.5\text{ dB}$ sidelobe suppression.
+   - **Display / Interpolation Step ($\delta d$):** The spatial interval between adjacent discrete IFFT bins after zero-padding to $N_{\text{pad}}$ points.
+   - **Critical Principle:** Zero-padding ($N \to N_{\text{pad}}$) does **NOT** improve the physical two-fault resolution $\Delta R_{\text{eff}}$. It performs purely trigonometric (sinc) interpolation between existing Fourier samples, reducing peak-amplitude scallop loss and visual jaggedness. Two physical discontinuities separated by $< \Delta R_{\text{eff}}$ will merge into a single broad peak regardless of $N_{\text{pad}}$.
+4. **Unit Consistency:** $[v_p] = \text{m/s}$, $[B] = \text{s}^{-1} \implies [\Delta R] = \text{m}$; $[\delta d] = \text{m}$.
 5. **Implementation:** `diagnosis.py:distance_resolution` and `core/fault_location.py:calculate_resolution_metrics`.
 6. **Test Coverage:** Tested in `test_diagnosis.py` and `test_location.py`.
 
@@ -315,6 +325,36 @@
    $$\phi_0 = \lim_{f \to 0} \angle \Gamma(f) = \angle \Gamma_L$$
    $$\cos(\phi_0) = \begin{cases} +1.0 & \text{Open Circuit } (\Gamma_L = +1) \\ -1.0 & \text{Short Circuit } (\Gamma_L = -1) \end{cases}$$
 2. **Academic Source:** Physics derivation; Collin (2001), Ch. 3; Pozar (4th ed.), Sec. 2.3.
-3. **Physical Basis:** As $f \to 0$, the electrical line length $\beta(f) \ell = \frac{2\pi f}{v_p} \ell \equiv 0$ vanishes identically. Therefore, the DC phase intercept $\phi_0$ reflects purely the load reflection angle $\angle \Gamma_L$, completely independent of line length $\ell$ and velocity factor $v_p$.
+3. **Physical Basis & Ideal Assumptions:**
+   - As $f \to 0$, the electrical line length $\beta(f) \ell = \frac{2\pi f}{v_p} \ell \equiv 0$ vanishes identically. Therefore, the DC phase intercept $\phi_0$ reflects purely the load reflection angle $\angle \Gamma_L$, independent of line length $\ell$ and velocity factor $v_p$.
+   - **Phase-Unwrapping Sampling Limit:** To prevent $2\pi$ spatial ambiguity during numerical phase unwrapping, the phase change between adjacent frequency points must be strictly less than $\pi$:
+     $$\Delta \phi = \frac{4\pi d}{v_p} \Delta f < \pi \implies \Delta f < \frac{v_p}{4 d_{\text{max}}}$$
+     For $d_{\text{max}} = 2.5\text{ m}$ and $\text{vf} = 0.66$, this requires $\Delta f < 19.8\text{ MHz}$. Exceeding this step causes unwrapping cycle slips.
+   - **Low-Frequency Extrapolation Noise Sensitivity:** Because practical VNA sweeps start at $f_{\text{min}} > 0$ (e.g., $100\text{ MHz} - 500\text{ MHz}$), estimating $\phi_0$ requires extrapolating the linear regression line over the unmeasured gap $[0, f_{\text{min}}]$. Severe receiver noise or frequency-dependent phase nonlinearity inflates the standard error of the intercept:
+     $$\text{SE}(\phi_0) = \text{SE}(m) \sqrt{\frac{1}{N}\sum f_k^2}$$
+   - **Fit-Quality Threshold:** Linear phase regression requires $R^2 \ge 0.95$. If $R^2 < 0.95$, phase nonlinearity (indicative of dispersion, multiple reflections, or heavy reactive parasitics) invalidates the single-reflection DC intercept model.
+   - **Tested Parameter Range:** Formally validated in Monte Carlo testing across line lengths $\ell \in [0.4, 2.5]\text{ m}$, frequency bands $f \in [0.2, 5.0]\text{ GHz}$, velocity factors $\text{vf} \in [0.66, 1.0]$, and noise levels $\sigma \le 0.03$.
 4. **Implementation:** `diagnosis.py:extract_features` and `diagnosis.py:classify`.
 5. **Test Coverage:** Parametrized in `test_diagnosis.py:test_open_vs_short_separation_across_vf_and_lengths` across $\text{vf} \in [0.66, 0.70, 1.0]$ and lengths $[0.4, 0.9, 1.8]\text{ m}$ (100% pass rate).
+
+---
+
+## 3. Verified Academic Citations
+
+1. **Pozar, D. M.** (2012). *Microwave Engineering*, 4th ed., John Wiley & Sons, Hoboken, NJ. ISBN: 978-0-470-63155-3.
+2. **Collin, R. E.** (2001). *Foundations for Microwave Engineering*, 2nd ed., IEEE Press / Wiley-Interscience, New York. ISBN: 978-0-7803-6031-0.
+3. **Ramo, S., Whinnery, J. R., & Van Duzer, T.** (1994). *Fields and Waves in Communication Electronics*, 3rd ed., John Wiley & Sons, New York. ISBN: 978-0-471-58551-0.
+4. **Furse, C. M., Kafal, M., Razzaghi, R., & Shin, Y.-J.** (2021). "Fault Diagnosis for Electrical Systems and Power Networks: A Review," *IEEE Sensors Journal*, vol. 21, no. 2, pp. 888–906, Jan. 2021. DOI: [10.1109/JSEN.2020.2987321](https://doi.org/10.1109/JSEN.2020.2987321).
+5. **Chang, K., Xu, Z., Zhang, G., & Wang, L.** (2026). "Fault Location and Evaluation in Coaxial Cables Based on Stepped Frequency Waveform Reflectometry and Electromagnetic Time Reversal," *IEEE Transactions on Instrumentation and Measurement*, vol. 75, Art. no. 3503811, pp. 1–11, Jan. 2026. DOI: [10.1109/TIM.2026.3657555](https://doi.org/10.1109/TIM.2026.3657555).
+6. **Liu, C., Hou, Y., Duan, Z., & Chen, D.** (2024). "Underground Power Cable Fault Detection and Localization Based on the Spectrum of Propagation Functions," *IEEE Transactions on Instrumentation and Measurement*, vol. 73, Art. no. 3524911, pp. 1–11, Sept. 2024. DOI: [10.1109/TIM.2024.3460831](https://doi.org/10.1109/TIM.2024.3460831).
+7. **Shi, X., Kafal, M., & Furse, C. M.** (2023). "Application of Augmented Spread Spectrum Time Domain Reflectometry for Detection and Localization of Soft Faults on a Coaxial Cable," *IEEE Transactions on Instrumentation and Measurement*, vol. 72, Art. no. 3504210, pp. 1–10, 2023. DOI: [10.1109/TIM.2023.3243681](https://doi.org/10.1109/TIM.2023.3243681).
+8. **Rao, X., Xiao, S., Cheng, Y., & Peng, Z.** (2023). "Cable Defect Location by Using Frequency Domain Reflectometry With Synchrosqueezing Generalized S-Transform," in *IEEE 5th Student Conference on Electric Power Engineering (SCEPE)*, pp. 1–5, 2023. DOI: [10.1109/SCEPE59695.2023.10427848](https://doi.org/10.1109/SCEPE59695.2023.10427848).
+9. **Song, E.-S., Shin, Y.-J., Stone, P. E., Wang, J., Choe, T.-S., Yook, J.-G., & Park, J.-B.** (2009). "Detection and Location of Multiple Wiring Faults via Time–Frequency-Domain Reflectometry," *IEEE Transactions on Electromagnetic Compatibility*, vol. 51, no. 1, pp. 131–138, Feb. 2009. DOI: [10.1109/TEMC.2008.2007964](https://doi.org/10.1109/TEMC.2008.2007964).
+10. **Kingston, S., Benoit, E., Edun, A. S., et al.** (2021). "A SSTDR Methodology, Implementations, and Challenges," *Sensors*, vol. 21, no. 16, p. 5268, Aug. 2021. DOI: [10.3390/s21165268](https://doi.org/10.3390/s21165268).
+11. **Williams, D. F., LeGolvan, K. A., & Jargon, J. A.** (2006). "An Accurate Calibration Accounting for Toroid Losses in VNA Measurements," *IEEE Transactions on Microwave Theory and Techniques*, vol. 54, no. 12, pp. 4370–4377, Dec. 2006. DOI: [10.1109/TMTT.2006.885903](https://doi.org/10.1109/TMTT.2006.885903).
+12. **Marks, R. B.** (1991). "A Multiline Method of Network Analyzer Calibration," *IEEE Transactions on Microwave Theory and Techniques*, vol. 39, no. 7, pp. 1205–1215, July 1991. DOI: [10.1109/22.85388](https://doi.org/10.1109/22.85388).
+13. **Stumper, U.** (2005). "Influence of Noise on Vector Network Analyzer Calibrations," *IEEE Transactions on Instrumentation and Measurement*, vol. 54, no. 2, pp. 627–631, Apr. 2005. DOI: [10.1109/TIM.2004.843067](https://doi.org/10.1109/TIM.2004.843067).
+14. **Ridler, N. M., & Salter, M. J.** (2007). "Evaluating and Expressing Uncertainty in S-Parameter Measurements," *Metrologia*, vol. 44, no. 4, pp. 292–299, 2007. DOI: [10.1088/0026-1394/44/4/007](https://doi.org/10.1088/0026-1394/44/4/007).
+15. **Harris, F. J.** (1978). "On the Use of Windows for Harmonic Analysis with the Discrete Fourier Transform," *Proceedings of the IEEE*, vol. 66, no. 1, pp. 51–83, Jan. 1978. DOI: [10.1109/PROC.1978.10837](https://doi.org/10.1109/PROC.1978.10837).
+16. **Keysight Technologies** (2020). *Time Domain Analysis Using a Network Analyzer*, Application Note 5989-5723EN, Keysight Technologies, Santa Rosa, CA.
+17. **Anritsu Company** (2018). *Distance-to-Fault (DTF) Measurement Fundamentals*, Application Note 11410-00373, Anritsu Company, Morgan Hill, CA.
