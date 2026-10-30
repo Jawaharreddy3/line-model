@@ -338,7 +338,8 @@ def _compute_ifft_distance(gamma, freqs, vf):
     gamma_pad[:N] = gamma_win
 
     # Step 4: Inverse FFT to pseudo-time domain
-    time_response = np.fft.ifft(gamma_pad)
+    # Scale by (Npad / N) so peak amplitude reflects windowed reflection magnitude
+    time_response = np.fft.ifft(gamma_pad) * (float(Npad) / float(N))
     mag_time = np.abs(time_response)
 
     # Time axis: t_k = k / (Npad * df)
@@ -352,8 +353,8 @@ def _compute_ifft_distance(gamma, freqs, vf):
     peak_idx = int(np.argmax(search_mag))
     peak_val = search_mag[peak_idx]
 
-    # If peak is too weak (< 0.005), no clear echo detected
-    if peak_val < 0.005:
+    # If peak is too weak (< 0.01), no clear echo detected
+    if peak_val < 0.01:
         return None
 
     t_peak = t_axis[peak_idx]
