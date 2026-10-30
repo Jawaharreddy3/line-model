@@ -145,21 +145,7 @@ Open `http://localhost:8501` in your browser.
 
 ---
 
-## 5. Verification Against Hand Calculations (`HAND_CALCULATIONS.md`)
-
-All 7 analytical scenarios from `HAND_CALCULATIONS.md` ($Z_0 = 50\,\Omega, f = 100\text{ MHz}, \text{vf} = 1.0$) are automated in the test suite:
-
-1. **Matched Line ($Z_L = 50\,\Omega$):** $\Gamma_L = 0, Z_{\text{in}} = 50\,\Omega$ for any length.
-2. **Short Circuit at $\lambda/8$:** $Z_{\text{in}} = +j50\,\Omega$ (purely inductive).
-3. **Open Circuit at $\lambda/8$:** $Z_{\text{in}} = -j50\,\Omega$ (purely capacitive).
-4. **Quarter-Wave Line ($Z_L = 100\,\Omega$):** $Z_{\text{in}} = 25\,\Omega, |\Gamma_L| = 1/3, \text{VSWR} = 2.0, \text{RL} = 9.542\text{ dB}$.
-5. **Half-Wave Line ($Z_L = 30 + j40\,\Omega$):** $Z_{\text{in}} = Z_L$ (repeats every $\lambda/2$).
-6. **Quarter-Wave Transformer ($50 \to 200\,\Omega$):** $Z_t = \sqrt{50 \times 200} = 100\,\Omega, l_t = 0.75\text{ m}$.
-7. **Singular Cases:** Short at $\lambda/4 \implies Z_{\text{in}} = \infty$; Open at $\lambda/4 \implies Z_{\text{in}} = 0$.
-
----
-
-## 6. Theory & Core Equations
+## 5. Theory & Core Equations
 
 ### Transmission Line Core Equations
 - **Phase Velocity:** $v_p = \text{vf} \cdot c_0$
@@ -181,7 +167,7 @@ All 7 analytical scenarios from `HAND_CALCULATIONS.md` ($Z_0 = 50\,\Omega, f = 1
 
 ---
 
-## 7. Empirical Validation Results
+## 6. Empirical Validation Results
 
 From the automated Monte Carlo test suite ($N = 240$ randomized lines, complex noise $\sigma = 0.02$):
 
