@@ -265,9 +265,9 @@ Per the proposal, the project is a **simulation-based educational prototype**. T
 | Configuration / Validation Type | Sample Size & Parameters | Seed Strategy | Artifacts / Deliverables | Limitation |
 |---|---|---|---|---|
 | **Analytical Benchmark** | 7 canonical cases (`HAND_CALCULATIONS.md`) | Deterministic formulas | `HAND_CALCULATIONS.md`, Dashboard View 8 | Specific analytical parameter combinations |
-| **Streamlit Live Validation** | $N = 120$ (20/class), $\sigma = 0.02$ | Fixed seed `42` | Interactive GUI dashboard (View 7) | In-memory evaluation; ephemeral session data |
-| **Standalone Batch Validation** | $N = 240$ (40/class), $\sigma = 0.02$ | Fixed seed `42` | `confusion_matrix.csv`, `classification_metrics.csv`, `subtype_confusion_matrix.csv`, `subtype_classification_metrics.csv`, `location_errors.csv` | Synthetic data generator; no physical cable measurements |
-| **Noise Sensitivity Study** | $N = 120$ per $\sigma$ (6 levels: 0.0 to 0.18) | Distinct seeds (`100 + int(σ*100)`) | `noise_sensitivity.csv`, `noise_sensitivity.png` | Non-paired cohorts; majority-class baseline under high noise |
+| **Streamlit Live Validation** | $N = 120$ (20/scenario), $\sigma = 0.02$ | Fixed seed `42` | Interactive GUI dashboard (View 7) | In-memory evaluation; ephemeral session data |
+| **Standalone Batch Validation** | $N = 240$ (40/scenario), $\sigma = 0.02$ | Fixed seed `42` | `confusion_matrix.csv`, `classification_metrics.csv`, `subtype_confusion_matrix.csv`, `subtype_classification_metrics.csv`, `location_errors.csv` | Synthetic data generator; no physical cable measurements |
+| **Noise Sensitivity Study** | $N = 120$ per $\sigma$ (6 levels: 0.0 to 0.18) | Distinct seeds (`100 + int(σ*100)`) | `noise_sensitivity.csv`, `results/figures/accuracy_vs_noise.png` | Non-paired cohorts; majority-class baseline under high noise |
 | **Impedance Matching Validation** | Exact analytical $f_0$ evaluation + sweep | Deterministic math | Dashboard View 6, `test_matching.py` | Lossless line assumption ($\alpha = 0$) |
 
 The project **correctly states** throughout its documentation and UI that it is a virtual educational simulator, not a field-certified instrument. These limitations are consistent with the proposal, which states: *"The final deliverable is an educational virtual prototype, not a field-tested cable diagnostic instrument."*
@@ -354,7 +354,6 @@ This is independent of automated tests.
 | `test_diagnosis.py` | 28 | Classifier contract labels, rule logic, DiagnosisResult |
 | `test_measurements.py` | 12 | Reflection, VSWR, RL, SweepResult, non-passive handling |
 | `test_integration.py` | 8 | End-to-end module composition |
-| `test_line_model.py` | — | (included above) |
 | `test_fault_simulation.py` | 10 | ABCD cascade, scenario outputs |
 | `test_matching.py` | 7 | Quarter-wave design, compare_matching |
 | `test_location.py` | 5 | IFFT, phase-slope, resolution metrics |
