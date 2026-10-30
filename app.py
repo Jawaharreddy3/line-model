@@ -45,55 +45,296 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ── Custom Engineering CSS Styling ────────────────────────────────────────────
+# ── Custom Engineering CSS Styling ───────────────────────────────────────────
 st.markdown("""
 <style>
-    /* Engineering Dark Theme Elements */
-    .metric-card {
-        background-color: #1e2638;
-        border: 1px solid #2d3b58;
-        border-radius: 8px;
-        padding: 14px 18px;
-        margin-bottom: 12px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    }
-    .metric-title {
-        color: #8da2c0;
-        font-size: 0.85rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-    }
-    .metric-value {
-        color: #00e5ff;
-        font-size: 1.6rem;
-        font-weight: 700;
-        font-family: 'Consolas', 'Courier New', monospace;
-    }
-    .status-badge-healthy {
-        background-color: #0e3d23;
-        color: #2ecc71;
-        padding: 4px 12px;
-        border-radius: 4px;
-        font-weight: bold;
-    }
-    .status-badge-mismatch {
-        background-color: #4a2800;
-        color: #f39c12;
-        padding: 4px 12px;
-        border-radius: 4px;
-        font-weight: bold;
-    }
-    .status-badge-fault {
-        background-color: #4a1212;
-        color: #e74c3c;
-        padding: 4px 12px;
-        border-radius: 4px;
-        font-weight: bold;
-    }
+:root {
+    --rld-bg: #0b1220;
+    --rld-sidebar: #0d1726;
+    --rld-panel: #111d2e;
+    --rld-panel-raised: #17263a;
+    --rld-border: #26374d;
+    --rld-text: #e8eef6;
+    --rld-muted: #91a2b8;
+    --rld-cyan: #35c6d5;
+    --rld-green: #40c894;
+    --rld-amber: #e9ad55;
+}
+html, body, [class*="css"], button, input, textarea, select {
+    font-family: Inter, "Segoe UI", system-ui, sans-serif;
+}
+.stApp {
+    background:
+        radial-gradient(ellipse at 88% 0%, rgba(34, 105, 128, .12), transparent 32%),
+        linear-gradient(145deg, #0b1220 0%, #0e1828 54%, #0b1422 100%);
+    color: var(--rld-text);
+}
+[data-testid="stHeader"] {
+    background: rgba(11, 18, 32, .72);
+}
+[data-testid="stMainBlockContainer"] {
+    max-width: 1500px;
+    padding: 2rem 2.4rem 3rem;
+}
+[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, #0d1726 0%, #0a1320 100%);
+    border-right: 1px solid var(--rld-border);
+}
+[data-testid="stSidebar"] > div:first-child {
+    padding-top: 1.25rem;
+}
+[data-testid="stSidebar"] h1,
+[data-testid="stSidebar"] h2,
+[data-testid="stSidebar"] h3 {
+    color: var(--rld-text);
+    letter-spacing: -.02em;
+}
+[data-testid="stSidebar"] hr {
+    border-color: var(--rld-border);
+    margin: 1rem 0;
+}
+h1, h2, h3, h4 {
+    color: var(--rld-text);
+    letter-spacing: -.035em;
+    font-weight: 650;
+}
+h1 { font-size: 2rem; line-height: 1.18; }
+h2 { font-size: 1.48rem; line-height: 1.25; }
+h3 { font-size: 1.12rem; line-height: 1.35; }
+p, li, label, [data-testid="stMarkdownContainer"] {
+    color: var(--rld-text);
+    line-height: 1.62;
+}
+.stCaption, [data-testid="stCaptionContainer"] {
+    color: var(--rld-muted) !important;
+    font-size: .82rem;
+}
+[data-testid="stSidebar"] label,
+[data-testid="stWidgetLabel"] p {
+    color: #c6d2e1 !important;
+    font-size: .86rem;
+    font-weight: 550;
+}
+[data-testid="stSidebar"] div[role="radiogroup"] {
+    gap: .35rem;
+}
+[data-testid="stSidebar"] div[role="radiogroup"] label {
+    border: 1px solid transparent;
+    border-radius: 10px;
+    padding: .45rem .65rem;
+    transition: background .18s ease, border-color .18s ease;
+}
+[data-testid="stSidebar"] div[role="radiogroup"] label:hover {
+    background: #17263a;
+    border-color: #2b425b;
+}
+[data-testid="stSidebar"] div[role="radiogroup"] label:has(input:checked) {
+    background: #172b40;
+    border-color: #31536b;
+}
+input, textarea, [data-baseweb="select"] > div {
+    background: #142236 !important;
+    color: var(--rld-text) !important;
+    border-color: #2b4058 !important;
+    border-radius: 9px !important;
+}
+[data-baseweb="input"] input, [data-baseweb="textarea"] textarea {
+    color: var(--rld-text) !important;
+}
+[data-baseweb="select"] span {
+    color: var(--rld-text) !important;
+}
+div[data-testid="stNumberInput"] button,
+div[data-testid="stSelectbox"] button {
+    color: var(--rld-muted) !important;
+    border-color: #2b4058 !important;
+}
+[data-testid="stSlider"] [role="slider"] {
+    border-color: var(--rld-cyan) !important;
+    box-shadow: 0 0 0 3px rgba(53, 198, 213, .16);
+}
+[data-testid="stSlider"] [data-testid="stTickBar"] {
+    background: #2b4058;
+}
+.stButton > button, .stDownloadButton > button {
+    min-height: 2.55rem;
+    border-radius: 9px;
+    border: 1px solid #2a6171;
+    background: linear-gradient(135deg, #176477, #17475d);
+    color: #f2fbff;
+    font-weight: 650;
+    letter-spacing: .01em;
+    transition: transform .16s ease, box-shadow .16s ease, filter .16s ease;
+}
+.stButton > button:hover, .stDownloadButton > button:hover {
+    border-color: var(--rld-cyan);
+    color: #ffffff;
+    filter: brightness(1.12);
+    box-shadow: 0 7px 22px rgba(21, 154, 174, .18);
+    transform: translateY(-1px);
+}
+.stButton > button:focus, .stDownloadButton > button:focus {
+    box-shadow: 0 0 0 3px rgba(53, 198, 213, .23);
+}
+div[data-testid="stMetric"] {
+    background: linear-gradient(145deg, #142338, #101c2c);
+    border: 1px solid var(--rld-border);
+    border-radius: 12px;
+    padding: 1rem 1.1rem;
+    box-shadow: 0 8px 24px rgba(0,0,0,.14);
+}
+div[data-testid="stMetric"] label {
+    color: var(--rld-muted) !important;
+    font-size: .75rem;
+    font-weight: 650;
+    letter-spacing: .055em;
+    text-transform: uppercase;
+}
+div[data-testid="stMetric"] [data-testid="stMetricValue"] {
+    color: var(--rld-cyan);
+    font-weight: 700;
+    letter-spacing: -.035em;
+}
+.metric-card {
+    background: linear-gradient(145deg, #17283d, #111e30);
+    border: 1px solid #2a3d55;
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-bottom: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.16);
+}
+.metric-title {
+    color: #9aacc1;
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .075em;
+}
+.metric-value {
+    color: var(--rld-cyan);
+    font-size: 1.55rem;
+    font-weight: 750;
+    font-family: "SFMono-Regular", Consolas, monospace;
+    letter-spacing: -.035em;
+}
+.status-badge-healthy {
+    background: rgba(64,200,148,.14);
+    color: #63dfae;
+    padding: 5px 12px;
+    border: 1px solid rgba(64,200,148,.28);
+    border-radius: 999px;
+    font-weight: 700;
+}
+.status-badge-mismatch {
+    background: rgba(233,173,85,.13);
+    color: #f3bd70;
+    padding: 5px 12px;
+    border: 1px solid rgba(233,173,85,.28);
+    border-radius: 999px;
+    font-weight: 700;
+}
+.status-badge-fault {
+    background: rgba(232,91,96,.13);
+    color: #ff8589;
+    padding: 5px 12px;
+    border: 1px solid rgba(232,91,96,.28);
+    border-radius: 999px;
+    font-weight: 700;
+}
+.stTabs [data-baseweb="tab-list"] {
+    gap: .35rem;
+    border-bottom: 1px solid var(--rld-border);
+}
+.stTabs [data-baseweb="tab"] {
+    background: transparent;
+    border-radius: 9px 9px 0 0;
+    color: var(--rld-muted);
+    padding: .7rem 1rem;
+}
+.stTabs [aria-selected="true"] {
+    color: var(--rld-cyan) !important;
+    border-bottom: 2px solid var(--rld-cyan) !important;
+}
+[data-testid="stAlert"] {
+    border: 1px solid var(--rld-border);
+    border-radius: 11px;
+    background: #142338;
+}
+[data-testid="stDataFrame"], [data-testid="stTable"] {
+    border: 1px solid var(--rld-border);
+    border-radius: 10px;
+    overflow: hidden;
+}
+[data-testid="stPlotlyChart"], [data-testid="stPyplot"], [data-testid="stImage"] {
+    border: 1px solid rgba(55, 78, 105, .7);
+    border-radius: 12px;
+    overflow: hidden;
+}
+[data-testid="stExpander"] {
+    border: 1px solid var(--rld-border);
+    border-radius: 10px;
+    background: rgba(17, 29, 46, .62);
+}
+[data-testid="stMarkdownContainer"] pre {
+    border: 1px solid var(--rld-border);
+    border-radius: 10px;
+    background: #0b1523;
+}
+[data-testid="stMarkdownContainer"] code {
+    color: #8fe6ed;
+    background: rgba(53,198,213,.09);
+    border-radius: 5px;
+    padding: .08rem .28rem;
+}
+.katex, .katex * {
+    color: #eaf4fb !important;
+}
+.katex-display {
+    margin: 1rem 0 !important;
+    padding: .85rem 1rem;
+    overflow-x: auto;
+    background: rgba(24, 43, 63, .72);
+    border: 1px solid #2a4057;
+    border-radius: 10px;
+}
+[data-testid="stMarkdownContainer"] blockquote {
+    border-left: 3px solid var(--rld-cyan);
+    background: rgba(53,198,213,.06);
+    padding: .55rem 1rem;
+    border-radius: 0 9px 9px 0;
+}
+hr {
+    border-color: var(--rld-border) !important;
+}
+*:focus-visible {
+    outline: 2px solid rgba(53,198,213,.8) !important;
+    outline-offset: 2px;
+}
+@media (max-width: 900px) {
+    [data-testid="stMainBlockContainer"] { padding: 1.2rem 1rem 2rem; }
+    h1 { font-size: 1.65rem; }
+    div[data-testid="stMetric"] { padding: .8rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition: none !important; animation: none !important; }
+}
 </style>
 """, unsafe_allow_html=True)
 
+# Presentational styling for Matplotlib figures; calculation and data pipelines are unchanged.
+plt.rcParams.update({
+    "figure.facecolor": "#111d2e",
+    "axes.facecolor": "#111d2e",
+    "savefig.facecolor": "#111d2e",
+    "text.color": "#e8eef6",
+    "axes.labelcolor": "#c2cfdd",
+    "xtick.color": "#a9b8ca",
+    "ytick.color": "#a9b8ca",
+    "axes.edgecolor": "#354961",
+    "grid.color": "#2b3d54",
+    "legend.facecolor": "#17263a",
+    "legend.edgecolor": "#354961",
+})
 # ── Application Header ────────────────────────────────────────────────────────
 st.title("📡 RF LINE DOCTOR")
 st.markdown(
@@ -144,15 +385,15 @@ vf = st.sidebar.slider(
     max_value=1.0,
     value=0.66,
     step=0.01,
-    help="vp = vf * c0. Typical: Solid PE Coax = 0.66, PTFE = 0.70, Air = 1.0",
+    help="vₚ = vf × c₀. Typical: solid PE coax = 0.66, PTFE = 0.70, air = 1.0",
 )
 
 st.sidebar.subheader("📶 Frequency Sweep Range")
 col_sf1, col_sf2 = st.sidebar.columns(2)
 with col_sf1:
-    f_start_mhz = st.number_input("f_start (MHz)", min_value=1.0, max_value=50000.0, value=500.0, step=50.0)
+    f_start_mhz = st.number_input("fₘᵢₙ (MHz)", min_value=1.0, max_value=50000.0, value=500.0, step=50.0)
 with col_sf2:
-    f_stop_mhz = st.number_input("f_stop (MHz)", min_value=5.0, max_value=50000.0, value=4000.0, step=100.0)
+    f_stop_mhz = st.number_input("fₘₐₓ (MHz)", min_value=5.0, max_value=50000.0, value=4000.0, step=100.0)
 
 if f_start_mhz >= f_stop_mhz:
     st.sidebar.error("f_start must be strictly less than f_stop")
@@ -166,12 +407,12 @@ scenario_preset = st.sidebar.selectbox(
     "Fault Preset Scenario",
     [
         "Case 1: Healthy Matched (ZL = Z0)",
-        "Case 2: Resistive Mismatch (ZL = RL != Z0)",
-        "Case 3: Open Circuit (ZL = ∞)",
-        "Case 4: Short Circuit (ZL = 0)",
-        "Case 5: Series Inductive Discontinuity (Series L)",
-        "Case 6: Shunt Capacitive Discontinuity (Shunt C)",
-        "Custom: Arbitrary Complex Load (R + jX)",
+        "Case 2: Resistive mismatch (Zₗ = Rₗ ≠ Z₀)",
+        "Case 3: Open circuit (Zₗ = ∞)",
+        "Case 4: Short circuit (Zₗ = 0)",
+        "Case 5: Series inductive discontinuity (L)",
+        "Case 6: Shunt capacitive discontinuity (C)",
+        "Custom: Complex load (R + jX)",
     ],
     index=1,
 )
@@ -213,7 +454,7 @@ else:
     ZL_val = complex(c_r, c_x)
 
 noise_std = st.sidebar.slider(
-    "Measurement Noise (σ on S11)",
+    "Measurement Noise (σ on S₁₁)",
     min_value=0.0,
     max_value=0.15,
     value=0.0,
@@ -370,7 +611,7 @@ elif nav_section == "3. Signal Analysis & Smith Chart":
     st.header("3. Signal Analysis & Smith Chart")
 
     tab_rf, tab_z, tab_smith = st.tabs([
-        "📊 Reflection Metrics (|S11|, VSWR, RL)",
+        "📊 Reflection metrics (|S₁₁|, VSWR, return loss)",
         "🔌 Input Impedance (Rin, Xin, Phase)",
         "🧭 Normalized Smith Chart",
     ])
@@ -635,12 +876,12 @@ elif nav_section == "6. Quarter-Wave Matching Studio":
             f_design = f_design_mhz * 1e6
 
             match_res = match.compare_matching(Z0, RL_val, freqs, vf=vf, f_design=f_design, rl_threshold=20.0)
-            st.metric("Transformer Impedance (Zt)", f"{match_res['Zt']:.2f} Ω")
-            st.metric("Physical Length (lt)", f"{match_res['length_m']*1000:.1f} mm")
+            st.metric("Transformer impedance Zₜ (Ω)", f"{match_res['Zt']:.2f} Ω")
+            st.metric("Transformer length lₜ (mm)", f"{match_res['length_m']*1000:.1f} mm")
             st.metric("Contiguous Usable BW (RL ≥ 20 dB)", f"{match_res['bandwidth_hz']/1e6:.1f} MHz")
 
             f0_rl = match_res["at_f_design"]["rl_db"]
-            st.metric("Return Loss @ Design f₀", "∞ dB (Exact)" if np.isinf(f0_rl) else f"{f0_rl:.1f} dB")
+            st.metric("Return loss at design frequency f₀", "∞ dB (Exact)" if np.isinf(f0_rl) else f"{f0_rl:.1f} dB")
             st.caption("Note: Load resistance RL [Ω] is the physical termination, while Return Loss [dB] evaluates reflected power.")
 
         with match_col2:
