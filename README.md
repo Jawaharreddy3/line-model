@@ -68,7 +68,57 @@ line-model/
 
 ---
 
-## 3. Quick Start
+## 3. Installation & Running Locally from GitHub
+
+You can run RF LINE DOCTOR on your own computer. Each user runs a local copy of the application; it is not necessary for the project owner's computer to stay online.
+
+### Prerequisites
+
+- Python installed on your computer.
+- Git installed on your computer.
+- An internet connection for the initial clone and dependency installation.
+
+### Step 1 — Clone the project
+
+Open PowerShell (Windows) or a terminal (macOS/Linux) and run:
+
+```bash
+git clone -b rf-line-doctor-build --single-branch https://github.com/Jawaharreddy3/line-model.git
+```
+
+This downloads the project from the `rf-line-doctor-build` branch.
+
+### Step 2 — Enter the project folder
+
+```bash
+cd line-model
+```
+
+### Step 3 — Install the required Python packages
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+### Step 4 — Start the Streamlit application
+
+```bash
+python -m streamlit run app.py
+```
+
+### Step 5 — Open the local website
+
+Open your browser and visit:
+
+[`http://localhost:8501`](http://localhost:8501)
+
+The RF LINE DOCTOR dashboard will run on your computer. Keep the terminal window open while using it. To stop the application, press `Ctrl + C` in that terminal.
+
+**Important:** `localhost:8501` is local to the computer running the command. Sharing the GitHub repository lets others download and run their own copy; it does not make your local application directly accessible to them.
+
+---
+
+## 4. Quick Start
 
 ### Run the Complete Test Suite
 ```bash
@@ -95,7 +145,7 @@ Open `http://localhost:8501` in your browser.
 
 ---
 
-## 4. Verification Against Hand Calculations (`HAND_CALCULATIONS.md`)
+## 5. Verification Against Hand Calculations (`HAND_CALCULATIONS.md`)
 
 All 7 analytical scenarios from `HAND_CALCULATIONS.md` ($Z_0 = 50\,\Omega, f = 100\text{ MHz}, \text{vf} = 1.0$) are automated in the test suite:
 
@@ -109,7 +159,7 @@ All 7 analytical scenarios from `HAND_CALCULATIONS.md` ($Z_0 = 50\,\Omega, f = 1
 
 ---
 
-## 5. Theory & Core Equations
+## 6. Theory & Core Equations
 
 ### Transmission Line Core Equations
 - **Phase Velocity:** $v_p = \text{vf} \cdot c_0$
@@ -131,7 +181,7 @@ All 7 analytical scenarios from `HAND_CALCULATIONS.md` ($Z_0 = 50\,\Omega, f = 1
 
 ---
 
-## 6. Empirical Validation Results
+## 7. Empirical Validation Results
 
 From the automated Monte Carlo test suite ($N = 240$ randomized lines, complex noise $\sigma = 0.02$):
 
