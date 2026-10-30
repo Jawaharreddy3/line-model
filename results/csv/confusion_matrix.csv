@@ -1,0 +1,6 @@
+,Pred: healthy,Pred: open,Pred: short,Pred: mismatch,Pred: unknown
+True: healthy,40,0,0,0,0
+True: open,0,40,0,0,0
+True: short,0,0,40,0,0
+True: mismatch,0,0,1,119,0
+True: unknown,0,0,0,0,0
