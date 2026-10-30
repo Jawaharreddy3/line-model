@@ -17,7 +17,7 @@
 |---|---|---|---|---|
 | **Phase 0** | Baseline Audit, Recovery Protocol & Environment Setup | `PROGRESS.md`, `IMPLEMENTATION_STATUS.md`, `TECHNICAL_DECISIONS.md`, `.gitignore` | **COMPLETED** | 27 / 27 (`test_line_model.py`) |
 | **Phase 1** | Member 2: Measurements Module | `measurements.py`, `test_measurements.py` | **COMPLETED** | 36 / 36 (27 core + 9 measurements) |
-| **Phase 2** | Dedicated 6-Scenario Fault Simulation | `fault_simulation.py`, `test_fault_simulation.py` | PENDING | — |
+| **Phase 2** | Dedicated 6-Scenario Fault Simulation | `fault_simulation.py`, `test_fault_simulation.py` | **COMPLETED** | 46 / 46 (27 core + 9 measurements + 10 simulation) |
 | **Phase 3** | Member 3: Quarter-Wave Impedance Matching Studio | `matching.py`, `test_matching.py` | PENDING | — |
 | **Phase 4** | Member 3: Diagnosis & IFFT Fault Localization | `diagnosis.py`, `test_diagnosis.py` | PENDING | — |
 | **Phase 5** | Member 4: Interactive Streamlit Web UI | `app.py` | PENDING | — |
@@ -37,6 +37,16 @@
   - `sweep(Z0, ZL, length, f_array, vf)`: exact contract keys (`f`, `zin`, `gamma`, `vswr`, `rl_db`), correct output dimensions and frequency consistency.
   - `smith_plot(gamma_array, ax, **kw)`: headless Matplotlib axes generation, constant resistance and reactance grid circles, line styling.
 
+### Checkpoint: Phase 2 (`fault_simulation.py`)
+- **Command:** `python -m pytest -v`
+- **Result:** 46 passed in 0.50s (100% pass)
+- **Verified items:**
+  - All 6 fault scenarios verified: `healthy`, `mismatch`, `open`, `short`, `series_L`, `shunt_C`.
+  - Cascaded 2-port ABCD formulation verified for intermediate discontinuities ($0 \le d_{\text{fault}} \le \text{length}$).
+  - Zero-limit continuity: $L \to 0$ and $C \to 0$ collapse exactly to healthy matched line.
+  - Reactive frequency trend verification: $\Delta |\Gamma| / \Delta f > 0$ for $L$ and $C$.
+  - Noise injection bounded to physically passive reflection space ($|\Gamma| \le 1.0$).
+
 ---
 
 ## 4. Known Bugs & Caveats
@@ -45,4 +55,4 @@
 ---
 
 ## 5. Next Immediate Step
-- Execute Phase 2: Dedicated 6-Scenario Fault Simulation (`fault_simulation.py` and `test_fault_simulation.py`), incorporating 2-port ABCD cascading for series inductive and shunt capacitive discontinuities, plus boundary fault types (`healthy`, `mismatch`, `open`, `short`, `series_L`, `shunt_C`).
+- Execute Phase 3: Member 3 Quarter-Wave Impedance Matching Studio (`matching.py` and `test_matching.py`), including exact design frequency matching, load resistance $R_L$ vs return loss $\text{RL}_{\text{dB}}$ distinction, and bandwidth evaluation ($\text{RL} \ge 20\text{ dB}$).
