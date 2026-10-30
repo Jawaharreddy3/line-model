@@ -112,7 +112,6 @@ nav_section = st.sidebar.radio(
         "5. Fault Location (TDR & Phase)",
         "6. Quarter-Wave Matching Studio",
         "7. Independent Validation Lab",
-        "8. Theory & Hand Calculations",
     ],
     index=1,
 )
@@ -772,30 +771,3 @@ elif nav_section == "7. Independent Validation Lab":
             e_locs = [it["est_pos"] for it in v_dataset if it["true_pos"] is not None]
             l_stats = compute_location_metrics(t_locs, e_locs)
             st.success(f"**Fault Location Performance:** MAE = `{l_stats['mae_m']*100:.2f} cm` | RMSE = `{l_stats['rmse_m']*100:.2f} cm` (Valid: {l_stats['valid_count']}/{len(t_locs)})")
-
-# ─────────────────────────────────────────────────────────────────────────────
-# VIEW 8: THEORY & HAND CALCULATIONS
-# ─────────────────────────────────────────────────────────────────────────────
-elif nav_section == "8. Theory & Hand Calculations":
-    st.header("8. Electromagnetic Theory & Benchmark Calculations")
-
-    st.markdown(r"""
-    ### Canonical Verification Benchmarks (`HAND_CALCULATIONS.md`)
-    Common test parameters: $Z_0 = 50\,\Omega, f = 100\text{ MHz}, \text{vf} = 1.0 \implies \lambda = 2.998\text{ m}, \beta = 2.096\text{ rad/m}$.
-
-    1. **Matched Load ($Z_L = 50\,\Omega$):**
-       $$\Gamma_L = \frac{50 - 50}{50 + 50} = 0 \implies Z_{\text{in}} = Z_0 = 50\,\Omega \quad (\forall l)$$
-    2. **Short Circuit at $l = \lambda/8$ ($\beta l = 45^\circ$):**
-       $$Z_{\text{in}} = +j Z_0 \tan(45^\circ) = +j50\,\Omega \quad (\text{purely inductive})$$
-    3. **Open Circuit at $l = \lambda/8$ ($\beta l = 45^\circ$):**
-       $$Z_{\text{in}} = -j Z_0 \cot(45^\circ) = -j50\,\Omega \quad (\text{purely capacitive})$$
-    4. **Quarter-Wave Inversion ($l = \lambda/4, Z_L = 100\,\Omega$):**
-       $$Z_{\text{in}} = \frac{Z_0^2}{Z_L} = \frac{2500}{100} = 25\,\Omega \implies \Gamma = \frac{25 - 50}{25 + 50} = -\frac{1}{3} \implies \text{VSWR} = 2.0, \text{RL} = 9.542\text{ dB}$$
-    5. **Half-Wave Repetition ($l = \lambda/2, Z_L = 30 + j40\,\Omega$):**
-       $$Z_{\text{in}} = Z_L = 30 + j40\,\Omega \quad (\text{impedance repeats every } \lambda/2)$$
-    6. **Quarter-Wave Transformer ($50 \to 200\,\Omega$ at $100\text{ MHz}$):**
-       $$Z_t = \sqrt{50 \times 200} = 100\,\Omega, \quad l_t = \frac{\lambda}{4} = 0.75\text{ m}$$
-    7. **Singularities at $\lambda/4$:**
-       - Short at $\lambda/4 \implies Z_{\text{in}} \to \infty$ (virtual open circuit).
-       - Open at $\lambda/4 \implies Z_{\text{in}} \to 0$ (virtual short circuit).
-    """)
