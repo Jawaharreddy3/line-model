@@ -474,6 +474,7 @@ elif nav_section == "3. Signal Analysis & Smith Chart":
 elif nav_section == "4. Fault Diagnosis Engine":
     st.header("4. Transparent Rule-Based Fault Diagnosis")
     st.caption("Inferred strictly from single-port S11 measurements without access to simulation ground truth.")
+    st.caption("⚙️ Classifier threshold values (e.g. |Γ| < 0.05, trend > 0.010) are engineering choices tuned to this simulation range. They are not universal electromagnetic constants.")
 
     diag_col1, diag_col2 = st.columns([2, 3])
     with diag_col1:
@@ -529,8 +530,32 @@ RECOMMENDED CORRECTIVE ACTIONS:
 # VIEW 5: FAULT LOCATION (TDR & PHASE SLOPE)
 # ─────────────────────────────────────────────────────────────────────────────
 elif nav_section == "5. Fault Location (TDR & Phase)":
-    st.header("5. Fault Location: Time-Domain Reflectometry (TDR)")
-    st.caption("Dual-method distance localization: Hann-windowed IFFT pseudo-time reflectometry vs phase-slope cross-check.")
+    st.header("5. Fault Location: Phase-Slope Estimation and IFFT Verification")
+    st.caption("Estimated fault distance using two complementary methods derived from the frequency-swept reflection data.")
+
+    st.info(r"""
+**Primary Method — Phase-Slope / Frequency:**  
+For a single dominant reflector at distance *d* from the measurement port, the round-trip path
+introduces a linear phase rotation in the frequency-swept reflection:
+
+$$\phi(f) \approx \phi_0 - \frac{4\pi d}{v_p}\,f$$
+
+where $v_p = \mathrm{vf} \times c_0$ is the propagation velocity.  
+The slope of the unwrapped phase gives the distance estimate:
+
+$$d = -\frac{v_p}{4\pi}\,\frac{d\phi}{df}$$
+
+This method is straightforward to derive from transmission-line phasor theory (EC-3104).  
+**Limitation:** Reactive discontinuities (series L, shunt C) introduce a frequency-dependent
+internal phase offset that biases the slope estimate. The result should be treated as an
+*estimated* distance, not a precise measurement.
+
+**Supporting Cross-Check — IFFT Pseudo-Time Profile:**  
+The same reflection data is transformed to a pseudo-time domain via an inverse FFT (with a Hann
+window to reduce spectral leakage). A peak in the time profile at travel time *t* corresponds to
+distance $d = v_p\,t/2$.  Physical resolution of this approach is $\Delta R = v_p/(2B)$, where $B$ is
+the sweep bandwidth.  This is presented as a visualisation aid, not as a separate primary method.
+""")
 
     loc_col1, loc_col2 = st.columns([3, 2])
     with loc_col1:
@@ -556,12 +581,12 @@ elif nav_section == "5. Fault Location (TDR & Phase)":
             plt.close(fig_tdr)
 
     with loc_col2:
-        st.subheader("Dual-Method Localization Summary")
+        st.subheader("Localization Results Summary")
         d1 = loc_dual["dist_ifft_m"]
         d2 = loc_dual["dist_phase_m"]
 
-        st.write(f"- **Method 1 (IFFT TDR):** `{f'{d1:.3f} m' if d1 is not None else 'None (Matched)'}`")
-        st.write(f"- **Method 2 (Phase Slope):** `{f'{d2:.3f} m' if d2 is not None else 'None'}`")
+        st.write(f"- **Phase-Slope Estimate (Primary):** `{f'{d2:.3f} m' if d2 is not None else 'None (insufficient reflection)'}`")
+        st.write(f"- **IFFT TDR Cross-Check (Supporting):** `{f'{d1:.3f} m' if d1 is not None else 'None (no clear echo)'}`")
 
         if loc_dual["discrepancy_m"] is not None:
             st.write(f"- **Discrepancy |M1 - M2|:** `{loc_dual['discrepancy_m']*100:.2f} cm`")

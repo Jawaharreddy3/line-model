@@ -1,12 +1,12 @@
 # RF LINE DOCTOR
 
-An autonomous virtual diagnostics and impedance matching system for RF and microwave transmission lines.
+An educational virtual transmission-line diagnostics and impedance matching simulator for RF and microwave engineering courses.
 
 ---
 
 ## 1. Overview
 
-**RF LINE DOCTOR** provides a modular, production-grade simulation, diagnostics, and matching platform for RF transmission lines based on classical electromagnetic theory.
+**RF LINE DOCTOR** is an educational virtual prototype for EC-3104 Microwave Engineering. It implements classical transmission-line theory in a simulation-based environment, covering fault diagnosis, fault location estimation, and impedance matching.
 
 - **Authoritative Physical Model:** Lossless uniform transmission lines ($e^{j\omega t}$ convention), closed-form input impedance, and cascaded 2-port ABCD matrix formulations.
 - **Six Canonical Fault Scenarios:**
@@ -17,7 +17,7 @@ An autonomous virtual diagnostics and impedance matching system for RF and micro
   5. `series_L`: Intermediate series inductive discontinuity ($Z_s = j\omega L$) at distance $d$.
   6. `shunt_C`: Intermediate shunt capacitive discontinuity ($Y_p = j\omega C$) at distance $d$.
 - **Rule-Based Single-Port Classifier:** Diagnostic classifier operating solely on single-port reflection data ($S_{11}$, frequency, $Z_0$) without peeking at ground truth. Maps strictly to 5 frozen contract labels (`healthy`, `open`, `short`, `mismatch`, `unknown`) while carrying rich internal subtype details.
-- **IFFT Pseudo-Time Reflectometry (TDR):** Hann-windowed, zero-padded inverse FFT reflectometry detecting physical fault position with millimeter precision and validating frequency grid uniformity.
+- **IFFT TDR Visualisation (Cross-Check):** Hann-windowed, zero-padded inverse FFT reflectometry used as a supporting cross-check of phase-slope distance estimates. Physical resolution depends on sweep bandwidth: ΔR = vp / (2B). Validating frequency grid uniformity before IFFT is applied.
 - **Quarter-Wave Matching Studio:** Exact synthesis of quarter-wave transformers ($Z_t = \sqrt{Z_0 R_L}$) with exact cancellation at design frequency $f_0$ ($\text{VSWR}=1.0, \text{RL}=\infty$) and passband evaluation ($\text{RL} \ge 20\text{ dB}$).
 - **Interactive Streamlit Web Dashboard:** Full GUI featuring live Smith charts, multi-parameter sweeps, fault injection, and matching comparison.
 
