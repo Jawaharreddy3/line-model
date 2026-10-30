@@ -259,16 +259,17 @@ $$d = \frac{v_p \cdot t_{\text{peak}}}{2} = \frac{c_0 \cdot \text{vf} \cdot t_{\
 ### 9.2 Reconciling Resolution, Windowing, Range Sampling, and Zero-Padding
 A central contribution of this engineering audit is reconciling four frequently conflated spatial metrics [Keysight AN 5989-5723EN, pp. 6–10; Anritsu AN 11410-00373, pp. 3–5]:
 
-1. **Nominal Bandwidth-Based Resolution (Rayleigh Limit, $\Delta R_{\text{nom}}$):**
+1. **Nominal Bandwidth-Based Resolution (Rayleigh Criterion, $\Delta R_{\text{nom}}$):**
    $$\Delta R_{\text{nom}} = \frac{v_p}{2 B} = \frac{c_0 \cdot \text{vf}}{2 (f_{\text{max}} - f_{\text{min}})}$$
-   This represents the ideal rectangular-window impulsive limit.
+   This represents the fundamental physical limit set by the swept measurement bandwidth $B$.
 2. **Window-Dependent Effective Resolution ($\Delta R_{\text{eff}}$):**
-   Direct IFFT truncation corresponds to a rectangular window with strong $-13\text{ dB}$ sinc sidelobes. Applying a Hann window suppresses sidelobes to $-32\text{ dB}$, eliminating false soft-fault detections, but broadens the impulse mainlobe by a window factor $W_f \approx 1.5 - 1.8$ [Harris, 1978]:
-   $$\Delta R_{\text{eff}} = W_f \cdot \frac{v_p}{2 B} \approx 1.5 \cdot \frac{v_p}{2 B}$$
-   Two distinct discontinuities separated by less than $\Delta R_{\text{eff}}$ blend into a single convolved peak and cannot be resolved as two separate faults.
+   Direct IFFT truncation corresponds to a rectangular spectral window yielding an impulse response $h(t) \propto \text{sinc}(B t)$ with strong $-13\text{ dB}$ sidelobes. Applying a Hann window suppresses sidelobes to $-31.5\text{ dB}$, eliminating false soft-fault detections, but broadens the impulse mainlobe:
+   - **Half-Power ($-3\text{ dB}$) Resolution:** The $-3\text{ dB}$ temporal pulse width of an unwindowed Dirichlet/sinc kernel is $\tau_{-3\text{dB},\text{rect}} \approx 0.886 / B$, giving spatial $-3\text{ dB}$ width $\Delta R_{-3\text{dB},\text{rect}} \approx 0.89 \frac{v_p}{2 B}$. For a Hann window, the $-3\text{ dB}$ temporal pulse width expands to $\tau_{-3\text{dB},\text{Hann}} \approx 1.437 / B$, giving spatial $-3\text{ dB}$ width $\Delta R_{-3\text{dB},\text{Hann}} \approx 1.44 \frac{v_p}{2 B}$. The broadening ratio of $-3\text{ dB}$ mainlobe widths is $\frac{1.437}{0.886} \approx 1.62$.
+   - **Equivalent Noise Bandwidth (ENBW):** In spectral analysis, the Hann window's noise transmission bandwidth expansion factor is $\text{ENBW} = 1.50 \cdot \Delta f$.
+   - **Operational Definition:** When reporting effective spatial resolution, one must distinguish between the $-3\text{ dB}$ mainlobe separability ($\Delta R_{-3\text{dB}} \approx 1.44 \Delta R_{\text{nom}}$, a factor of $1.62$ over rectangular $-3\text{ dB}$ width) and the ENBW factor ($1.50$). In all cases, windowing trades two-point Rayleigh separability for $-31.5\text{ dB}$ sidelobe suppression. Discontinuities closer than the effective mainlobe width blend into a single peak.
 3. **Range / Display Sampling Step (Zero-Padded Interpolation Step, $\delta d_{\text{display}}$):**
    $$\delta d_{\text{display}} = \frac{v_p}{2 N_{\text{pad}} \Delta f}$$
-   Zero-padding from $N$ to $N_{\text{pad}} \ge 2048$ samples the continuous windowed sinc/Dirichlet interpolation curve at denser points on the display grid. **Zero-padding improves the centroid estimation precision of a single isolated peak, but does NOT improve the physical two-fault resolution $\Delta R_{\text{eff}}$.**
+   Zero-padding from $N$ to $N_{\text{pad}} \ge 2048$ evaluates the continuous trigonometric (sinc) interpolation curve at finer intervals on the digital display grid. **Zero-padding eliminates peak scallop amplitude loss and smooths the visualization, but does NOT improve the physical two-fault resolution.**
 4. **Unambiguous Measurement Range ($R_{\text{max}}$):**
    $$R_{\text{max}} = \frac{v_p}{2 \Delta f}$$
    To prevent time-domain aliasing and ghost echoes, the frequency step must be sufficiently fine such that $\ell < R_{\text{max}}$.
@@ -317,7 +318,7 @@ In high-frequency vector network analysis, raw instrument measurements are corru
 
 ### 11.2 Metrological VNA Uncertainty Framework vs Synthetic Gaussian Receiver Noise
 A critical distinction must be drawn between:
-- **Full Metrological VNA Uncertainty Analysis:** Evaluated by national metrology institutes (NIST, NPL, PTB) using tools such as the NIST Microwave Uncertainty Framework [Williams et al., 2006; Marks, 1991; Ridler & Salter, 2007; Stumper, 2005]. This rigorous framework propagates residual systematic errors (residual directivity, test-port match, calibration standard mechanical tolerances, connector repeatability) and dynamic accuracy using full 2D covariance matrices.
+- **Full Metrological VNA Uncertainty Analysis:** Evaluated by national metrology institutes (NIST, NPL, PTB) using tools such as the NIST Microwave Uncertainty Framework [Williams, Wang, & Arz, 2003; Marks, 1991; Ridler & Salter, 2007; Stumper, 2005]. This rigorous framework propagates residual systematic errors (residual directivity, test-port match, calibration standard mechanical tolerances, connector repeatability) and dynamic accuracy using full 2D covariance matrices.
 - **Assumed Synthetic Simulation Noise Model (RF Line Doctor):** As an educational simulation prototype, RF Line Doctor assumes systematic calibration errors have been resolved, modeling the residual uncalibrated receiver noise as zero-mean complex circular Gaussian noise on S-parameters:
   $$\Gamma_{\text{observed}}(f) = \Gamma_{\text{ideal}}(f) + n(f), \quad n(f) = n_I + j n_Q \sim \mathcal{CN}(0, \sigma^2)$$
   where $n_I, n_Q \sim \mathcal{N}(0, \sigma^2/2)$.
@@ -332,26 +333,31 @@ Metrology guidelines strictly prohibit artificial clipping ($\Gamma / |\Gamma|$)
 
 ---
 
-## 12. Critical Analysis of Recent Research Literature (2023–2026)
+## 12. Critical Analysis of Recent Research Literature (2022–2026)
 
-To ensure the highest academic integrity, contemporary peer-reviewed papers from 2023 to 2026 were critically evaluated:
+To ensure the highest academic integrity, contemporary peer-reviewed papers were critically evaluated:
 
-1. **Chang et al. (2026) [IEEE Trans. Instrum. Meas., vol. 75, Art. no. 3503811; DOI: 10.1109/TIM.2026.3657555]:**
+1. **Chang et al. (2026) [IEEE Trans. Instrum. Meas., vol. 75, Art. no. 3503811, pp. 1–11, Jan. 2026; DOI: 10.1109/TIM.2026.3657555]:**
+   - *Authors:* Kaixing Chang, Zhengxun Xu, Gang Zhang, and Lixin Wang.
    - *Method:* Combines Stepped Frequency Waveform Reflectometry (SFWR) with Electromagnetic Time Reversal (EMTR) to detect, locate, and quantify soft faults in coaxial cables.
    - *Relevance:* Confirms that stepped CW frequency sweeps (identical to our simulated sweep generator) preserve amplitude and phase information necessary to quantify fault severity.
    - *Limitations:* EMTR requires high computational power and iterative waveform reconstruction, which exceeds the real-time requirements of an interactive undergraduate educational prototype.
-2. **Liu et al. (2024) [IEEE Trans. Instrum. Meas., vol. 73, Art. no. 3524911; DOI: 10.1109/TIM.2024.3460831]:**
-   - *Method:* Utilizes the spectrum of propagation functions (SPF) combined with integral transforms to locate power cable defects without time-frequency cross-term artifacts.
+2. **Liu et al. (2024) [IEEE Trans. Instrum. Meas., vol. 73, Art. no. 3530211, pp. 1–11, 2024; DOI: 10.1109/TIM.2024.3453315]:**
+   - *Authors:* Chunqi Liu, Yimin Hou, Zhimin Duan, Rui Shang, Kunpeng Wang, and Dongsheng Chen.
+   - *Method:* Utilizes the spectrum of propagation functions (SPF) combined with integral transforms to locate underground power cable defects without time-frequency cross-term artifacts.
    - *Relevance:* Demonstrates the power of frequency-domain transfer function analysis for cable fault localization.
    - *Limitations:* Requires baseline calibration data of healthy cables, which is unavailable in blind single-ended testing.
-3. **Song et al. (2025) [IEEE Trans. Instrum. Meas., vol. 74, pp. 1–10]:**
-   - *Method:* Investigates time-frequency fusion algorithms based on SFWR to suppress multiple reflections in industrial cables.
-   - *Relevance:* Highlights that secondary reflection echoes from connectors can confuse single-peak TDR estimators.
-4. **Shi et al. (2023) [IEEE Trans. Instrum. Meas., vol. 72, Art. no. 3504210; DOI: 10.1109/TIM.2023.3243681]:**
-   - *Method:* Applies Augmented Spread Spectrum TDR with Variational Mode Decomposition (VMD) for localized soft faults on coaxial lines.
-   - *Relevance:* Documents the sensitivity of high-frequency reflectometry to connector crimp defects and shield degradation.
-5. **Rao et al. (2023) [IEEE SCEPE, DOI: 10.1109/SCEPE59695.2023.10427848]:**
-   - *Method:* Employs Synchrosqueezing Generalized S-Transforms to map FDR reflection data into a time-frequency distribution.
+3. **Shi et al. (2022) [IEEE Trans. Aerosp. Electron. Syst., vol. 58, no. 6, pp. 4891–4901, Dec. 2022; DOI: 10.1109/TAES.2022.3184913]:**
+   - *Authors:* Xudong Shi, Ruipu Li, Haotian Zhang, and Yang Liu.
+   - *Method:* Applies Augmented Spread Spectrum TDR (ASSTDR) combining improved variational mode decomposition (VMD), short-time Fourier transform (STFT), and reassigned spectrograms for detecting localized soft faults on coaxial cables.
+   - *Relevance:* Documents the sensitivity of reflectometry to connector crimp defects and soft cable degradation.
+4. **Song et al. (2025) [Measurement, vol. 254, Art. no. 117866, pp. 1–12, Oct. 2025; DOI: 10.1016/j.measurement.2025.117866]:**
+   - *Authors:* Ci Song, Haibao Mu, Xingyu Zou, and Guanjun Zhang.
+   - *Method:* Applies stepped-frequency waveform reflectometry (SFWR) with raw-signal impedance mismatch compensation to detect, locate, and characterize line-like distributed insulation aging faults in cables.
+   - *Relevance:* Highlights the critical necessity of compensating for head-end mismatch reflections when estimating distributed cable properties.
+5. **Rao et al. (2023) [2023 Panda Forum on Power and Energy (PandaFPE), pp. 1178–1182, 2023; DOI: 10.1109/PandaFPE57779.2023.10140514]:**
+   - *Authors:* Xianjie Rao, Zhonglin Xu, Huifang Guan, Yuqin Ding, Xiaobing Yang, and Yongpeng Yang.
+   - *Method:* Employs Synchrosqueezing Generalized S-Transforms to convert FDR reflection coefficient spectra into a frequency-location distance representation.
    - *Relevance:* Proves that advanced transform kernels sharpen spatial peaks, but introduce significant parameter-tuning complexity compared to standard Hann-windowed IFFT.
 
 ---
@@ -370,18 +376,18 @@ To satisfy academic integrity, the following practical limitations must be ackno
 1. **Phase Unwrapping Sampling Limit:**  
    `np.unwrap` requires that the phase difference between adjacent frequency points satisfy $|\Delta\phi| < \pi$. This imposes a strict sampling constraint: $\Delta f < v_p / (4 d_{\text{max}})$. If $\Delta f$ is too coarse or the cable is too long, phase slips occur, corrupting the linear regression slope $m$ and intercept $\phi_0$.
 2. **Low-Frequency Extrapolation Gap:**  
-   If a measurement sweep starts far above DC (e.g., $f_{\text{start}} = 1\text{ GHz}$), extrapolating across a $1\text{ GHz}$ gap back to $f = 0$ is sensitive to slope noise. The intercept uncertainty is $\Delta\phi_0 \approx \Delta m \cdot f_{\text{center}}$.
+   If a measurement sweep starts far above DC (e.g., $f_{\text{start}} = 1\text{ GHz}$), extrapolating across a $1\text{ GHz}$ gap back to $f = 0$ is sensitive to slope noise. The intercept uncertainty scales with the lever arm $f_{\text{start}} / \Delta f$.
 3. **Linearity & Goodness-of-Fit ($R^2$):**  
-   Linear regression strictly assumes a single non-dispersive reflection. If multiple discontinuities exist or a large series $L$ or shunt $C$ discontinuity introduces strong phase curvature, the phase slope is non-linear. The classifier must require high linearity ($R^2 \ge 0.95$) before trusting $\cos\phi_0$.
+   Linear phase regression strictly assumes a single non-dispersive reflection. In the current implementation (`diagnosis.py:extract_features`), $\phi_0$ is estimated via first-order linear regression (`np.polyfit`) without evaluating or enforcing an $R^2$ threshold at runtime. Requiring a high linearity threshold ($R^2 \ge 0.95$) is documented as a **recommended future safeguard** to flag non-linear phase distortion from severe dispersion, multi-fault reflections, or high noise, but is not currently enforced as a runtime rejection criterion in the existing codebase.
 4. **Empirically Tested Parameter Range:**  
-   The $100\%$ open/short separation was verified on: line lengths $\ell \in [0.4, 2.5]\text{ m}$, frequency sweeps $f_{\text{start}} \in [200, 600]\text{ MHz}$ to $f_{\text{stop}} \in [3.0, 5.0]\text{ GHz}$ ($N = 300-400$ points, $\Delta f \approx 10\text{ MHz}$), velocity factors $\text{vf} \in [0.66, 0.70, 1.0]$, and noise $\sigma \le 0.03$. Claims of $100\%$ accuracy apply strictly within this parameter domain.
+   The $100\%$ open/short separation was verified on: line lengths $\ell \in [0.5, 2.5]\text{ m}$, frequency sweeps $f_{\text{start}} \in [200, 600]\text{ MHz}$ to $f_{\text{stop}} \in [3000, 5000]\text{ MHz}$ ($N = 300$ points), discrete velocity factors $\text{vf} \in \{0.66, 0.70, 1.0\}$, and noise $\sigma = 0.02$. Claims of $100\%$ accuracy apply strictly within this parameter domain.
 
 ---
 
 ## 14. Simulation-Based Validation & Noise Sensitivity Analysis
 
 ### 14.1 Validation Methodology
-The validation laboratory (`validation/run_validation.py`) executes automated Monte Carlo trials on $N = 240$ randomized synthetic transmission lines ($40$ per scenario across `healthy`, `mismatch`, `open`, `short`, `series_L`, `shunt_C`). Ground truth is strictly segregated from the single-port classifier.
+The validation laboratory (`validation/run_validation.py`) executes automated Monte Carlo trials on $N = 240$ randomized synthetic transmission lines ($40$ per scenario across `healthy`, `mismatch`, `open`, `short`, `series_L`, `shunt_C`) at noise level $\sigma = 0.02$. Ground truth is strictly segregated from the single-port classifier. Cable lengths span $\ell \in [0.5, 2.5]\text{ m}$, discrete velocity factors $\text{vf} \in \{0.66, 0.70, 1.0\}$, characteristic impedance $Z_0 \in \{50.0, 75.0\}\,\Omega$, intermediate reactances $L \in [2, 40]\text{ nH}$ and $C \in [2, 40]\text{ pF}$, and terminal mismatch loads $Z_L \in \{0.4 Z_0, 0.7 Z_0, 1.5 Z_0, 2.5 Z_0\}$.
 
 ### 14.2 Empirical Results at $\sigma = 0.02$
 - **5-Class Public Contract Accuracy:** **99.58%** (239 / 240 correct)
@@ -390,18 +396,22 @@ The validation laboratory (`validation/run_validation.py`) executes automated Mo
 - **Location RMSE:** **0.22 cm** (2.2 mm)
 
 ### 14.3 Full Noise-Sensitivity Degradation Profile
-To avoid misleading presentation of only favorable results, the system was evaluated across increasing complex noise levels:
+To evaluate robustness under degraded SNR, tests were executed across six discrete complex noise standard deviations:
 
-| Complex Noise Std Dev ($\sigma$) | Classification Accuracy (%) | Fault Location MAE (cm) | Operational Status |
-| :---: | :---: | :---: | :--- |
-| **0.00** (Ideal noiseless) | **98.33%** | 0.14 cm | Fully Operational |
-| **0.02** (Typical VNA noise) | **100.00%** | 0.16 cm | Fully Operational (Optimal) |
-| **0.05** (Elevated noise) | **61.67%** | 1.84 cm | Degraded (Phase unwrapping slips begin) |
-| **0.08** (High noise) | **50.00%** | 4.12 cm | Severely Degraded (Threshold breakdown) |
-| **0.12** (Extreme noise) | **50.00%** | 7.65 cm | Non-operational (Random baseline) |
-| **0.18** (Severe interference) | **50.00%** | 12.40 cm | Non-operational |
+| Complex Noise Std Dev ($\sigma$) | Classification Accuracy (%) | Operational Status |
+| :---: | :---: | :--- |
+| **0.00** | **98.33%** | Fully Operational (Minor noiseless boundary artifact) |
+| **0.02** | **100.00%** | Fully Operational (Nominal Baseline) |
+| **0.05** | **61.67%** | Degraded (Reactive trend threshold breakdown) |
+| **0.08** | **50.00%** | Severely Degraded (Majority-class baseline) |
+| **0.12** | **50.00%** | Non-operational (Majority-class baseline) |
+| **0.18** | **50.00%** | Non-operational (Majority-class baseline) |
 
-**Academic Finding:** The classifier maintains high reliability for $\sigma \le 0.03$. At $\sigma \ge 0.05$, noise-induced phase unwrapping slips corrupt the DC phase intercept, and random noise peaks trigger false reactive trend classifications, causing accuracy to degrade to the $50\%$ random guessing baseline.
+#### Methodological Notes & Physical Findings:
+1. **Sample Cohort Structure:** In the noise sensitivity study, 20 samples per physical scenario across 6 scenarios were generated at each noise level ($N = 120$ samples per noise level). Each noise level uses a distinct random seed (`seed = 100 + int(n_sigma * 100)`). Therefore, these are **not paired experiments** on identical lines, but independent randomized cohorts evaluated at each discrete noise standard deviation.
+2. **Omission of Noise-Dependent MAE:** The noise study script (`validation/run_validation.py`) exports classification accuracy vs noise into `results/csv/noise_sensitivity.csv`. Because noise-dependent fault location MAE is not computed across the noise sweep, unsupported numerical distance error claims have been removed.
+3. **Physical Degradation Mechanism:** At $\sigma \ge 0.05$, additive circular Gaussian noise corrupts the monotonic reflection magnitude trends ($\Delta |\Gamma| / \Delta f$) and phase signatures produced by intermediate reactive elements ($L \in [2, 40]\text{ nH}$, $C \in [2, 40]\text{ pF}$), causing reactive rules to fail and misclassify as healthy or mismatch.
+4. **Explanation of the 50.0% Asymptotic Floor:** The 50.0% high-noise result is **not** a random-guessing baseline (which would be 20% for 5 classes). Instead, it reflects class imbalance in the frozen contract mapping: three physical scenarios (`mismatch`, `series_L`, `shunt_C`) are all mapped to the target label `"mismatch"`. Because each scenario comprises 20 samples, the `"mismatch"` class accounts for $60 / 120 = 50.0\%$ of the generated dataset. When high noise obscures subtle reactive and healthy signatures, predictions collapse toward `"mismatch"`, resulting in a 50.0% accuracy that represents the majority-class baseline of this 3-scenario contract mapping.
 
 ### 14.4 Critical Validation Limitation: Unknown Class Support ($N=0$)
 In the current synthetic test set, all 240 generated lines belong to one of the six modeled physical categories. **There were zero ($N = 0$) true out-of-distribution or unclassifiable samples.** Consequently, the classifier's specificity and ability to correctly reject anomalous or unclassifiable inputs into the `"unknown"` contract class has **not been empirically validated**.
@@ -417,18 +427,19 @@ In the current synthetic test set, all 240 generated lines belong to one of the 
 5. **Kingston, S., Benoit, E., Edun, A. S., et al.** (2021). A SSTDR methodology, implementations, and challenges. *Sensors*, 21(16), 5268. DOI: [10.3390/s21165268](https://doi.org/10.3390/s21165268).
 6. **Song, E.-S., Shin, Y.-J., Stone, P. E., Wang, J., Choe, T.-S., Yook, J.-G., & Park, J.-B.** (2009). Detection and location of multiple wiring faults via time–frequency-domain reflectometry. *IEEE Transactions on Electromagnetic Compatibility*, 51(1), 131–138. DOI: [10.1109/TEMC.2008.2007964](https://doi.org/10.1109/TEMC.2008.2007964).
 7. **Chang, K., Xu, Z., Zhang, G., & Wang, L.** (2026). Fault location and evaluation in coaxial cables based on stepped frequency waveform reflectometry and electromagnetic time reversal. *IEEE Transactions on Instrumentation and Measurement*, 75, Art. no. 3503811, 1–11. DOI: [10.1109/TIM.2026.3657555](https://doi.org/10.1109/TIM.2026.3657555).
-8. **Liu, C., Hou, Y., Duan, Z., & Chen, D.** (2024). Underground power cable fault detection and localization based on the spectrum of propagation functions. *IEEE Transactions on Instrumentation and Measurement*, 73, Art. no. 3524911, 1–11. DOI: [10.1109/TIM.2024.3460831](https://doi.org/10.1109/TIM.2024.3460831).
-9. **Shi, X., Kafal, M., & Furse, C. M.** (2023). Application of augmented spread spectrum time domain reflectometry for detection and localization of soft faults on a coaxial cable. *IEEE Transactions on Instrumentation and Measurement*, 72, Art. no. 3504210, 1–10. DOI: [10.1109/TIM.2023.3243681](https://doi.org/10.1109/TIM.2023.3243681).
-10. **Rao, X., Xiao, S., Cheng, Y., & Peng, Z.** (2023). Cable defect location by using frequency domain reflectometry with synchrosqueezing generalized S-transform. In *2023 IEEE 5th Student Conference on Electric Power Engineering (SCEPE)*, 1–6. DOI: [10.1109/SCEPE59695.2023.10427848](https://doi.org/10.1109/SCEPE59695.2023.10427848).
-11. **Keysight Technologies.** (2019). *Time Domain Analysis Using a Network Analyzer*. Application Note 5989-5723EN (formerly 1287-12). Keysight Technologies, Santa Rosa, CA.
-12. **Keysight Technologies.** (2014). *Understanding Vector Network Analyzer S-Parameter Measurements*. Application Note 1287-1. Keysight Technologies, Santa Rosa, CA.
-13. **Anritsu Company.** (2018). *Distance-to-Fault (DTF)*. Application Note 11410-00373. Anritsu Company, Morgan Hill, CA.
-14. **Anritsu Company.** (2017). *Reflectometer Measurements — Revisited*. Application Note 11410-00214. Anritsu Company, Morgan Hill, CA.
-15. **Rohde & Schwarz.** (2016). *Fundamentals of Vector Network Analysis*. Primer by M. Hiebel. Rohde & Schwarz GmbH & Co. KG, Munich, Germany.
-16. **Williams, D. F., Hale, P. D., Clement, T. S., & Morgan, J. M.** (2006). Calibrated vector network analyzer measurements through 40 GHz. *IEEE Transactions on Microwave Theory and Techniques*, 54(12), 4376–4381. DOI: [10.1109/TMTT.2006.885903](https://doi.org/10.1109/TMTT.2006.885903).
-17. **Marks, R. B.** (1991). A multiline method of network analyzer calibration. *IEEE Transactions on Microwave Theory and Techniques*, 39(7), 1205–1215. DOI: [10.1109/22.85388](https://doi.org/10.1109/22.85388).
-18. **Stumper, U.** (2005). Uncertainty evaluation of vector network analyzer measurements. *IEEE Transactions on Instrumentation and Measurement*, 54(2), 653–657. DOI: [10.1109/TIM.2004.843067](https://doi.org/10.1109/TIM.2004.843067).
-19. **Ridler, N. M., & Salter, M. J.** (2007). An approach to evaluating measurement uncertainty in vector network analysis. *Metrologia*, 44(4), 282–288. DOI: [10.1088/0026-1394/44/4/007](https://doi.org/10.1088/0026-1394/44/4/007).
-20. **Harris, F. J.** (1978). On the use of windows for harmonic analysis with the discrete Fourier transform. *Proceedings of the IEEE*, 66(1), 51–83. DOI: [10.1109/PROC.1978.10837](https://doi.org/10.1109/PROC.1978.10837).
-21. **Green, E. I.** (1958). The story of Q. *American Scientist*, 46(3), 298–305.
-22. **Smith, P. H.** (1939). Transmission line calculator. *Electronics*, 12(1), 29–31.
+8. **Liu, C., Hou, Y., Duan, Z., Shang, R., Wang, K., & Chen, D.** (2024). Underground power cable fault detection and localization based on the spectrum of propagation functions. *IEEE Transactions on Instrumentation and Measurement*, 73, Art. no. 3530211, 1–11. DOI: [10.1109/TIM.2024.3453315](https://doi.org/10.1109/TIM.2024.3453315).
+9. **Shi, X., Li, R., Zhang, H., & Liu, Y.** (2022). Application of augmented spread spectrum time domain reflectometry for detection and localization of soft faults on a coaxial cable. *IEEE Transactions on Aerospace and Electronic Systems*, 58(6), 4891–4901. DOI: [10.1109/TAES.2022.3184913](https://doi.org/10.1109/TAES.2022.3184913).
+10. **Song, C., Mu, H., Zou, X., & Zhang, G.** (2025). Application of stepped-frequency waveform reflectometry to locating and characterizing line-like aging faults in cables. *Measurement*, 254, Art. no. 117866, 1–12. DOI: [10.1016/j.measurement.2025.117866](https://doi.org/10.1016/j.measurement.2025.117866).
+11. **Rao, X., Xu, Z., Guan, H., Ding, Y., Yang, X., & Yang, Y.** (2023). Cable defect location by using frequency domain reflectometry with synchrosqueezing generalized S-transform. In *2023 Panda Forum on Power and Energy (PandaFPE)*, 1178–1182. DOI: [10.1109/PandaFPE57779.2023.10140514](https://doi.org/10.1109/PandaFPE57779.2023.10140514).
+12. **Keysight Technologies.** (2020). *Time Domain Analysis Using a Network Analyzer*. Application Note 5989-5723EN. Keysight Technologies, Santa Rosa, CA.
+13. **Keysight Technologies.** (2021). *Understanding the Fundamental Principles of Vector Network Analysis*. Application Note 1287-1. Keysight Technologies, Santa Rosa, CA.
+14. **Anritsu Company.** (2018). *Distance-to-Fault (DTF) Measurement Fundamentals*. Application Note 11410-00373. Anritsu Company, Morgan Hill, CA.
+15. **Anritsu Company.** (2017). *Reflectometer Measurements — Revisited*. Application Note 11410-00214. Anritsu Company, Morgan Hill, CA.
+16. **Rohde & Schwarz.** (2016). *Fundamentals of Vector Network Analysis*. Primer by M. Hiebel. Rohde & Schwarz GmbH & Co. KG, Munich, Germany.
+17. **Williams, D. F., Wang, J. C. M., & Arz, U.** (2003). An optimal vector-network-analyzer calibration algorithm. *IEEE Transactions on Microwave Theory and Techniques*, 51(12), 2391–2401. DOI: [10.1109/TMTT.2003.819211](https://doi.org/10.1109/TMTT.2003.819211).
+18. **Marks, R. B.** (1991). A multiline method of network analyzer calibration. *IEEE Transactions on Microwave Theory and Techniques*, 39(7), 1205–1215. DOI: [10.1109/22.85388](https://doi.org/10.1109/22.85388).
+19. **Stumper, U.** (2005). Uncertainty of VNA S-parameter measurement due to nonideal TRL calibration items. *IEEE Transactions on Instrumentation and Measurement*, 54(2), 676–679. DOI: [10.1109/TIM.2005.843521](https://doi.org/10.1109/TIM.2005.843521).
+20. **Ridler, N. M., & Salter, M. J.** (2007). Evaluating and expressing uncertainty in S-parameter measurements. *Metrologia*, 44(4), 292–299. DOI: [10.1088/0026-1394/44/4/007](https://doi.org/10.1088/0026-1394/44/4/007).
+21. **Harris, F. J.** (1978). On the use of windows for harmonic analysis with the discrete Fourier transform. *Proceedings of the IEEE*, 66(1), 51–83. DOI: [10.1109/PROC.1978.10837](https://doi.org/10.1109/PROC.1978.10837).
+22. **Green, E. I.** (1958). The story of Q. *American Scientist*, 46(3), 298–305.
+23. **Smith, P. H.** (1939). Transmission line calculator. *Electronics*, 12(1), 29–31.
