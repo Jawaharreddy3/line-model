@@ -194,6 +194,15 @@ input, textarea, [data-baseweb="select"] > div {
     color: #ffffff !important;
 }
 
+/* ── Native Bordered Container Styling (Figma Cards) ── */
+[data-testid="stVerticalBlockBorderWrapper"] {
+    background: var(--rld-card) !important;
+    border: 1px solid var(--rld-border) !important;
+    border-radius: 12px !important;
+    padding: 16px 20px !important;
+    margin-bottom: 0.85rem !important;
+}
+
 /* ── Figma Cards & Components ── */
 .figma-card {
     background: var(--rld-card);
@@ -261,6 +270,13 @@ input, textarea, [data-baseweb="select"] > div {
     color: var(--rld-text-muted);
 }
 
+.figma-quick-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 4px;
+}
+
 /* ── Tabs ── */
 .stTabs [data-baseweb="tab-list"] {
     gap: 0.5rem;
@@ -286,10 +302,10 @@ input, textarea, [data-baseweb="select"] > div {
 
 /* ── Charts, Tables, Alerts ── */
 [data-testid="stPlotlyChart"], [data-testid="stPyplot"], [data-testid="stImage"] {
-    border: 1px solid var(--rld-border);
+    border: none !important;
     border-radius: 12px;
     overflow: hidden;
-    background: var(--rld-card);
+    background: transparent !important;
 }
 
 [data-testid="stDataFrame"], [data-testid="stTable"] {
@@ -312,18 +328,18 @@ input, textarea, [data-baseweb="select"] > div {
     background: var(--rld-card);
 }
 
-/* ── KaTeX Math ── */
+/* ── KaTeX Math (Cyan Glow & Prominent Styling) ── */
 .katex, .katex * {
-    color: #ffffff !important;
+    color: #00e5ff !important;
+    font-size: 1.04em;
 }
 
 .katex-display {
-    margin: 0.8rem 0 !important;
-    padding: 0.75rem 1rem;
+    margin: 0.5rem 0 !important;
+    padding: 0.4rem 0 !important;
     overflow-x: auto;
-    background: #0b0f17;
-    border: 1px solid var(--rld-border);
-    border-radius: 8px;
+    background: transparent !important;
+    border: none !important;
 }
 
 @media (max-width: 900px) {
@@ -383,19 +399,19 @@ def render_config_pill_bar(Z0_val, len_val, vf_val, f_min_mhz, f_max_mhz):
     <div class="figma-section-title">SIMULATION CONFIGURATION</div>
     <div class="figma-pill-bar">
       <div class="figma-pill-cell">
-        <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;">CHARACTERISTIC IMPEDANCE</div>
+        <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;">CHARACTERISTIC IMPEDANCE (<i>Z</i><sub>0</sub>)</div>
         <div style="font-size: 1.05rem; color: #ffffff; font-weight: 600; margin-top: 2px;">{Z0_val:.0f} Ω</div>
       </div>
       <div class="figma-pill-cell">
-        <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;">LINE LENGTH</div>
+        <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;">PHYSICAL LENGTH (<i>l</i>)</div>
         <div style="font-size: 1.05rem; color: #ffffff; font-weight: 600; margin-top: 2px;">{len_val:.2f} m</div>
       </div>
       <div class="figma-pill-cell">
-        <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;">VELOCITY FACTOR</div>
+        <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;">VELOCITY FACTOR (<i>v</i><sub>f</sub>)</div>
         <div style="font-size: 1.05rem; color: #ffffff; font-weight: 600; margin-top: 2px;">{vf_val:.2f}</div>
       </div>
       <div class="figma-pill-cell">
-        <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;">FREQUENCY RANGE</div>
+        <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;">FREQUENCY RANGE (<i>f</i>)</div>
         <div style="font-size: 1.05rem; color: #ffffff; font-weight: 600; margin-top: 2px;">{f_min_mhz/1000:.2f} – {f_max_mhz/1000:.2f} GHz</div>
       </div>
     </div>
@@ -438,20 +454,20 @@ Z0 = st.sidebar.number_input(
     max_value=1000.0,
     value=50.0,
     step=5.0,
-    help="Reference line characteristic impedance (e.g., 50 Ω or 75 Ω)",
+    help="Reference line characteristic impedance Z₀ (e.g., 50 Ω or 75 Ω)",
 )
 
 length = st.sidebar.number_input(
-    "Physical Line Length (m)",
+    "Physical Line Length l (m)",
     min_value=0.05,
     max_value=100.0,
     value=1.0,
     step=0.1,
-    help="Physical end-to-end cable length in metres",
+    help="Physical end-to-end cable length l in metres",
 )
 
 vf = st.sidebar.slider(
-    "Velocity Factor (vf)",
+    "Velocity Factor vf (vₚ/c₀)",
     min_value=0.1,
     max_value=1.0,
     value=0.66,
@@ -477,10 +493,10 @@ st.sidebar.markdown('<div style="font-size: 0.7rem; font-weight: 700; color: #64
 scenario_preset = st.sidebar.selectbox(
     "Fault Preset Scenario",
     [
-        "Case 1: Healthy matched (Zₗ = Z₀)",
-        "Case 2: Resistive mismatch (Zₗ = Rₗ ≠ Z₀)",
-        "Case 3: Open circuit (Zₗ = ∞)",
-        "Case 4: Short circuit (Zₗ = 0)",
+        "Case 1: Healthy matched (Z_L = Z_0)",
+        "Case 2: Resistive mismatch (Z_L = R_L ≠ Z_0)",
+        "Case 3: Open circuit (Z_L = ∞)",
+        "Case 4: Short circuit (Z_L = 0)",
         "Case 5: Series inductive discontinuity (L)",
         "Case 6: Shunt capacitive discontinuity (C)",
         "Custom: Complex load (R + jX)",
@@ -500,7 +516,7 @@ if "Case 1" in scenario_preset:
     ZL_val = complex(Z0)
 elif "Case 2" in scenario_preset:
     sim_scenario = "mismatch"
-    RL_input = st.sidebar.number_input("Load Resistance RL (Ω)", min_value=1.0, max_value=2000.0, value=120.0, step=5.0)
+    RL_input = st.sidebar.number_input("Load Resistance R_L (Ω)", min_value=1.0, max_value=2000.0, value=120.0, step=5.0)
     ZL_val = complex(RL_input)
 elif "Case 3" in scenario_preset:
     sim_scenario = "open"
@@ -530,7 +546,7 @@ noise_std = st.sidebar.slider(
     max_value=0.15,
     value=0.0,
     step=0.01,
-    help="Complex Gaussian noise added to simulated S11",
+    help="Complex Gaussian noise added to simulated S₁₁ reflection",
 )
 
 # Bottom Model Status Card in Sidebar (from Figma)
@@ -631,7 +647,7 @@ if "overview" in nav_section.lower():
         <div class="figma-metric-card">
           <div class="figma-metric-label">INPUT REFLECTION</div>
           <div class="figma-metric-val" style="color: #00e5ff;">
-            <span style="font-size: 1.05rem; color: #64748b; font-weight: 500;">|S₁₁|</span> {mean_gamma:.2f}
+            <span style="font-size: 1.05rem; color: #64748b; font-weight: 500;">|S<sub>11</sub>|</span> {mean_gamma:.2f}
           </div>
           <div class="figma-metric-sub">Across selected sweep</div>
         </div>
@@ -665,28 +681,25 @@ if "overview" in nav_section.lower():
     resp_col1, resp_col2 = st.columns([13, 7])
 
     with resp_col1:
-        st.markdown("""
-        <div class="figma-card" style="padding-bottom: 10px;">
-          <div style="font-size: 0.95rem; font-weight: 600; color: #ffffff;">Reflection magnitude across frequency</div>
-          <div style="font-size: 0.75rem; color: #64748b; margin-top: 1px; margin-bottom: 8px;">Input reflection coefficient • Frequency sweep</div>
-        """, unsafe_allow_html=True)
-        
-        fig_ov, ax_ov = plt.subplots(figsize=(7.6, 3.45))
-        ax_ov.plot(f_ghz, np.abs(sweep_dict["gamma"]), color="#00e5ff", lw=2.2, label="|S₁₁| (input reflection)")
-        ax_ov.axhline(0.05, color="#38bdf8", linestyle="--", alpha=0.5, label="Healthy Threshold (0.05)")
-        ax_ov.set_xlabel("Frequency (GHz)", fontsize=9, color="#94a3b8")
-        ax_ov.set_ylabel("|S₁₁| magnitude", fontsize=9, color="#94a3b8")
-        ax_ov.set_ylim(-0.05, 1.05)
-        ax_ov.set_yticks([0.0, 0.5, 1.0])
-        ax_ov.grid(True, color="#1e293b", alpha=0.7, linestyle="-")
-        ax_ov.tick_params(colors="#64748b", labelsize=8.5)
-        for sp in ax_ov.spines.values():
-            sp.set_color("#1e293b")
-        ax_ov.legend(loc="upper right", fontsize=8, facecolor="#0b0f17", edgecolor="#1e293b")
-        plt.tight_layout()
-        st.pyplot(fig_ov)
-        plt.close(fig_ov)
-        st.markdown("</div>", unsafe_allow_html=True)
+        with st.container(border=True):
+            st.markdown('<div style="font-size: 0.95rem; font-weight: 600; color: #ffffff;">Reflection magnitude across frequency</div>', unsafe_allow_html=True)
+            st.markdown('<div style="font-size: 0.75rem; color: #64748b; margin-top: 1px; margin-bottom: 8px;">Input reflection coefficient |S₁₁| • Frequency sweep</div>', unsafe_allow_html=True)
+            
+            fig_ov, ax_ov = plt.subplots(figsize=(7.6, 3.45))
+            ax_ov.plot(f_ghz, np.abs(sweep_dict["gamma"]), color="#00e5ff", lw=2.2, label="|S₁₁| (input reflection)")
+            ax_ov.axhline(0.05, color="#38bdf8", linestyle="--", alpha=0.5, label="Healthy Threshold (0.05)")
+            ax_ov.set_xlabel("Frequency (GHz)", fontsize=9, color="#94a3b8")
+            ax_ov.set_ylabel("|S₁₁| magnitude", fontsize=9, color="#94a3b8")
+            ax_ov.set_ylim(-0.05, 1.05)
+            ax_ov.set_yticks([0.0, 0.5, 1.0])
+            ax_ov.grid(True, color="#1e293b", alpha=0.7, linestyle="-")
+            ax_ov.tick_params(colors="#64748b", labelsize=8.5)
+            for sp in ax_ov.spines.values():
+                sp.set_color("#1e293b")
+            ax_ov.legend(loc="upper right", fontsize=8, facecolor="#0b0f17", edgecolor="#1e293b")
+            plt.tight_layout()
+            st.pyplot(fig_ov)
+            plt.close(fig_ov)
 
     with resp_col2:
         badge_bg = "rgba(245, 158, 11, 0.14)"
@@ -702,63 +715,46 @@ if "overview" in nav_section.lower():
             badge_color = "#ef4444"
 
         subtype_title = inferred_class.subtype.replace("_", " ").capitalize()
-        expl_text = diag_report["physics_explanation"].split(".")[0] + "."
+        sentences = [s.strip() for s in diag_report["physics_explanation"].split(". ") if s.strip()]
+        if sentences:
+            expl_text = sentences[0] if sentences[0].endswith(".") else (sentences[0] + ".")
+        else:
+            expl_text = diag_report["physics_explanation"]
         ev_items = diag_report["evidence"][:3]
         if len(ev_items) == 0:
             ev_items = ["Reflection profile within expected limits for scenario."]
 
-        bullets_html = "".join([f'<div style="font-size: 0.78rem; color: #94a3b8; line-height: 1.45; margin-bottom: 4px;">• {e}</div>' for e in ev_items])
-
-        st.markdown(f"""
-        <div class="figma-card" style="height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
-          <div>
-            <div style="font-size: 0.7rem; font-weight: 700; color: #64748b; letter-spacing: 0.08em; text-transform: uppercase;">DIAGNOSTIC RESULT</div>
-            <div style="margin-top: 8px;">
-              <span style="display: inline-block; padding: 3px 12px; background: {badge_bg}; border: 1px solid {badge_border}; border-radius: 999px; font-size: 0.72rem; font-weight: 700; color: {badge_color}; letter-spacing: 0.06em;">
-                {str(inferred_class).upper()}
-              </span>
-            </div>
-            <div style="font-size: 1.2rem; font-weight: 700; color: #ffffff; margin-top: 10px;">{subtype_title}</div>
-            <div style="font-size: 0.82rem; color: #94a3b8; line-height: 1.5; margin-top: 6px;">{expl_text}</div>
-          </div>
-          <div style="margin-top: 16px;">
-            <div style="font-size: 0.68rem; font-weight: 700; color: #64748b; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px;">OBSERVED EVIDENCE</div>
-            {bullets_html}
-          </div>
-        </div>
-        """, unsafe_allow_html=True)
+        with st.container(border=True):
+            st.markdown(f'<div class="figma-metric-label">DIAGNOSTIC RESULT</div>', unsafe_allow_html=True)
+            st.markdown(f'<span style="display: inline-block; padding: 3px 12px; background: {badge_bg}; border: 1px solid {badge_border}; border-radius: 999px; font-size: 0.72rem; font-weight: 700; color: {badge_color}; letter-spacing: 0.06em; margin-top: 6px; margin-bottom: 8px;">{str(inferred_class).upper()}</span>', unsafe_allow_html=True)
+            st.markdown(f"#### {subtype_title}")
+            st.markdown(expl_text)
+            st.markdown('<div class="figma-metric-label" style="margin-top: 14px; margin-bottom: 6px;">OBSERVED EVIDENCE</div>', unsafe_allow_html=True)
+            for e in ev_items:
+                st.markdown(f"- {e}")
 
     st.markdown("<div style='height: 14px;'></div>", unsafe_allow_html=True)
 
-    # 4. QUICK INTERPRETATION (3 Cards with Cyan Engineering Formulas)
+    # 4. QUICK INTERPRETATION (3 Cards with Proper LaTeX Equations)
     st.markdown('<div class="figma-section-title">QUICK INTERPRETATION</div>', unsafe_allow_html=True)
     q1, q2, q3 = st.columns(3)
     with q1:
-        st.markdown("""
-        <div class="figma-card">
-          <div style="font-size: 0.88rem; font-weight: 600; color: #ffffff;">Reflection coefficient</div>
-          <div style="font-family: 'JetBrains Mono', Consolas, monospace; color: #00e5ff; font-weight: 600; font-size: 0.92rem; margin: 8px 0 6px 0;">Γ = (Z_L − Z_0) / (Z_L + Z_0)</div>
-          <div style="font-size: 0.76rem; color: #94a3b8;">Describes the ratio of reflected to incident wave.</div>
-        </div>
-        """, unsafe_allow_html=True)
+        with st.container(border=True):
+            st.markdown('<div class="figma-quick-title">Reflection coefficient</div>', unsafe_allow_html=True)
+            st.latex(r"\Gamma = \frac{Z_L - Z_0}{Z_L + Z_0}")
+            st.caption("Describes the ratio of reflected to incident wave amplitude.")
 
     with q2:
-        st.markdown("""
-        <div class="figma-card">
-          <div style="font-size: 0.88rem; font-weight: 600; color: #ffffff;">Standing-wave ratio</div>
-          <div style="font-family: 'JetBrains Mono', Consolas, monospace; color: #00e5ff; font-weight: 600; font-size: 0.92rem; margin: 8px 0 6px 0;">VSWR = (1 + |Γ|) / (1 − |Γ|)</div>
-          <div style="font-size: 0.76rem; color: #94a3b8;">Indicates the severity of impedance mismatch.</div>
-        </div>
-        """, unsafe_allow_html=True)
+        with st.container(border=True):
+            st.markdown('<div class="figma-quick-title">Standing-wave ratio</div>', unsafe_allow_html=True)
+            st.latex(r"\text{VSWR} = \frac{1 + |\Gamma|}{1 - |\Gamma|}")
+            st.caption("Indicates the severity of transmission impedance mismatch.")
 
     with q3:
-        st.markdown("""
-        <div class="figma-card">
-          <div style="font-size: 0.88rem; font-weight: 600; color: #ffffff;">Input impedance</div>
-          <div style="font-family: 'JetBrains Mono', Consolas, monospace; color: #00e5ff; font-weight: 600; font-size: 0.92rem; margin: 8px 0 6px 0;">Z_in = Z_0 (1 + Γ) / (1 − Γ)</div>
-          <div style="font-size: 0.76rem; color: #94a3b8;">Impedance presented at the input of the line.</div>
-        </div>
-        """, unsafe_allow_html=True)
+        with st.container(border=True):
+            st.markdown('<div class="figma-quick-title">Input impedance</div>', unsafe_allow_html=True)
+            st.latex(r"Z_{\text{in}} = Z_0\,\frac{1 + \Gamma}{1 - \Gamma}")
+            st.caption("Impedance presented at the line measurement input.")
 
     render_footer()
 
@@ -777,69 +773,62 @@ elif "simulator" in nav_section.lower():
 
     col_sim1, col_sim2 = st.columns([13, 7])
     with col_sim1:
-        st.markdown("""
-        <div class="figma-card" style="padding-bottom: 10px;">
-          <div style="font-size: 0.95rem; font-weight: 600; color: #ffffff;">Simulated reflection sweep profile</div>
-          <div style="font-size: 0.75rem; color: #64748b; margin-top: 1px; margin-bottom: 8px;">Calculated single-port |S₁₁| magnitude across swept frequency band</div>
-        """, unsafe_allow_html=True)
-        fig_s, ax_s = plt.subplots(figsize=(7.6, 3.6))
-        ax_s.plot(f_ghz, np.abs(sweep_dict["gamma"]), color="#00e5ff", lw=2.2, label="|S₁₁| (input reflection)")
-        ax_s.axhline(0.05, color="#10b981", linestyle="--", alpha=0.6, label="Healthy Threshold (0.05)")
-        ax_s.set_xlabel("Frequency (GHz)", fontsize=9, color="#94a3b8")
-        ax_s.set_ylabel("|S₁₁| magnitude", fontsize=9, color="#94a3b8")
-        ax_s.set_ylim(-0.05, 1.05)
-        ax_s.grid(True, color="#1e293b", alpha=0.7)
-        ax_s.tick_params(colors="#64748b", labelsize=8.5)
-        for sp in ax_s.spines.values():
-            sp.set_color("#1e293b")
-        ax_s.legend(loc="upper right", fontsize=8, facecolor="#0b0f17", edgecolor="#1e293b")
-        plt.tight_layout()
-        st.pyplot(fig_s)
-        plt.close(fig_s)
-        st.markdown("</div>", unsafe_allow_html=True)
+        with st.container(border=True):
+            st.markdown('<div style="font-size: 0.95rem; font-weight: 600; color: #ffffff;">Simulated reflection sweep profile</div>', unsafe_allow_html=True)
+            st.markdown('<div style="font-size: 0.75rem; color: #64748b; margin-top: 1px; margin-bottom: 8px;">Calculated single-port |S₁₁| magnitude across swept frequency band</div>', unsafe_allow_html=True)
+            
+            fig_s, ax_s = plt.subplots(figsize=(7.6, 3.6))
+            ax_s.plot(f_ghz, np.abs(sweep_dict["gamma"]), color="#00e5ff", lw=2.2, label="|S₁₁| (input reflection)")
+            ax_s.axhline(0.05, color="#10b981", linestyle="--", alpha=0.6, label="Healthy Threshold (0.05)")
+            ax_s.set_xlabel("Frequency (GHz)", fontsize=9, color="#94a3b8")
+            ax_s.set_ylabel("|S₁₁| magnitude", fontsize=9, color="#94a3b8")
+            ax_s.set_ylim(-0.05, 1.05)
+            ax_s.grid(True, color="#1e293b", alpha=0.7)
+            ax_s.tick_params(colors="#64748b", labelsize=8.5)
+            for sp in ax_s.spines.values():
+                sp.set_color("#1e293b")
+            ax_s.legend(loc="upper right", fontsize=8, facecolor="#0b0f17", edgecolor="#1e293b")
+            plt.tight_layout()
+            st.pyplot(fig_s)
+            plt.close(fig_s)
 
     with col_sim2:
-        st.markdown("""
-        <div class="figma-card" style="height: 100%;">
-          <div style="font-size: 0.7rem; font-weight: 700; color: #64748b; letter-spacing: 0.08em; text-transform: uppercase;">SIMULATION GROUND TRUTH</div>
-          <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 4px; margin-bottom: 12px;">Reference parameters used for virtual waveform generation (not accessible to classifier).</div>
-          
-          <div style="display: flex; flex-direction: column; gap: 8px;">
-            <div class="figma-pill-cell">
-              <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; text-transform: uppercase;">INJECTED SCENARIO</div>
-              <div style="font-size: 0.95rem; color: #ffffff; font-weight: 600; margin-top: 2px;">{}</div>
+        with st.container(border=True):
+            st.markdown('<div class="figma-metric-label">SIMULATION GROUND TRUTH</div>', unsafe_allow_html=True)
+            st.markdown('<div style="font-size: 0.8rem; color: #94a3b8; margin-top: 4px; margin-bottom: 12px;">Reference parameters used for virtual waveform generation (not accessible to classifier).</div>', unsafe_allow_html=True)
+            
+            fault_pos_str = f"{fault_pos:.2f} m" if sim_scenario in ["series_L", "shunt_C"] else (f"{length:.2f} m (Load)" if sim_scenario != "healthy" else "None (Uniform)")
+            st.markdown(f"""
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <div class="figma-pill-cell">
+                <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; text-transform: uppercase;">INJECTED SCENARIO</div>
+                <div style="font-size: 0.95rem; color: #ffffff; font-weight: 600; margin-top: 2px;">{sim_scenario.upper()}</div>
+              </div>
+              <div class="figma-pill-cell">
+                <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; text-transform: uppercase;">TERMINATION IMPEDANCE (<i>Z</i><sub>L</sub>)</div>
+                <div style="font-size: 0.95rem; color: #00e5ff; font-weight: 600; margin-top: 2px;">{str(ZL_val)}</div>
+              </div>
+              <div class="figma-pill-cell">
+                <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; text-transform: uppercase;">FAULT POSITION (<i>d</i>)</div>
+                <div style="font-size: 0.95rem; color: #ffffff; font-weight: 600; margin-top: 2px;">{fault_pos_str}</div>
+              </div>
+              <div class="figma-pill-cell">
+                <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; text-transform: uppercase;">MEASUREMENT NOISE (&sigma;)</div>
+                <div style="font-size: 0.95rem; color: #f59e0b; font-weight: 600; margin-top: 2px;">{noise_std:.2f}</div>
+              </div>
             </div>
-            <div class="figma-pill-cell">
-              <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; text-transform: uppercase;">TERMINATION IMPEDANCE (Z_L)</div>
-              <div style="font-size: 0.95rem; color: #00e5ff; font-weight: 600; margin-top: 2px;">{}</div>
-            </div>
-            <div class="figma-pill-cell">
-              <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; text-transform: uppercase;">FAULT POSITION</div>
-              <div style="font-size: 0.95rem; color: #ffffff; font-weight: 600; margin-top: 2px;">{}</div>
-            </div>
-            <div class="figma-pill-cell">
-              <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; text-transform: uppercase;">MEASUREMENT NOISE (σ)</div>
-              <div style="font-size: 0.95rem; color: #f59e0b; font-weight: 600; margin-top: 2px;">{}</div>
-            </div>
-          </div>
-        </div>
-        """.format(
-            sim_scenario.upper(),
-            str(ZL_val),
-            f"{fault_pos:.2f} m" if sim_scenario in ["series_L", "shunt_C"] else (f"{length:.2f} m (Load)" if sim_scenario != "healthy" else "None (Uniform)"),
-            f"{noise_std:.2f}"
-        ), unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
 
-    # Data export table
+    # Data export table with clean engineering column titles
     st.markdown('<div class="figma-section-title" style="margin-top: 1.2rem;">FREQUENCY SWEEP DATA TABLE</div>', unsafe_allow_html=True)
     df_sweep = pd.DataFrame({
-        "Freq_MHz": freqs / 1e6,
-        "Zin_Real_Ohm": np.real(sweep_dict["zin"]),
-        "Zin_Imag_Ohm": np.imag(sweep_dict["zin"]),
-        "S11_Mag": np.abs(sweep_dict["gamma"]),
-        "S11_Phase_Deg": np.degrees(np.unwrap(np.angle(sweep_dict["gamma"]))),
+        "f (MHz)": freqs / 1e6,
+        "Re(Z_in) (Ω)": np.real(sweep_dict["zin"]),
+        "Im(Z_in) (Ω)": np.imag(sweep_dict["zin"]),
+        "|S11|": np.abs(sweep_dict["gamma"]),
+        "Phase (deg)": np.degrees(np.unwrap(np.angle(sweep_dict["gamma"]))),
         "VSWR": sweep_dict["vswr"],
-        "Return_Loss_dB": sweep_dict["rl_db"],
+        "Return Loss (dB)": sweep_dict["rl_db"],
     })
     st.dataframe(df_sweep.head(100), height=240)
 
@@ -866,8 +855,8 @@ elif "signal" in nav_section.lower():
     )
 
     tab_rf, tab_z, tab_smith = st.tabs([
-        "📊 Reflection metrics (|S₁₁|, VSWR, return loss)",
-        "🔌 Input impedance (Rᵢₙ, Xᵢₙ, phase)",
+        "📊 Reflection metrics (|S₁₁|, VSWR, Return Loss)",
+        "🔌 Input impedance (Rᵢₙ, Xᵢₙ, Phase)",
         "🧭 Normalized Smith chart",
     ])
 
@@ -880,132 +869,123 @@ elif "signal" in nav_section.lower():
                 "Ideal reflection data is preserved without artificial clipping."
             )
 
-        st.markdown("""
-        <div class="figma-card">
-          <div style="font-size: 0.92rem; font-weight: 600; color: #ffffff; margin-bottom: 8px;">Multi-Metric Reflection Overview</div>
-        """, unsafe_allow_html=True)
-        
-        fig_rf, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(10, 7.5), sharex=True)
+        with st.container(border=True):
+            st.markdown('<div style="font-size: 0.92rem; font-weight: 600; color: #ffffff; margin-bottom: 8px;">Multi-Metric Reflection Overview (|S₁₁|, VSWR, Return Loss)</div>', unsafe_allow_html=True)
+            
+            fig_rf, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(10, 7.5), sharex=True)
 
-        ax1.plot(f_ghz, np.abs(sweep_dict["gamma"]), color="#00e5ff", lw=2, label="|S₁₁|")
-        ax1.axhline(0.05, color="#10b981", linestyle="--", alpha=0.7, label="Matched Threshold (0.05)")
-        ax1.set_ylabel("|S₁₁| mag", fontsize=8.5, color="#94a3b8")
-        ax1.set_ylim(-0.05, 1.05)
-        ax1.grid(True, color="#1e293b", alpha=0.6)
-        ax1.tick_params(colors="#64748b", labelsize=8)
-        for sp in ax1.spines.values(): sp.set_color("#1e293b")
-        ax1.legend(loc="upper right", fontsize=8, facecolor="#0b0f17", edgecolor="#1e293b")
+            ax1.plot(f_ghz, np.abs(sweep_dict["gamma"]), color="#00e5ff", lw=2, label="|S₁₁|")
+            ax1.axhline(0.05, color="#10b981", linestyle="--", alpha=0.7, label="Matched Threshold (0.05)")
+            ax1.set_ylabel("|S₁₁| mag", fontsize=8.5, color="#94a3b8")
+            ax1.set_ylim(-0.05, 1.05)
+            ax1.grid(True, color="#1e293b", alpha=0.6)
+            ax1.tick_params(colors="#64748b", labelsize=8)
+            for sp in ax1.spines.values(): sp.set_color("#1e293b")
+            ax1.legend(loc="upper right", fontsize=8, facecolor="#0b0f17", edgecolor="#1e293b")
 
-        vswr_plot = np.clip(sweep_dict["vswr"], 1.0, 50.0)
-        ax2.plot(f_ghz, vswr_plot, color="#f59e0b", lw=2, label="VSWR")
-        ax2.axhline(2.0, color="#64748b", linestyle="--", alpha=0.7, label="VSWR = 2.0 Benchmark")
-        ax2.set_ylabel("VSWR", fontsize=8.5, color="#94a3b8")
-        ax2.set_ylim(1.0, min(max(np.nanmax(vswr_plot) * 1.1, 3.0), 30.0))
-        ax2.grid(True, color="#1e293b", alpha=0.6)
-        ax2.tick_params(colors="#64748b", labelsize=8)
-        for sp in ax2.spines.values(): sp.set_color("#1e293b")
-        ax2.legend(loc="upper right", fontsize=8, facecolor="#0b0f17", edgecolor="#1e293b")
+            vswr_plot = np.clip(sweep_dict["vswr"], 1.0, 50.0)
+            ax2.plot(f_ghz, vswr_plot, color="#f59e0b", lw=2, label="VSWR")
+            ax2.axhline(2.0, color="#64748b", linestyle="--", alpha=0.7, label="VSWR = 2.0 Benchmark")
+            ax2.set_ylabel("VSWR", fontsize=8.5, color="#94a3b8")
+            ax2.set_ylim(1.0, min(max(np.nanmax(vswr_plot) * 1.1, 3.0), 30.0))
+            ax2.grid(True, color="#1e293b", alpha=0.6)
+            ax2.tick_params(colors="#64748b", labelsize=8)
+            for sp in ax2.spines.values(): sp.set_color("#1e293b")
+            ax2.legend(loc="upper right", fontsize=8, facecolor="#0b0f17", edgecolor="#1e293b")
 
-        rl_plot = np.clip(sweep_dict["rl_db"], 0.0, 60.0)
-        ax3.plot(f_ghz, rl_plot, color="#10b981", lw=2, label="Return Loss (dB)")
-        ax3.axhline(20.0, color="#38bdf8", linestyle="--", alpha=0.7, label="20 dB Match Benchmark")
-        ax3.axhline(10.0, color="#f59e0b", linestyle=":", alpha=0.7, label="10 dB Minimal Benchmark")
-        ax3.set_ylabel("RL (dB)", fontsize=8.5, color="#94a3b8")
-        ax3.set_xlabel("Frequency (GHz)", fontsize=8.5, color="#94a3b8")
-        ax3.set_ylim(0, 60)
-        ax3.grid(True, color="#1e293b", alpha=0.6)
-        ax3.tick_params(colors="#64748b", labelsize=8)
-        for sp in ax3.spines.values(): sp.set_color("#1e293b")
-        ax3.legend(loc="upper right", fontsize=8, facecolor="#0b0f17", edgecolor="#1e293b")
+            rl_plot = np.clip(sweep_dict["rl_db"], 0.0, 60.0)
+            ax3.plot(f_ghz, rl_plot, color="#10b981", lw=2, label="Return Loss (dB)")
+            ax3.axhline(20.0, color="#38bdf8", linestyle="--", alpha=0.7, label="20 dB Match Benchmark")
+            ax3.axhline(10.0, color="#f59e0b", linestyle=":", alpha=0.7, label="10 dB Minimal Benchmark")
+            ax3.set_ylabel("RL (dB)", fontsize=8.5, color="#94a3b8")
+            ax3.set_xlabel("Frequency (GHz)", fontsize=8.5, color="#94a3b8")
+            ax3.set_ylim(0, 60)
+            ax3.grid(True, color="#1e293b", alpha=0.6)
+            ax3.tick_params(colors="#64748b", labelsize=8)
+            for sp in ax3.spines.values(): sp.set_color("#1e293b")
+            ax3.legend(loc="upper right", fontsize=8, facecolor="#0b0f17", edgecolor="#1e293b")
 
-        plt.tight_layout()
-        st.pyplot(fig_rf)
-        plt.close(fig_rf)
-        st.markdown("</div>", unsafe_allow_html=True)
+            plt.tight_layout()
+            st.pyplot(fig_rf)
+            plt.close(fig_rf)
 
     with tab_z:
-        st.markdown("""
-        <div class="figma-card">
-          <div style="font-size: 0.92rem; font-weight: 600; color: #ffffff; margin-bottom: 8px;">Transformed Input Impedance Across Frequency</div>
-        """, unsafe_allow_html=True)
-        fig_z, (ax_rin, ax_xin, ax_ph) = plt.subplots(3, 1, figsize=(10, 7.5), sharex=True)
+        with st.container(border=True):
+            st.markdown('<div style="font-size: 0.92rem; font-weight: 600; color: #ffffff; margin-bottom: 8px;">Transformed Input Impedance Across Frequency (Rᵢₙ, Xᵢₙ, ∠S₁₁)</div>', unsafe_allow_html=True)
+            
+            fig_z, (ax_rin, ax_xin, ax_ph) = plt.subplots(3, 1, figsize=(10, 7.5), sharex=True)
 
-        rin_plot = np.clip(rin, -100.0, 500.0)
-        ax_rin.plot(f_ghz, rin_plot, color="#a855f7", lw=2, label="Rᵢₙ = Re(Zᵢₙ)")
-        ax_rin.axhline(Z0, color="#64748b", linestyle="--", alpha=0.7, label=f"Z₀ = {Z0} Ω")
-        ax_rin.set_ylabel("Resistance (Ω)", fontsize=8.5, color="#94a3b8")
-        ax_rin.grid(True, color="#1e293b", alpha=0.6)
-        ax_rin.tick_params(colors="#64748b", labelsize=8)
-        for sp in ax_rin.spines.values(): sp.set_color("#1e293b")
-        ax_rin.legend(loc="upper right", fontsize=8, facecolor="#0b0f17", edgecolor="#1e293b")
+            rin_plot = np.clip(rin, -100.0, 500.0)
+            ax_rin.plot(f_ghz, rin_plot, color="#a855f7", lw=2, label="Rᵢₙ = Re(Zᵢₙ)")
+            ax_rin.axhline(Z0, color="#64748b", linestyle="--", alpha=0.7, label=f"Z₀ = {Z0:.0f} Ω")
+            ax_rin.set_ylabel("Resistance (Ω)", fontsize=8.5, color="#94a3b8")
+            ax_rin.grid(True, color="#1e293b", alpha=0.6)
+            ax_rin.tick_params(colors="#64748b", labelsize=8)
+            for sp in ax_rin.spines.values(): sp.set_color("#1e293b")
+            ax_rin.legend(loc="upper right", fontsize=8, facecolor="#0b0f17", edgecolor="#1e293b")
 
-        xin_plot = np.clip(xin, -500.0, 500.0)
-        ax_xin.plot(f_ghz, xin_plot, color="#ec4899", lw=2, label="Xᵢₙ = Im(Zᵢₙ)")
-        ax_xin.axhline(0, color="#64748b", linestyle="-", alpha=0.5)
-        ax_xin.set_ylabel("Reactance (Ω)", fontsize=8.5, color="#94a3b8")
-        ax_xin.grid(True, color="#1e293b", alpha=0.6)
-        ax_xin.tick_params(colors="#64748b", labelsize=8)
-        for sp in ax_xin.spines.values(): sp.set_color("#1e293b")
-        ax_xin.legend(loc="upper right", fontsize=8, facecolor="#0b0f17", edgecolor="#1e293b")
+            xin_plot = np.clip(xin, -500.0, 500.0)
+            ax_xin.plot(f_ghz, xin_plot, color="#ec4899", lw=2, label="Xᵢₙ = Im(Zᵢₙ)")
+            ax_xin.axhline(0, color="#64748b", linestyle="-", alpha=0.5)
+            ax_xin.set_ylabel("Reactance (Ω)", fontsize=8.5, color="#94a3b8")
+            ax_xin.grid(True, color="#1e293b", alpha=0.6)
+            ax_xin.tick_params(colors="#64748b", labelsize=8)
+            for sp in ax_xin.spines.values(): sp.set_color("#1e293b")
+            ax_xin.legend(loc="upper right", fontsize=8, facecolor="#0b0f17", edgecolor="#1e293b")
 
-        ax_ph.plot(f_ghz, spectral_feat["phase_deg"], color="#38bdf8", lw=2, label="Unwrapped Phase (deg)")
-        ax_ph.set_ylabel("Phase (deg)", fontsize=8.5, color="#94a3b8")
-        ax_ph.set_xlabel("Frequency (GHz)", fontsize=8.5, color="#94a3b8")
-        ax_ph.grid(True, color="#1e293b", alpha=0.6)
-        ax_ph.tick_params(colors="#64748b", labelsize=8)
-        for sp in ax_ph.spines.values(): sp.set_color("#1e293b")
-        ax_ph.legend(loc="upper right", fontsize=8, facecolor="#0b0f17", edgecolor="#1e293b")
+            ax_ph.plot(f_ghz, spectral_feat["phase_deg"], color="#38bdf8", lw=2, label="Unwrapped Phase ∠S₁₁ (deg)")
+            ax_ph.set_ylabel("Phase (deg)", fontsize=8.5, color="#94a3b8")
+            ax_ph.set_xlabel("Frequency (GHz)", fontsize=8.5, color="#94a3b8")
+            ax_ph.grid(True, color="#1e293b", alpha=0.6)
+            ax_ph.tick_params(colors="#64748b", labelsize=8)
+            for sp in ax_ph.spines.values(): sp.set_color("#1e293b")
+            ax_ph.legend(loc="upper right", fontsize=8, facecolor="#0b0f17", edgecolor="#1e293b")
 
-        plt.tight_layout()
-        st.pyplot(fig_z)
-        plt.close(fig_z)
-        st.markdown("</div>", unsafe_allow_html=True)
+            plt.tight_layout()
+            st.pyplot(fig_z)
+            plt.close(fig_z)
 
     with tab_smith:
         col_sm1, col_sm2 = st.columns([12, 8])
         with col_sm1:
-            st.markdown("""
-            <div class="figma-card">
-              <div style="font-size: 0.92rem; font-weight: 600; color: #ffffff; margin-bottom: 8px;">Normalized Reflection Locus Γ(f)</div>
-            """, unsafe_allow_html=True)
-            fig_sm, ax_sm = plt.subplots(figsize=(6.5, 6.5))
-            meas.smith_plot(sweep_dict["gamma"], ax=ax_sm, label=f"Sweep ({f_start_mhz:.0f}–{f_stop_mhz:.0f} MHz)")
-            ax_sm.legend(loc="lower right", fontsize=8.5, facecolor="#0b0f17", edgecolor="#1e293b")
-            plt.tight_layout()
-            st.pyplot(fig_sm)
-            plt.close(fig_sm)
-            st.markdown("</div>", unsafe_allow_html=True)
+            with st.container(border=True):
+                st.markdown('<div style="font-size: 0.92rem; font-weight: 600; color: #ffffff; margin-bottom: 8px;">Normalized Reflection Locus Γ(f)</div>', unsafe_allow_html=True)
+                fig_sm, ax_sm = plt.subplots(figsize=(6.5, 6.5))
+                meas.smith_plot(sweep_dict["gamma"], ax=ax_sm, label=f"Sweep ({f_start_mhz:.0f}–{f_stop_mhz:.0f} MHz)")
+                ax_sm.legend(loc="lower right", fontsize=8.5, facecolor="#0b0f17", edgecolor="#1e293b")
+                plt.tight_layout()
+                st.pyplot(fig_sm)
+                plt.close(fig_sm)
 
         with col_sm2:
-            st.markdown(r"""
-            <div class="figma-card" style="height: 100%;">
-              <div style="font-size: 0.7rem; font-weight: 700; color: #64748b; letter-spacing: 0.08em; text-transform: uppercase;">SMITH CHART LANDMARKS</div>
-              <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 4px; margin-bottom: 14px;">Complex reflection coefficient mapped to normalized impedance $z = Z / Z_0$.</div>
+            with st.container(border=True):
+                st.markdown('<div class="figma-metric-label">SMITH CHART LANDMARKS</div>', unsafe_allow_html=True)
+                st.markdown('<div style="font-size: 0.8rem; color: #94a3b8; margin-top: 4px; margin-bottom: 14px;">Complex reflection mapped to normalized impedance <i>z</i> = <i>Z</i> / <i>Z</i><sub>0</sub>.</div>', unsafe_allow_html=True)
 
-              <div style="display: flex; flex-direction: column; gap: 10px;">
-                <div class="figma-pill-cell">
-                  <div style="font-size: 0.72rem; color: #10b981; font-weight: 700;">● CENTRE (Γ = 0)</div>
-                  <div style="font-size: 0.78rem; color: #cbd5e1; margin-top: 2px;">Perfect match: $Z_L = Z_0$, return loss $\to \infty$, no reflected wave.</div>
+                st.markdown("""
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                  <div class="figma-pill-cell">
+                    <div style="font-size: 0.72rem; color: #10b981; font-weight: 700;">● CENTRE (|Γ| = 0)</div>
+                    <div style="font-size: 0.78rem; color: #cbd5e1; margin-top: 2px;">Matched load: <i>Z</i><sub>L</sub> = <i>Z</i><sub>0</sub>, Return Loss &rarr; &infin;, no reflection.</div>
+                  </div>
+                  <div class="figma-pill-cell">
+                    <div style="font-size: 0.72rem; color: #ef4444; font-weight: 700;">● RIGHT EDGE (Γ = +1)</div>
+                    <div style="font-size: 0.78rem; color: #cbd5e1; margin-top: 2px;">Open circuit: <i>Z</i><sub>L</sub> &rarr; &infin;, VSWR &rarr; &infin;, zero terminal current.</div>
+                  </div>
+                  <div class="figma-pill-cell">
+                    <div style="font-size: 0.72rem; color: #ef4444; font-weight: 700;">● LEFT EDGE (Γ = −1)</div>
+                    <div style="font-size: 0.78rem; color: #cbd5e1; margin-top: 2px;">Short circuit: <i>Z</i><sub>L</sub> = 0 &Omega;, terminal voltage cancellation.</div>
+                  </div>
+                  <div class="figma-pill-cell">
+                    <div style="font-size: 0.72rem; color: #00e5ff; font-weight: 700;">● UPPER HALF (Im(Z) &gt; 0)</div>
+                    <div style="font-size: 0.78rem; color: #cbd5e1; margin-top: 2px;">Inductive impedance: Series inductance or shorted line segment (<i>X</i><sub>L</sub> &gt; 0).</div>
+                  </div>
+                  <div class="figma-pill-cell">
+                    <div style="font-size: 0.72rem; color: #a855f7; font-weight: 700;">● LOWER HALF (Im(Z) &lt; 0)</div>
+                    <div style="font-size: 0.78rem; color: #cbd5e1; margin-top: 2px;">Capacitive impedance: Shunt capacitance or open stub section (<i>X</i><sub>C</sub> &lt; 0).</div>
+                  </div>
                 </div>
-                <div class="figma-pill-cell">
-                  <div style="font-size: 0.72rem; color: #ef4444; font-weight: 700;">● RIGHT EDGE (Γ = +1)</div>
-                  <div style="font-size: 0.78rem; color: #cbd5e1; margin-top: 2px;">Open circuit: $Z_L \to \infty$, infinite VSWR, zero transmitted current.</div>
-                </div>
-                <div class="figma-pill-cell">
-                  <div style="font-size: 0.72rem; color: #ef4444; font-weight: 700;">● LEFT EDGE (Γ = −1)</div>
-                  <div style="font-size: 0.78rem; color: #cbd5e1; margin-top: 2px;">Short circuit: $Z_L \to 0$, complete voltage cancellation at termination.</div>
-                </div>
-                <div class="figma-pill-cell">
-                  <div style="font-size: 0.72rem; color: #00e5ff; font-weight: 700;">● UPPER HALF (Im(Z) > 0)</div>
-                  <div style="font-size: 0.78rem; color: #cbd5e1; margin-top: 2px;">Inductive impedance: Net series inductance or shorted line segment.</div>
-                </div>
-                <div class="figma-pill-cell">
-                  <div style="font-size: 0.72rem; color: #a855f7; font-weight: 700;">● LOWER HALF (Im(Z) < 0)</div>
-                  <div style="font-size: 0.78rem; color: #cbd5e1; margin-top: 2px;">Capacitive impedance: Net shunt capacitance or open stub section.</div>
-                </div>
-              </div>
-            </div>
-            """, unsafe_allow_html=True)
+                """, unsafe_allow_html=True)
 
     render_footer()
 
@@ -1029,64 +1009,48 @@ elif "diagnosis" in nav_section.lower():
     diag_col1, diag_col2 = st.columns([8, 12])
 
     with diag_col1:
-        st.markdown(f"""
-        <div class="figma-card">
-          <div style="font-size: 0.7rem; font-weight: 700; color: #64748b; letter-spacing: 0.08em; text-transform: uppercase;">DIAGNOSTIC CLASSIFICATION</div>
-          
-          <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;">
-            <div class="figma-pill-cell">
-              <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; text-transform: uppercase;">FROZEN CONTRACT CLASS</div>
-              <div style="font-size: 1.1rem; color: #00e5ff; font-weight: 700; margin-top: 2px;">{str(inferred_class).upper()}</div>
+        with st.container(border=True):
+            st.markdown('<div class="figma-metric-label">DIAGNOSTIC CLASSIFICATION</div>', unsafe_allow_html=True)
+            st.markdown(f"""
+            <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">
+              <div class="figma-pill-cell">
+                <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; text-transform: uppercase;">FROZEN CONTRACT CLASS</div>
+                <div style="font-size: 1.1rem; color: #00e5ff; font-weight: 700; margin-top: 2px;">{str(inferred_class).upper()}</div>
+              </div>
+              <div class="figma-pill-cell">
+                <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; text-transform: uppercase;">PHYSICAL INFERRED SUBTYPE</div>
+                <div style="font-size: 0.95rem; color: #ffffff; font-weight: 600; margin-top: 2px;">{inferred_class.subtype}</div>
+              </div>
+              <div class="figma-pill-cell">
+                <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; text-transform: uppercase;">DIAGNOSTIC CONFIDENCE</div>
+                <div style="font-size: 0.95rem; color: #10b981; font-weight: 600; margin-top: 2px;">{inferred_class.confidence.upper()}</div>
+              </div>
+              <div class="figma-pill-cell">
+                <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; text-transform: uppercase;">RULES TRIGGERED</div>
+                <div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 2px; font-family: monospace;">{', '.join(inferred_class.rules_fired)}</div>
+              </div>
             </div>
-            <div class="figma-pill-cell">
-              <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; text-transform: uppercase;">PHYSICAL INFERRED SUBTYPE</div>
-              <div style="font-size: 0.95rem; color: #ffffff; font-weight: 600; margin-top: 2px;">{inferred_class.subtype}</div>
-            </div>
-            <div class="figma-pill-cell">
-              <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; text-transform: uppercase;">DIAGNOSTIC CONFIDENCE</div>
-              <div style="font-size: 0.95rem; color: #10b981; font-weight: 600; margin-top: 2px;">{inferred_class.confidence.upper()}</div>
-            </div>
-            <div class="figma-pill-cell">
-              <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; text-transform: uppercase;">RULES TRIGGERED</div>
-              <div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 2px; font-family: monospace;">{', '.join(inferred_class.rules_fired)}</div>
-            </div>
-          </div>
-        </div>
-        """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
 
-        ev_html = "".join([f'<div style="font-size: 0.8rem; color: #cbd5e1; line-height: 1.5; margin-bottom: 6px;">• {e}</div>' for e in diag_report["evidence"]])
-        st.markdown(f"""
-        <div class="figma-card">
-          <div style="font-size: 0.7rem; font-weight: 700; color: #64748b; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px;">OBSERVED SIGNAL EVIDENCE</div>
-          {ev_html}
-        </div>
-        """, unsafe_allow_html=True)
+        with st.container(border=True):
+            st.markdown('<div style="font-size: 0.7rem; font-weight: 700; color: #64748b; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px;">OBSERVED SIGNAL EVIDENCE</div>', unsafe_allow_html=True)
+            for e in diag_report["evidence"]:
+                st.markdown(f"- {e}")
 
     with diag_col2:
-        st.markdown(f"""
-        <div class="figma-card" style="border-left: 3px solid #00e5ff;">
-          <div style="font-size: 0.7rem; font-weight: 700; color: #00e5ff; letter-spacing: 0.08em; text-transform: uppercase;">ELECTROMAGNETIC PHYSICS EXPLANATION</div>
-          <div style="font-size: 0.84rem; color: #cbd5e1; line-height: 1.6; margin-top: 8px;">
-            {diag_report["physics_explanation"]}
-          </div>
-        </div>
-        """, unsafe_allow_html=True)
+        with st.container(border=True):
+            st.markdown('<div style="font-size: 0.72rem; font-weight: 700; color: #00e5ff; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px;">ELECTROMAGNETIC PHYSICS EXPLANATION</div>', unsafe_allow_html=True)
+            st.markdown(diag_report["physics_explanation"])
 
-        amb_html = "".join([f'<div style="font-size: 0.8rem; color: #f59e0b; line-height: 1.5; margin-bottom: 6px;">⚠️ {a}</div>' for a in diag_report["ambiguities"]])
-        st.markdown(f"""
-        <div class="figma-card">
-          <div style="font-size: 0.7rem; font-weight: 700; color: #64748b; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px;">POTENTIAL AMBIGUITIES & LIMITATIONS</div>
-          {amb_html}
-        </div>
-        """, unsafe_allow_html=True)
+        with st.container(border=True):
+            st.markdown('<div style="font-size: 0.72rem; font-weight: 700; color: #f59e0b; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px;">POTENTIAL AMBIGUITIES & LIMITATIONS</div>', unsafe_allow_html=True)
+            for amb in diag_report["ambiguities"]:
+                st.markdown(f"⚠️ {amb}")
 
-        act_html = "".join([f'<div style="font-size: 0.8rem; color: #10b981; line-height: 1.5; margin-bottom: 6px;">🔧 {a}</div>' for a in diag_report["corrective_actions"]])
-        st.markdown(f"""
-        <div class="figma-card">
-          <div style="font-size: 0.7rem; font-weight: 700; color: #64748b; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px;">RECOMMENDED CORRECTIVE ACTIONS</div>
-          {act_html}
-        </div>
-        """, unsafe_allow_html=True)
+        with st.container(border=True):
+            st.markdown('<div style="font-size: 0.72rem; font-weight: 700; color: #10b981; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px;">RECOMMENDED CORRECTIVE ACTIONS</div>', unsafe_allow_html=True)
+            for act in diag_report["corrective_actions"]:
+                st.markdown(f"🔧 {act}")
 
     report_text = f"""================================================================================
 RF LINE DOCTOR -- AUTOMATED FAULT DIAGNOSTIC REPORT
@@ -1126,62 +1090,51 @@ elif "location" in nav_section.lower():
         "Dual-method distance estimation derived from frequency-swept reflection data.",
     )
 
-    st.markdown(r"""
-    <div class="figma-card" style="border-left: 3px solid #38bdf8;">
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-        <div>
-          <div style="font-size: 0.74rem; font-weight: 700; color: #00e5ff; text-transform: uppercase; letter-spacing: 0.06em;">Primary Method — Phase Slope Analysis</div>
-          <div style="font-size: 0.8rem; color: #cbd5e1; line-height: 1.5; margin-top: 6px;">
-            For a dominant boundary discontinuity at distance $d$, the round-trip delay imparts a linear phase ramp across frequency:
-            $$\phi(f) \approx \phi_0 - \frac{4\pi d}{v_p} f \implies d = -\frac{v_p}{4\pi}\frac{d\phi}{df}$$
-            Directly derived from course transmission-line phasor theory. Reactive discontinuities introduce minor frequency-dependent phase offsets.
-          </div>
-        </div>
-        <div>
-          <div style="font-size: 0.74rem; font-weight: 700; color: #10b981; text-transform: uppercase; letter-spacing: 0.06em;">Supporting Cross-Check — IFFT Pseudo-TDR</div>
-          <div style="font-size: 0.8rem; color: #cbd5e1; line-height: 1.5; margin-top: 6px;">
-            Inverse FFT with a Hann window synthesizes the pseudo-impulse reflection profile $|h(t)|$. A peak at round-trip time $t$ locates the reflection at:
-            $$d = \frac{v_p t}{2}, \quad \Delta R = \frac{v_p}{2B}$$
-            Zero-padding improves interpolation but does not exceed the Rayleigh resolution limit $\Delta R$.
-          </div>
-        </div>
-      </div>
-    </div>
-    """, unsafe_allow_html=True)
+    th_col1, th_col2 = st.columns(2)
+    with th_col1:
+        with st.container(border=True):
+            st.markdown('<div style="font-size: 0.74rem; font-weight: 700; color: #00e5ff; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px;">Primary Method — Phase Slope Analysis</div>', unsafe_allow_html=True)
+            st.markdown("For a dominant boundary discontinuity at distance $d$, the round-trip delay imparts a linear phase ramp across frequency:")
+            st.latex(r"\phi(f) \approx \phi_0 - \frac{4\pi d}{v_p}\,f \implies d = -\frac{v_p}{4\pi}\,\frac{d\phi}{df}")
+            st.caption("Directly derived from course transmission-line phasor theory. Reactive discontinuities introduce minor frequency-dependent phase offsets.")
+
+    with th_col2:
+        with st.container(border=True):
+            st.markdown('<div style="font-size: 0.74rem; font-weight: 700; color: #10b981; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px;">Supporting Cross-Check — IFFT Pseudo-TDR</div>', unsafe_allow_html=True)
+            st.markdown("Inverse FFT with a Hann window synthesizes the pseudo-impulse reflection profile $|h(t)|$. A peak at round-trip time $t$ locates the reflection at:")
+            st.latex(r"d = \frac{v_p\,t}{2}, \quad \Delta R = \frac{v_p}{2B}")
+            st.caption("Zero-padding interpolates the peak centroid but does not exceed the physical Rayleigh resolution limit ΔR.")
 
     loc_col1, loc_col2 = st.columns([12, 8])
 
     with loc_col1:
-        st.markdown("""
-        <div class="figma-card" style="padding-bottom: 10px;">
-          <div style="font-size: 0.95rem; font-weight: 600; color: #ffffff;">IFFT Pseudo-Time Echo Response |h(t)|</div>
-          <div style="font-size: 0.75rem; color: #64748b; margin-top: 1px; margin-bottom: 8px;">Synthesized spatial reflection envelope with localized peak centroid</div>
-        """, unsafe_allow_html=True)
+        with st.container(border=True):
+            st.markdown('<div style="font-size: 0.95rem; font-weight: 600; color: #ffffff;">IFFT Pseudo-Time Echo Response |h(t)|</div>', unsafe_allow_html=True)
+            st.markdown('<div style="font-size: 0.75rem; color: #64748b; margin-top: 1px; margin-bottom: 8px;">Synthesized spatial reflection envelope with localized peak centroid</div>', unsafe_allow_html=True)
 
-        tdr = loc_dual["tdr_data"]
-        fig_tdr, ax_t = plt.subplots(figsize=(7.5, 3.8))
+            tdr = loc_dual["tdr_data"]
+            fig_tdr, ax_t = plt.subplots(figsize=(7.5, 3.8))
 
-        if tdr.get("d_axis_m") is not None and len(tdr["d_axis_m"]) > 0:
-            d_axis = tdr["d_axis_m"]
-            t_mag = tdr["tdr_mag"]
-            view_mask = d_axis <= max(length * 1.5, 2.0)
-            ax_t.plot(d_axis[view_mask], t_mag[view_mask], color="#a855f7", lw=2, label="IFFT Echo Profile")
+            if tdr.get("d_axis_m") is not None and len(tdr["d_axis_m"]) > 0:
+                d_axis = tdr["d_axis_m"]
+                t_mag = tdr["tdr_mag"]
+                view_mask = d_axis <= max(length * 1.5, 2.0)
+                ax_t.plot(d_axis[view_mask], t_mag[view_mask], color="#a855f7", lw=2, label="IFFT Echo Profile")
 
-            d_est = loc_dual["dist_ifft_m"]
-            if d_est is not None:
-                ax_t.axvline(d_est, color="#ef4444", linestyle="--", lw=1.8, label=f"Discontinuity Peak: {d_est:.3f} m")
+                d_est = loc_dual["dist_ifft_m"]
+                if d_est is not None:
+                    ax_t.axvline(d_est, color="#ef4444", linestyle="--", lw=1.8, label=f"Discontinuity Peak: {d_est:.3f} m")
 
-            ax_t.set_xlabel("Physical Distance (m)", fontsize=9, color="#94a3b8")
-            ax_t.set_ylabel("Reflection Magnitude |h(t)|", fontsize=9, color="#94a3b8")
-            ax_t.grid(True, color="#1e293b", alpha=0.7)
-            ax_t.tick_params(colors="#64748b", labelsize=8.5)
-            for sp in ax_t.spines.values(): sp.set_color("#1e293b")
-            ax_t.legend(loc="upper right", fontsize=8, facecolor="#0b0f17", edgecolor="#1e293b")
+                ax_t.set_xlabel("Physical Distance (m)", fontsize=9, color="#94a3b8")
+                ax_t.set_ylabel("Reflection Magnitude |h(t)|", fontsize=9, color="#94a3b8")
+                ax_t.grid(True, color="#1e293b", alpha=0.7)
+                ax_t.tick_params(colors="#64748b", labelsize=8.5)
+                for sp in ax_t.spines.values(): sp.set_color("#1e293b")
+                ax_t.legend(loc="upper right", fontsize=8, facecolor="#0b0f17", edgecolor="#1e293b")
 
-        plt.tight_layout()
-        st.pyplot(fig_tdr)
-        plt.close(fig_tdr)
-        st.markdown("</div>", unsafe_allow_html=True)
+            plt.tight_layout()
+            st.pyplot(fig_tdr)
+            plt.close(fig_tdr)
 
     with loc_col2:
         d1 = loc_dual["dist_ifft_m"]
@@ -1189,42 +1142,41 @@ elif "location" in nav_section.lower():
 
         rel_badge = '<span style="color: #10b981; font-weight: 700;">● RELIABLE & VERIFIED</span>' if loc_dual["is_reliable"] else '<span style="color: #ef4444; font-weight: 700;">● HIGH UNCERTAINTY</span>'
 
-        st.markdown(f"""
-        <div class="figma-card" style="height: 100%;">
-          <div style="font-size: 0.7rem; font-weight: 700; color: #64748b; letter-spacing: 0.08em; text-transform: uppercase;">LOCALIZATION RESULTS SUMMARY</div>
-          
-          <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">
-            <div class="figma-pill-cell">
-              <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; text-transform: uppercase;">PHASE-SLOPE ESTIMATE (PRIMARY)</div>
-              <div style="font-size: 1rem; color: #00e5ff; font-weight: 600; margin-top: 2px;">
-                {f"{d2:.3f} m" if d2 is not None else "None (insufficient reflection)"}
+        with st.container(border=True):
+            st.markdown('<div class="figma-metric-label">LOCALIZATION RESULTS SUMMARY</div>', unsafe_allow_html=True)
+            
+            st.markdown(f"""
+            <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">
+              <div class="figma-pill-cell">
+                <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; text-transform: uppercase;">PHASE-SLOPE ESTIMATE (PRIMARY, <i>d</i>)</div>
+                <div style="font-size: 1rem; color: #00e5ff; font-weight: 600; margin-top: 2px;">
+                  {f"{d2:.3f} m" if d2 is not None else "None (insufficient reflection)"}
+                </div>
+              </div>
+              <div class="figma-pill-cell">
+                <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; text-transform: uppercase;">IFFT TDR CROSS-CHECK (SUPPORTING, <i>d</i>)</div>
+                <div style="font-size: 1rem; color: #ffffff; font-weight: 600; margin-top: 2px;">
+                  {f"{d1:.3f} m" if d1 is not None else "None (no clear echo)"}
+                </div>
+              </div>
+              <div class="figma-pill-cell">
+                <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; text-transform: uppercase;">RAYLEIGH RESOLUTION LIMIT (&Delta;<i>R</i>)</div>
+                <div style="font-size: 0.95rem; color: #cbd5e1; font-weight: 600; margin-top: 2px;">
+                  {res_info['range_res_m']*100:.2f} cm
+                </div>
+              </div>
+              <div class="figma-pill-cell">
+                <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; text-transform: uppercase;">UNAMBIGUOUS RANGE (<i>R</i><sub>max</sub>)</div>
+                <div style="font-size: 0.95rem; color: #cbd5e1; font-weight: 600; margin-top: 2px;">
+                  {res_info['unambig_range_m']:.2f} m
+                </div>
+              </div>
+              <div class="figma-pill-cell">
+                <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; text-transform: uppercase;">ESTIMATION STATUS</div>
+                <div style="font-size: 0.85rem; margin-top: 2px;">{rel_badge}</div>
               </div>
             </div>
-            <div class="figma-pill-cell">
-              <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; text-transform: uppercase;">IFFT TDR CROSS-CHECK (SUPPORTING)</div>
-              <div style="font-size: 1rem; color: #ffffff; font-weight: 600; margin-top: 2px;">
-                {f"{d1:.3f} m" if d1 is not None else "None (no clear echo)"}
-              </div>
-            </div>
-            <div class="figma-pill-cell">
-              <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; text-transform: uppercase;">RAYLEIGH RESOLUTION LIMIT (ΔR)</div>
-              <div style="font-size: 0.95rem; color: #cbd5e1; font-weight: 600; margin-top: 2px;">
-                {res_info['range_res_m']*100:.2f} cm
-              </div>
-            </div>
-            <div class="figma-pill-cell">
-              <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; text-transform: uppercase;">UNAMBIGUOUS RANGE (R_MAX)</div>
-              <div style="font-size: 0.95rem; color: #cbd5e1; font-weight: 600; margin-top: 2px;">
-                {res_info['unambig_range_m']:.2f} m
-              </div>
-            </div>
-            <div class="figma-pill-cell">
-              <div style="font-size: 0.68rem; color: #64748b; font-weight: 700; text-transform: uppercase;">ESTIMATION STATUS</div>
-              <div style="font-size: 0.85rem; margin-top: 2px;">{rel_badge}</div>
-            </div>
-          </div>
-        </div>
-        """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
 
     render_footer()
 
@@ -1236,7 +1188,7 @@ elif "matching" in nav_section.lower():
     render_breadcrumb("QUARTER-WAVE MATCHING")
     render_page_header(
         "Quarter-wave impedance matching studio",
-        "Synthesis and passband evaluation of quarter-wave transformers using Zₜ = √(Z₀ Rₗ).",
+        "Synthesis and passband evaluation of quarter-wave transformers using <i>Z</i><sub>t</sub> = &radic;(<i>Z</i><sub>0</sub> <i>R</i><sub>L</sub>).",
     )
 
     is_real = isinstance(ZL_val, complex) and np.isfinite(ZL_val.real) and ZL_val.real > 0 and abs(ZL_val.imag) < 1e-5
@@ -1246,8 +1198,8 @@ elif "matching" in nav_section.lower():
         <div class="figma-card" style="border-left: 3px solid #f59e0b;">
           <div style="font-size: 0.88rem; font-weight: 600; color: #f59e0b;">⚠️ Real Load Requirement for Quarter-Wave Matching</div>
           <div style="font-size: 0.82rem; color: #cbd5e1; margin-top: 6px; line-height: 1.5;">
-            Single-section quarter-wave transformers require a purely real load resistance $R_L > 0$.<br>
-            Current termination is <code>Z_L = {ZL_val}</code>.<br>
+            Single-section quarter-wave transformers require a purely real load resistance <i>R</i><sub>L</sub> &gt; 0.<br>
+            Current termination is <code><i>Z</i><sub>L</sub> = {ZL_val}</code>.<br>
             Select <strong>Case 2: Resistive Mismatch</strong> in the sidebar to design a matched transformer. Complex loads require reactive stub tuning.
           </div>
         </div>
@@ -1259,76 +1211,74 @@ elif "matching" in nav_section.lower():
         match_col1, match_col2 = st.columns([7, 13])
 
         with match_col1:
-            st.markdown('<div class="figma-section-title">DESIGN PARAMETERS</div>', unsafe_allow_html=True)
-            f_design_mhz = st.number_input("Design Frequency f₀ (MHz)", min_value=10.0, max_value=20000.0, value=f_mid / 1e6, step=50.0)
-            f_design = f_design_mhz * 1e6
+            with st.container(border=True):
+                st.markdown('<div class="figma-metric-label">DESIGN PARAMETERS</div>', unsafe_allow_html=True)
+                f_design_mhz = st.number_input("Design Frequency f₀ (MHz)", min_value=10.0, max_value=20000.0, value=f_mid / 1e6, step=50.0)
+                f_design = f_design_mhz * 1e6
 
-            match_res = match.compare_matching(Z0, RL_val, freqs, vf=vf, f_design=f_design, rl_threshold=20.0)
-            f0_rl = match_res["at_f_design"]["rl_db"]
-            rl_str = "∞ dB (Exact)" if np.isinf(f0_rl) else f"{f0_rl:.1f} dB"
+                match_res = match.compare_matching(Z0, RL_val, freqs, vf=vf, f_design=f_design, rl_threshold=20.0)
+                f0_rl = match_res["at_f_design"]["rl_db"]
+                rl_str = "∞ dB (Exact)" if np.isinf(f0_rl) else f"{f0_rl:.1f} dB"
 
-            st.markdown(f"""
-            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 12px;">
-              <div class="figma-metric-card">
-                <div class="figma-metric-label">TRANSFORMER IMPEDANCE (Z_T)</div>
-                <div class="figma-metric-val" style="color: #00e5ff;">{match_res['Zt']:.2f} Ω</div>
-                <div class="figma-metric-sub">Calculated via √(Z₀ · Rₗ)</div>
-              </div>
-              <div class="figma-metric-card">
-                <div class="figma-metric-label">PHYSICAL LENGTH (L_T)</div>
-                <div class="figma-metric-val" style="color: #10b981;">{match_res['length_m']*1000:.1f} mm</div>
-                <div class="figma-metric-sub">Quarter-wave at {f_design_mhz:.0f} MHz</div>
-              </div>
-              <div class="figma-metric-card">
-                <div class="figma-metric-label">USABLE BANDWIDTH (RL ≥ 20 DB)</div>
-                <div class="figma-metric-val" style="color: #f59e0b;">{match_res['bandwidth_hz']/1e6:.1f} MHz</div>
-                <div class="figma-metric-sub">Passband where VSWR ≤ 1.22</div>
-              </div>
-              <div class="figma-metric-card">
-                <div class="figma-metric-label">MATCHED RETURN LOSS AT F₀</div>
-                <div class="figma-metric-val" style="color: #38bdf8;">{rl_str}</div>
-                <div class="figma-metric-sub">Theoretical peak reflection attenuation</div>
-              </div>
-            </div>
-            """, unsafe_allow_html=True)
+                st.markdown(f"""
+                <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 12px;">
+                  <div class="figma-metric-card">
+                    <div class="figma-metric-label">TRANSFORMER IMPEDANCE (<i>Z</i><sub>t</sub>)</div>
+                    <div class="figma-metric-val" style="color: #00e5ff;">{match_res['Zt']:.2f} Ω</div>
+                    <div class="figma-metric-sub">Calculated via &radic;(<i>Z</i><sub>0</sub> &middot; <i>R</i><sub>L</sub>)</div>
+                  </div>
+                  <div class="figma-metric-card">
+                    <div class="figma-metric-label">PHYSICAL LENGTH (<i>l</i><sub>t</sub>)</div>
+                    <div class="figma-metric-val" style="color: #10b981;">{match_res['length_m']*1000:.1f} mm</div>
+                    <div class="figma-metric-sub">Quarter-wave at {f_design_mhz:.0f} MHz (&lambda;/4)</div>
+                  </div>
+                  <div class="figma-metric-card">
+                    <div class="figma-metric-label">USABLE BANDWIDTH (RL &ge; 20 dB)</div>
+                    <div class="figma-metric-val" style="color: #f59e0b;">{match_res['bandwidth_hz']/1e6:.1f} MHz</div>
+                    <div class="figma-metric-sub">Passband where VSWR &le; 1.22</div>
+                  </div>
+                  <div class="figma-metric-card">
+                    <div class="figma-metric-label">MATCHED RETURN LOSS AT <i>f</i><sub>0</sub></div>
+                    <div class="figma-metric-val" style="color: #38bdf8;">{rl_str}</div>
+                    <div class="figma-metric-sub">Theoretical peak reflection attenuation</div>
+                  </div>
+                </div>
+                """, unsafe_allow_html=True)
 
         with match_col2:
-            st.markdown("""
-            <div class="figma-card" style="padding-bottom: 10px;">
-              <div style="font-size: 0.95rem; font-weight: 600; color: #ffffff;">Performance Comparison (Before vs After Matching)</div>
-              <div style="font-size: 0.75rem; color: #64748b; margin-top: 1px; margin-bottom: 8px;">Evaluation of VSWR and return loss passband suppression</div>
-            """, unsafe_allow_html=True)
+            with st.container(border=True):
+                st.markdown('<div style="font-size: 0.95rem; font-weight: 600; color: #ffffff;">Performance Comparison (Before vs After Matching)</div>', unsafe_allow_html=True)
+                st.markdown('<div style="font-size: 0.75rem; color: #64748b; margin-top: 1px; margin-bottom: 8px;">Evaluation of VSWR and return loss passband suppression</div>', unsafe_allow_html=True)
 
-            fig_mc, (ax_mv, ax_mr) = plt.subplots(2, 1, figsize=(7.8, 5.8), sharex=True)
+                fig_mc, (ax_mv, ax_mr) = plt.subplots(2, 1, figsize=(7.8, 5.8), sharex=True)
 
-            # VSWR
-            ax_mv.plot(f_ghz, match_res["before"]["vswr"], color="#ef4444", linestyle="--", lw=1.8, label="Before Matching (Unmatched)")
-            ax_mv.plot(f_ghz, match_res["after"]["vswr"], color="#00e5ff", lw=2.2, label="After Matching (λ/4 Transformer)")
-            ax_mv.axvline(f_design / 1e9, color="#64748b", linestyle=":", label=f"f₀ = {f_design/1e9:.2f} GHz")
-            ax_mv.set_ylabel("VSWR", fontsize=8.5, color="#94a3b8")
-            ax_mv.set_ylim(1.0, 3.5)
-            ax_mv.grid(True, color="#1e293b", alpha=0.6)
-            ax_mv.tick_params(colors="#64748b", labelsize=8)
-            for sp in ax_mv.spines.values(): sp.set_color("#1e293b")
-            ax_mv.legend(loc="upper right", fontsize=8, facecolor="#0b0f17", edgecolor="#1e293b")
+                # VSWR
+                ax_mv.plot(f_ghz, match_res["before"]["vswr"], color="#ef4444", linestyle="--", lw=1.8, label="Before Matching (Unmatched)")
+                ax_mv.plot(f_ghz, match_res["after"]["vswr"], color="#00e5ff", lw=2.2, label="After Matching (λ/4 Transformer)")
+                ax_mv.axvline(f_design / 1e9, color="#64748b", linestyle=":", label=f"f₀ = {f_design/1e9:.2f} GHz")
+                ax_mv.set_ylabel("VSWR", fontsize=8.5, color="#94a3b8")
+                ax_mv.set_ylim(1.0, 3.5)
+                ax_mv.grid(True, color="#1e293b", alpha=0.6)
+                ax_mv.tick_params(colors="#64748b", labelsize=8)
+                for sp in ax_mv.spines.values(): sp.set_color("#1e293b")
+                ax_mv.legend(loc="upper right", fontsize=8, facecolor="#0b0f17", edgecolor="#1e293b")
 
-            # Return Loss
-            ax_mr.plot(f_ghz, match_res["before"]["rl_db"], color="#ef4444", linestyle="--", lw=1.8, label="Before Matching")
-            ax_mr.plot(f_ghz, match_res["after"]["rl_db"], color="#10b981", lw=2.2, label="After Matching")
-            ax_mr.axhline(20.0, color="#38bdf8", linestyle="--", label="20 dB Match Benchmark")
-            ax_mr.axvline(f_design / 1e9, color="#64748b", linestyle=":")
-            ax_mr.set_ylabel("Return Loss (dB)", fontsize=8.5, color="#94a3b8")
-            ax_mr.set_xlabel("Frequency (GHz)", fontsize=8.5, color="#94a3b8")
-            ax_mr.set_ylim(0, 50)
-            ax_mr.grid(True, color="#1e293b", alpha=0.6)
-            ax_mr.tick_params(colors="#64748b", labelsize=8)
-            for sp in ax_mr.spines.values(): sp.set_color("#1e293b")
-            ax_mr.legend(loc="lower right", fontsize=8, facecolor="#0b0f17", edgecolor="#1e293b")
+                # Return Loss
+                ax_mr.plot(f_ghz, match_res["before"]["rl_db"], color="#ef4444", linestyle="--", lw=1.8, label="Before Matching")
+                ax_mr.plot(f_ghz, match_res["after"]["rl_db"], color="#10b981", lw=2.2, label="After Matching")
+                ax_mr.axhline(20.0, color="#38bdf8", linestyle="--", label="20 dB Match Benchmark")
+                ax_mr.axvline(f_design / 1e9, color="#64748b", linestyle=":")
+                ax_mr.set_ylabel("Return Loss (dB)", fontsize=8.5, color="#94a3b8")
+                ax_mr.set_xlabel("Frequency (GHz)", fontsize=8.5, color="#94a3b8")
+                ax_mr.set_ylim(0, 50)
+                ax_mr.grid(True, color="#1e293b", alpha=0.6)
+                ax_mr.tick_params(colors="#64748b", labelsize=8)
+                for sp in ax_mr.spines.values(): sp.set_color("#1e293b")
+                ax_mr.legend(loc="lower right", fontsize=8, facecolor="#0b0f17", edgecolor="#1e293b")
 
-            plt.tight_layout()
-            st.pyplot(fig_mc)
-            plt.close(fig_mc)
-            st.markdown("</div>", unsafe_allow_html=True)
+                plt.tight_layout()
+                st.pyplot(fig_mc)
+                plt.close(fig_mc)
 
     render_footer()
 
@@ -1343,14 +1293,9 @@ elif "validation" in nav_section.lower():
         "Repeatable performance check across 120 randomized simulated line cases.",
     )
 
-    st.markdown("""
-    <div class="figma-card">
-      <div style="font-size: 0.88rem; font-weight: 600; color: #ffffff;">Repeatable Monte Carlo Simulation Suite</div>
-      <div style="font-size: 0.82rem; color: #94a3b8; margin-top: 4px; line-height: 1.5;">
-        This automated test executes 120 randomized coaxial line configurations (20 trials per each of the 6 physical scenarios) with Gaussian measurement noise (σ = 0.02). The predicted condition is evaluated against the ground-truth simulation model to verify classifier reliability.
-      </div>
-    </div>
-    """, unsafe_allow_html=True)
+    with st.container(border=True):
+        st.markdown('<div style="font-size: 0.88rem; font-weight: 600; color: #ffffff;">Repeatable Monte Carlo Simulation Suite</div>', unsafe_allow_html=True)
+        st.markdown('<div style="font-size: 0.82rem; color: #94a3b8; margin-top: 4px; line-height: 1.5;">This automated test executes 120 randomized coaxial line configurations (20 trials per each of the 6 physical scenarios) with Gaussian measurement noise (σ = 0.02). The predicted condition is evaluated against the ground-truth simulation model to verify classifier reliability.</div>', unsafe_allow_html=True)
 
     if st.button("▶ Run Randomized Validation (120 Cases)"):
         with st.spinner("Executing randomized validation trials..."):
@@ -1383,34 +1328,24 @@ elif "validation" in nav_section.lower():
 
             v_col1, v_col2 = st.columns(2)
             with v_col1:
-                st.markdown(f"""
-                <div class="figma-card">
-                  <div style="font-size: 0.72rem; font-weight: 700; color: #64748b; text-transform: uppercase;">
-                    CONTRACT CONFUSION MATRIX (ACCURACY = {val_rep['accuracy']*100:.1f}%)
-                  </div>
-                """, unsafe_allow_html=True)
-                df_vcm = pd.DataFrame(
-                    val_rep["confusion_matrix"],
-                    index=[f"True: {l}" for l in contract_labels],
-                    columns=[f"Pred: {l}" for l in contract_labels],
-                )
-                st.dataframe(df_vcm)
-                st.markdown("</div>", unsafe_allow_html=True)
+                with st.container(border=True):
+                    st.markdown(f'<div class="figma-section-title">CONTRACT CONFUSION MATRIX (ACCURACY = {val_rep["accuracy"]*100:.1f}%)</div>', unsafe_allow_html=True)
+                    df_vcm = pd.DataFrame(
+                        val_rep["confusion_matrix"],
+                        index=[f"True: {l}" for l in contract_labels],
+                        columns=[f"Pred: {l}" for l in contract_labels],
+                    )
+                    st.dataframe(df_vcm)
 
             with v_col2:
-                st.markdown("""
-                <div class="figma-card">
-                  <div style="font-size: 0.72rem; font-weight: 700; color: #64748b; text-transform: uppercase;">
-                    PER-CLASS CLASSIFICATION METRICS
-                  </div>
-                """, unsafe_allow_html=True)
-                m_rows = []
-                for l in contract_labels:
-                    r_dict = {"Class": l}
-                    r_dict.update(val_rep["per_class"][l])
-                    m_rows.append(r_dict)
-                st.dataframe(pd.DataFrame(m_rows))
-                st.markdown("</div>", unsafe_allow_html=True)
+                with st.container(border=True):
+                    st.markdown('<div class="figma-section-title">PER-CLASS CLASSIFICATION METRICS</div>', unsafe_allow_html=True)
+                    m_rows = []
+                    for l in contract_labels:
+                        r_dict = {"Class": l}
+                        r_dict.update(val_rep["per_class"][l])
+                        m_rows.append(r_dict)
+                    st.dataframe(pd.DataFrame(m_rows))
 
             # Subtype 6-scenario evaluation
             sub_map = {
@@ -1429,34 +1364,24 @@ elif "validation" in nav_section.lower():
 
             s_col1, s_col2 = st.columns(2)
             with s_col1:
-                st.markdown(f"""
-                <div class="figma-card">
-                  <div style="font-size: 0.72rem; font-weight: 700; color: #64748b; text-transform: uppercase;">
-                    SUBTYPE CONFUSION MATRIX (6 SCENARIOS, ACCURACY = {sub_rep['accuracy']*100:.1f}%)
-                  </div>
-                """, unsafe_allow_html=True)
-                df_scm = pd.DataFrame(
-                    sub_rep["confusion_matrix"],
-                    index=[f"True: {l}" for l in scen_labels],
-                    columns=[f"Pred: {l}" for l in scen_labels],
-                )
-                st.dataframe(df_scm)
-                st.markdown("</div>", unsafe_allow_html=True)
+                with st.container(border=True):
+                    st.markdown(f'<div class="figma-section-title">SUBTYPE CONFUSION MATRIX (6 SCENARIOS, ACCURACY = {sub_rep["accuracy"]*100:.1f}%)</div>', unsafe_allow_html=True)
+                    df_scm = pd.DataFrame(
+                        sub_rep["confusion_matrix"],
+                        index=[f"True: {l}" for l in scen_labels],
+                        columns=[f"Pred: {l}" for l in scen_labels],
+                    )
+                    st.dataframe(df_scm)
 
             with s_col2:
-                st.markdown("""
-                <div class="figma-card">
-                  <div style="font-size: 0.72rem; font-weight: 700; color: #64748b; text-transform: uppercase;">
-                    SUBTYPE CLASSIFICATION METRICS
-                  </div>
-                """, unsafe_allow_html=True)
-                sm_rows = []
-                for l in scen_labels:
-                    sr_dict = {"Scenario": l}
-                    sr_dict.update(sub_rep["per_class"][l])
-                    sm_rows.append(sr_dict)
-                st.dataframe(pd.DataFrame(sm_rows))
-                st.markdown("</div>", unsafe_allow_html=True)
+                with st.container(border=True):
+                    st.markdown('<div class="figma-section-title">SUBTYPE CLASSIFICATION METRICS</div>', unsafe_allow_html=True)
+                    sm_rows = []
+                    for l in scen_labels:
+                        sr_dict = {"Scenario": l}
+                        sr_dict.update(sub_rep["per_class"][l])
+                        sm_rows.append(sr_dict)
+                    st.dataframe(pd.DataFrame(sm_rows))
 
             t_locs = [it["true_pos"] for it in v_dataset if it["true_pos"] is not None]
             e_locs = [it["est_pos"] for it in v_dataset if it["true_pos"] is not None]
