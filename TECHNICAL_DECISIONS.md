@@ -34,3 +34,30 @@
 - **$R_L$:** Load resistance in Ohms ($\Omega$). Real part of termination impedance.
 - **$\text{RL}$ / $\text{RL}_{\text{dB}}$:** Return loss in decibels ($\text{dB}$), defined as $-20 \log_{10}(|\Gamma|)$.
 - Clear nomenclature maintained throughout code, docstrings, and UI to eliminate any ambiguity.
+
+---
+
+## 5. Post-Build Engineering Audit Refinements
+
+### 5.1 Velocity Factor Propagation
+- **Problem:** `extract_features(sweep_dict, Z0, vf=1.0)` was previously called inside `classify(sweep_dict, Z0)` without passing the actual velocity factor. For lines with $\text{vf} \ne 1.0$ (e.g. RG-58 with $\text{vf}=0.66$), de-embedding phase rotation $\exp(2j\beta d)$ used incorrect phase velocity, corrupting the de-embedded reflection plane.
+- **Solution:** Created `SweepResult(dict)` subclass in `measurements.py`. Retains `vf`, `Z0`, and `length` as metadata attributes while maintaining 100% standard dictionary semantics and frozen keys (`f`, `zin`, `gamma`, `vswr`, `rl_db`). `classify` extracts `vf` dynamically via `getattr(sweep_dict, 'vf', sweep_dict.get('vf', 1.0))` and propagates it to `extract_features` and de-embedding. Legacy plain dictionaries remain fully supported with documented fallback to 1.0.
+
+### 5.2 Unclipped Noise Simulation & Physical VSWR Handling
+- **Problem:** Measurement noise was previously clipped to $|\Gamma| \le 1.0$, which is unphysical for noisy receiver observations and distorts noise statistics.
+- **Solution:** Preserved noisy complex reflection samples even when $|S_{11}| > 1.0$. Separated ideal noiseless response (`gamma_ideal`) from noisy observed response (`gamma`). Because passive-line VSWR is physically undefined for $|S_{11}| > 1.0$, `measurements.vswr()` evaluates non-passive noisy points as `np.nan` rather than throwing exceptions or returning negative numbers. The classifier operates on the unclipped noisy data, and the UI displays explanatory warning banners.
+
+### 5.3 Physics-Based Resolution of Open vs Short Circuit
+- **Problem:** At microwave frequencies (e.g. 4 GHz), $\lambda/4 \approx 1.8\text{ cm}$. Any slight discretization error in high-frequency phase de-embedding rotates phase by $\approx 180^\circ$, causing short circuits to be confused with open circuits (previously 18/40 short cases were misclassified as open).
+- **Solution:** Evaluated the linear unwrapped phase fit $\phi(f) = \phi_0 + m f$. The intercept at $f \to 0$ ($\phi_0 = \lim_{f \to 0}\angle \Gamma(f)$) represents the reflection angle at DC, where electrical line length $\beta l \to 0$ vanishes completely regardless of line length or frequency:
+  $$\cos(\phi_0) = \begin{cases} +1.0 & \text{Open Circuit } (\Gamma_L = +1) \\ -1.0 & \text{Short Circuit } (\Gamma_L = -1) \end{cases}$$
+  Corroborated by actual de-embedded real reflection with true $v_p$, this achieved **100% recall** (40/40 open, 40/40 short) with 0 misclassifications.
+
+### 5.4 Contiguous Matching Bandwidth
+- **Problem:** `bw_freqs[-1] - bw_freqs[0]` spanned across disconnected harmonic bands if the return loss threshold was met in multiple regions.
+- **Solution:** Identified the array index closest to $f_{\text{design}}$ and expanded left and right along contiguous points satisfying $\text{RL} \ge \text{threshold}$. If threshold is not met at $f_0$, bandwidth is reported as $0.0\text{ Hz}$.
+
+### 5.5 Physical Rayleigh Resolution vs Interpolation Bin Spacing
+- **Rayleigh Physical Limit:** $\Delta R = \frac{v_p}{2 B}$. Two distinct physical discontinuities separated by $< \Delta R$ merge into a single impulse peak and cannot be resolved.
+- **Interpolation Bin Step:** $\delta d = \frac{v_p}{2 N_{\text{pad}} \Delta f}$. Zero-padding interpolates the peak centroid between coarse FFT bins, but does not improve the physical Rayleigh resolution limit $\Delta R$.
+- Both metrics and the physical phase-slope bias introduced by reactive discontinuities (series L and shunt C) are explicitly reported in code, validation outputs, and UI.

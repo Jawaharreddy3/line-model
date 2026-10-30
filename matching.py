@@ -149,13 +149,27 @@ def compare_matching(
     vswr_f0 = meas.vswr(gamma_f0)
     rl_f0 = meas.return_loss_db(gamma_f0)
 
-    # Compute usable bandwidth (contiguous band around f_design where RL >= threshold)
-    bw_mask = rl_after >= float(rl_threshold)
-    if np.any(bw_mask):
-        bw_freqs = f_arr[bw_mask]
-        bandwidth_hz = float(bw_freqs[-1] - bw_freqs[0])
-    else:
+    # Compute usable bandwidth: contiguous band containing f_design where RL >= threshold
+    thresh = float(rl_threshold)
+    idx_0 = int(np.argmin(np.abs(f_arr - float(f_design))))
+
+    # Check if threshold is met at design frequency
+    if rl_after[idx_0] < thresh:
         bandwidth_hz = 0.0
+        bw_edges = (None, None)
+    else:
+        # Expand contiguous band to the left
+        i_left = idx_0
+        while i_left > 0 and rl_after[i_left - 1] >= thresh:
+            i_left -= 1
+
+        # Expand contiguous band to the right
+        i_right = idx_0
+        while i_right < len(f_arr) - 1 and rl_after[i_right + 1] >= thresh:
+            i_right += 1
+
+        bandwidth_hz = float(f_arr[i_right] - f_arr[i_left])
+        bw_edges = (float(f_arr[i_left]), float(f_arr[i_right]))
 
     return {
         "before": before_dict,
@@ -164,6 +178,7 @@ def compare_matching(
         "length_m": lt,
         "f_design": f_design,
         "bandwidth_hz": bandwidth_hz,
+        "bw_edges": bw_edges,
         "rl_threshold": float(rl_threshold),
         "at_f_design": {
             "zin": zin_f0,

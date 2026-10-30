@@ -93,13 +93,33 @@ def test_reactive_discontinuity_trend():
     assert mag_C[-1] > mag_C[0]  # rises with frequency
 
 
-def test_noisy_simulation_bounded():
-    sim = fs.simulate_fault(
-        "mismatch", Z0, LENGTH, FREQ, vf=VF, noise_std=0.05
-    )
-    mag = np.abs(sim["sweep"]["gamma"])
-    assert np.all(mag <= 1.0)
-    assert np.all(mag >= 0.0)
+def test_noisy_simulation_unclipped_and_reproducible():
+    # Fixed random seeds ensure reproducible noise
+    rng1 = np.random.default_rng(12345)
+    rng2 = np.random.default_rng(12345)
+
+    sim1 = fs.simulate_fault("open", Z0, LENGTH, FREQ, vf=VF, noise_std=0.10, rng=rng1)
+    sim2 = fs.simulate_fault("open", Z0, LENGTH, FREQ, vf=VF, noise_std=0.10, rng=rng2)
+
+    # 1. Reproducibility
+    assert np.allclose(sim1["sweep"]["gamma"], sim2["sweep"]["gamma"])
+
+    # 2. Ideal response remains perfectly unity and passive
+    assert "gamma_ideal" in sim1["truth"]
+    assert np.allclose(np.abs(sim1["truth"]["gamma_ideal"]), 1.0)
+
+    # 3. Noisy response can exceed unity (|S11| > 1) without silent clipping
+    noisy_mag = np.abs(sim1["sweep"]["gamma"])
+    assert np.any(noisy_mag > 1.0)
+
+    # 4. For samples where |S11| > 1, VSWR is np.nan (handled gracefully without crashing)
+    over_unity_mask = noisy_mag > 1.0
+    vswr_vals = sim1["sweep"]["vswr"]
+    assert np.all(np.isnan(vswr_vals[over_unity_mask]))
+
+    # 5. Metadata preserved in SweepResult
+    assert sim1["sweep"].vf == pytest.approx(VF)
+    assert sim1["sweep"].Z0 == 50.0
 
 
 def test_invalid_scenario_raises():

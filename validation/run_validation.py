@@ -151,7 +151,7 @@ def run_full_validation():
     df_cm.to_csv(cm_path)
     print(f"Saved: {cm_path}")
 
-    # Export Classification Report
+    # Export Contract Classification Report
     metrics_rows = []
     for l in contract_labels:
         row = {"Class": l}
@@ -163,6 +163,41 @@ def run_full_validation():
     print(f"\n--- Classification Metrics Summary (Overall Accuracy = {report['accuracy']*100:.2f}%) ---")
     print(df_metrics.to_string(index=False))
     print(f"Saved: {metrics_path}")
+
+    # 2b. Compute Subtype Classification Metrics (6 Physical Scenarios)
+    subtype_map = {
+        "matched": "healthy",
+        "resistive_mismatch": "mismatch",
+        "open_circuit": "open",
+        "short_circuit": "short",
+        "series_L": "series_L",
+        "shunt_C": "shunt_C",
+        "uncertain": "unknown",
+    }
+    y_pred_scenario_mapped = [subtype_map.get(s, "unknown") for s in y_pred_subtype]
+    scenario_labels = ["healthy", "mismatch", "open", "short", "series_L", "shunt_C"]
+    subtype_report = compute_classification_report(y_true_scenario, y_pred_scenario_mapped, scenario_labels)
+    cm_sub = subtype_report["confusion_matrix"]
+
+    print("\n--- Empirical Subtype Confusion Matrix (6 Physical Scenarios) ---")
+    df_cm_sub = pd.DataFrame(cm_sub, index=[f"True: {l}" for l in scenario_labels], columns=[f"Pred: {l}" for l in scenario_labels])
+    print(df_cm_sub.to_string())
+
+    cm_sub_path = os.path.join(RESULTS_CSV_DIR, "subtype_confusion_matrix.csv")
+    df_cm_sub.to_csv(cm_sub_path)
+    print(f"Saved: {cm_sub_path}")
+
+    sub_metrics_rows = []
+    for l in scenario_labels:
+        row = {"Scenario": l}
+        row.update(subtype_report["per_class"][l])
+        sub_metrics_rows.append(row)
+    df_sub_metrics = pd.DataFrame(sub_metrics_rows)
+    sub_metrics_path = os.path.join(RESULTS_CSV_DIR, "subtype_classification_metrics.csv")
+    df_sub_metrics.to_csv(sub_metrics_path, index=False)
+    print(f"\n--- Subtype Classification Metrics Summary (Accuracy = {subtype_report['accuracy']*100:.2f}%) ---")
+    print(df_sub_metrics.to_string(index=False))
+    print(f"Saved: {sub_metrics_path}")
 
     # 3. Compute Fault Location Metrics
     loc_metrics = compute_location_metrics(true_positions, est_positions)
@@ -223,6 +258,30 @@ def run_full_validation():
     fig_cm.savefig(f_cm_path, dpi=150)
     plt.close(fig_cm)
     print(f"Saved figure: {f_cm_path}")
+
+    # ── Figure 1b: Subtype Confusion Matrix Heatmap (6 Scenarios) ────────────
+    fig_sub, ax_sub = plt.subplots(figsize=(7.5, 6))
+    im_sub = ax_sub.imshow(cm_sub, cmap="Blues", interpolation="nearest")
+    ax_sub.set_xticks(range(len(scenario_labels)))
+    ax_sub.set_yticks(range(len(scenario_labels)))
+    ax_sub.set_xticklabels(scenario_labels, rotation=45, ha="right")
+    ax_sub.set_yticklabels(scenario_labels)
+    ax_sub.set_xlabel("Predicted Physical Scenario")
+    ax_sub.set_ylabel("Ground-Truth Scenario")
+    ax_sub.set_title(f"Subtype Confusion Matrix (N = {subtype_report['total_samples']}, Acc = {subtype_report['accuracy']*100:.1f}%)")
+    plt.colorbar(im_sub, ax=ax_sub, label="Sample Count")
+
+    for i in range(len(scenario_labels)):
+        for j in range(len(scenario_labels)):
+            val = cm_sub[i, j]
+            color = "white" if val > cm_sub.max() / 2 else "black"
+            ax_sub.text(j, i, str(val), ha="center", va="center", color=color, fontweight="bold")
+
+    plt.tight_layout()
+    f_sub_path = os.path.join(RESULTS_FIG_DIR, "subtype_confusion_matrix.png")
+    fig_sub.savefig(f_sub_path, dpi=150)
+    plt.close(fig_sub)
+    print(f"Saved figure: {f_sub_path}")
 
     # ── Figure 2: Accuracy vs Noise Degradation ───────────────────────────────
     fig_n, ax_n = plt.subplots(figsize=(7, 4.5))

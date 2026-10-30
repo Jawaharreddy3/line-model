@@ -12,12 +12,33 @@ import numpy as np
 import line_model as lm
 
 __all__ = [
+    "SweepResult",
     "reflection_coefficient",
     "vswr",
     "return_loss_db",
     "sweep",
     "smith_plot",
 ]
+
+
+class SweepResult(dict):
+    """
+    Dictionary-compatible container for frequency sweep results.
+
+    Preserves exact contract keys ('f', 'zin', 'gamma', 'vswr', 'rl_db')
+    while retaining line metadata (vf, Z0, length) as accessible attributes.
+    Supports standard dictionary access, unpacking, and JSON serialization.
+    """
+
+    def __init__(self, *args, vf=1.0, Z0=50.0, length=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.vf = float(vf)
+        self.Z0 = complex(Z0)
+        self.length = float(length) if length is not None else None
+
+    def __repr__(self):
+        keys = list(self.keys())
+        return f"<SweepResult keys={keys} vf={self.vf} Z0={self.Z0}>"
 
 
 def reflection_coefficient(Z, Z0):
@@ -40,7 +61,6 @@ def reflection_coefficient(Z, Z0):
     denom = Z_b[fin_mask] + Z0_b[fin_mask]
     singular = np.abs(denom) < 1e-15
 
-    # Safe division
     out_fin = np.empty(denom.shape, dtype=complex)
     out_fin[singular] = 1.0 + 0.0j
     ok = ~singular
@@ -55,25 +75,23 @@ def vswr(gamma):
     Voltage Standing Wave Ratio (VSWR):
         VSWR = (1 + |Gamma|) / (1 - |Gamma|)
 
-    Returns np.inf when |Gamma| == 1.0 (or within numerical tolerance 1e-12).
-    Raises ValueError for non-passive loads |Gamma| > 1.0 + 1e-6.
+    Behavior:
+      - |Gamma| == 1.0: returns np.inf (total reflection).
+      - 0 <= |Gamma| < 1.0: returns physical ratio in [1.0, inf).
+      - |Gamma| > 1.0: returns np.nan for non-passive noisy samples
+        rather than crashing or returning negative values.
     """
     g = np.asarray(gamma, dtype=complex)
     mag = np.abs(g)
 
-    # Check for active / non-passive values
-    if np.any(mag > 1.0 + 1e-6):
-        raise ValueError("VSWR requires passive reflection coefficient |Gamma| <= 1")
+    out = np.full(mag.shape, np.nan, dtype=float)
 
-    # Clip slight numerical overshoots (e.g., 1.000000000000001)
-    mag_clipped = np.clip(mag, 0.0, 1.0)
+    # Passive samples: 0 <= |Gamma| <= 1.0 (with 1e-12 tolerance for float precision)
+    total_refl = np.isclose(mag, 1.0, atol=1e-12)
+    out[total_refl] = np.inf
 
-    out = np.empty(mag_clipped.shape, dtype=float)
-    total_reflection = np.isclose(mag_clipped, 1.0, atol=1e-12)
-    out[total_reflection] = np.inf
-
-    normal = ~total_reflection
-    out[normal] = (1.0 + mag_clipped[normal]) / (1.0 - mag_clipped[normal])
+    valid_passive = (mag >= 0.0) & (mag < 1.0 - 1e-12)
+    out[valid_passive] = (1.0 + mag[valid_passive]) / (1.0 - mag[valid_passive])
 
     return out if out.ndim else out.item()
 
@@ -83,8 +101,10 @@ def return_loss_db(gamma):
     Return Loss in dB:
         RL = -20 * log10(|Gamma|)
 
-    Returns np.inf when matched (|Gamma| == 0).
-    Guards against divide-by-zero warnings.
+    Behavior:
+      - Matched load (|Gamma| == 0): returns np.inf without log warnings.
+      - Passive reflection (0 < |Gamma| <= 1): returns positive dB.
+      - Non-passive noisy reflection (|Gamma| > 1): returns negative dB.
     """
     g = np.asarray(gamma, dtype=complex)
     mag = np.abs(g)
@@ -113,11 +133,11 @@ def sweep(Z0, ZL, length, f_array, vf=1.0):
 
     Returns
     -------
-    dict with exact contract keys:
+    SweepResult (dict) with exact contract keys:
         'f'     : frequency array [Hz]
         'zin'   : input impedance array [ohm]
         'gamma' : input reflection coefficient array
-        'vswr'  : VSWR array
+        'vswr'  : VSWR array (contains np.nan for non-passive noisy points)
         'rl_db' : Return loss array [dB]
     """
     f_arr = np.asarray(f_array, dtype=float)
@@ -126,13 +146,18 @@ def sweep(Z0, ZL, length, f_array, vf=1.0):
     swr = vswr(gamma)
     rl = return_loss_db(gamma)
 
-    return {
-        "f": f_arr,
-        "zin": zin,
-        "gamma": gamma,
-        "vswr": swr,
-        "rl_db": rl,
-    }
+    return SweepResult(
+        {
+            "f": f_arr,
+            "zin": zin,
+            "gamma": gamma,
+            "vswr": swr,
+            "rl_db": rl,
+        },
+        vf=vf,
+        Z0=Z0,
+        length=length,
+    )
 
 
 def smith_plot(gamma_array, ax=None, **kw):
@@ -181,7 +206,6 @@ def smith_plot(gamma_array, ax=None, **kw):
         radius_a = abs(1.0 / x)
         xc = center_x + radius_a * np.cos(phi)
         yc = center_y + radius_a * np.sin(phi)
-        # Clip inside unit circle (|Gamma| <= 1.001)
         inside = (xc**2 + yc**2) <= 1.001
         ax.plot(
             xc[inside],
@@ -192,16 +216,13 @@ def smith_plot(gamma_array, ax=None, **kw):
             zorder=1,
         )
 
-    # Horizontal center line (real axis)
     ax.axhline(0, color="black", linewidth=0.8, alpha=0.5, zorder=1)
 
-    # Plot input reflection trajectory
     g = np.asarray(gamma_array, dtype=complex)
     default_kw = {"color": "crimson", "linewidth": 1.8, "label": "Gamma"}
     default_kw.update(kw)
     ax.plot(g.real, g.imag, **default_kw)
 
-    # Mark starting frequency point
     if len(g) > 0:
         ax.scatter([g.real[0]], [g.imag[0]], color="crimson", s=30, zorder=5)
 

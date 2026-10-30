@@ -13,14 +13,14 @@
 | `line_model.py` | `quarter_wave_zin(Z0, ZL)` | $Z_0^2 / Z_L$ | **Verified** | Analytic cross-check |
 | `line_model.py` | `quarter_wave_impedance(Zline, R_load)` | $Z_t = \sqrt{Z_{\text{line}} R}$ | **Verified** | Real load required |
 | `measurements.py`| `reflection_coefficient(Z, Z0)` | $\Gamma = (Z-Z_0)/(Z+Z_0)$ | **Verified** | Vectorized, handles `inf` |
-| `measurements.py`| `vswr(gamma)` | $(1+|\Gamma|)/(1-|\Gamma|)$ | **Verified** | Returns `np.inf` when $|\Gamma| \ge 1$ |
+| `measurements.py`| `vswr(gamma)` | $(1+|\Gamma|)/(1-|\Gamma|)$ | **Verified** | Returns `np.inf` for $|\Gamma|=1.0$; `np.nan` for noisy active samples $|\Gamma| > 1.0$ |
 | `measurements.py`| `return_loss_db(gamma)` | $-20\log_{10}(|\Gamma|)$ | **Verified** | Returns `np.inf` when $\Gamma = 0$ |
-| `measurements.py`| `sweep(Z0, ZL, length, f_array, vf)` | dict: `f`, `zin`, `gamma`, `vswr`, `rl_db` | **Verified** | Matches contract keys |
+| `measurements.py`| `sweep(Z0, ZL, length, f_array, vf)` | `SweepResult` (dict-compatible): `f`, `zin`, `gamma`, `vswr`, `rl_db` | **Verified** | Preserves `vf`, `Z0`, `length`, `gamma_ideal` metadata attributes |
 | `measurements.py`| `smith_plot(gamma_array, ax=None, **kw)`| matplotlib `Axes` | **Verified** | Constant $r, x$ grid overlay |
-| `diagnosis.py` | `classify(sweep_dict, Z0)` | `"healthy"`, `"open"`, `"short"`, `"mismatch"`, `"unknown"` | **Verified** | Exact 5 frozen labels + rich subtypes |
+| `diagnosis.py` | `classify(sweep_dict, Z0)` | `"healthy"`, `"open"`, `"short"`, `"mismatch"`, `"unknown"` | **Verified** | Exact 5 frozen labels + rich subtypes (`cos(phi0)` DC intercept, 100% open/short separation) |
 | `diagnosis.py` | `estimate_distance(sweep_dict, vf, fault_class)` | float [m] or `None` | **Verified** | IFFT TDR peak method; `None` if healthy |
 | `matching.py` | `design_quarter_wave(Z0, RL, f, vf)` | dict: `Zt`, `length_m` | **Verified** | Exact matching at $f_0$ |
-| `matching.py` | `compare_matching(Z0, ZL, f_array, ...)` | dict: before / after sweep results | **Verified** | Bandwidth ($\text{RL} \ge 20\text{ dB}$) |
+| `matching.py` | `compare_matching(Z0, ZL, f_array, ...)` | dict: before / after sweep results | **Verified** | Contiguous passband ($\text{RL} \ge 20\text{ dB}$) around $f_{\text{design}}$ |
 | `app.py` | Streamlit Dashboard | Web Application | **Verified** | Uses only modular interfaces |
 
 ---

@@ -11,11 +11,17 @@ Simulates transmission lines with:
 
 Discontinuities use 2-port ABCD matrix cascading:
   M_total = M_line(0..d) @ M_discontinuity @ M_line(d..length)
+
+Preserves:
+  - SweepResult object containing actual velocity factor (vf), Z0, and length metadata.
+  - Noiseless ideal response ('gamma_ideal') separated from noisy observed response ('gamma').
+  - Unclipped noise modeling: samples with |S11| > 1.0 are preserved; VSWR returns NaN.
 """
 
 import numpy as np
 import line_model as lm
 import measurements as meas
+from measurements import SweepResult
 
 FAULT_SCENARIOS = [
     "healthy",
@@ -37,12 +43,7 @@ __all__ = [
 
 
 def abcd_uniform_line(Z0, beta, length):
-    """
-    ABCD matrix for a lossless uniform transmission-line section.
-        [ [cos(beta*l),     j*Z0*sin(beta*l)],
-          [j*sin(beta*l)/Z0, cos(beta*l)     ] ]
-    Supports scalar or array frequencies.
-    """
+    """ABCD matrix for a lossless uniform transmission-line section."""
     bl = np.asarray(beta, dtype=float) * float(length)
     cos_bl = np.cos(bl)
     sin_bl = np.sin(bl)
@@ -52,16 +53,11 @@ def abcd_uniform_line(Z0, beta, length):
     B = 1j * Z0c * sin_bl
     C = 1j * (sin_bl / Z0c)
     D = cos_bl
-
     return A, B, C, D
 
 
 def abcd_series_impedance(Z):
-    """
-    ABCD matrix for a series impedance:
-        [ [1, Z],
-          [0, 1] ]
-    """
+    """ABCD matrix for a series impedance [ [1, Z], [0, 1] ]."""
     Z = np.asarray(Z, dtype=complex)
     ones = np.ones_like(Z, dtype=complex)
     zeros = np.zeros_like(Z, dtype=complex)
@@ -69,11 +65,7 @@ def abcd_series_impedance(Z):
 
 
 def abcd_shunt_admittance(Y):
-    """
-    ABCD matrix for a shunt admittance:
-        [ [1, 0],
-          [Y, 1] ]
-    """
+    """ABCD matrix for a shunt admittance [ [1, 0], [Y, 1] ]."""
     Y = np.asarray(Y, dtype=complex)
     ones = np.ones_like(Y, dtype=complex)
     zeros = np.zeros_like(Y, dtype=complex)
@@ -92,16 +84,11 @@ def multiply_abcd(M1, M2):
 
 
 def zin_from_abcd(ABCD, ZL):
-    """
-    Input impedance from ABCD matrix and load impedance ZL:
-        Zin = (A*ZL + B) / (C*ZL + D)
-    Handles ZL = np.inf: Zin = A / C.
-    """
+    """Input impedance from ABCD matrix and load impedance ZL."""
     A, B, C, D = ABCD
     ZL_val = complex(ZL)
 
     if np.isinf(abs(ZL_val)):
-        # Limit as ZL -> inf is A / C
         C_safe = np.where(np.abs(C) < 1e-15, 1e-15, C)
         out = A / C_safe
         out[np.abs(C) < 1e-15] = np.inf
@@ -133,24 +120,11 @@ def simulate_fault(
     """
     Simulate one of the 6 canonical transmission line fault scenarios.
 
-    Parameters
-    ----------
-    scenario    : str, one of FAULT_SCENARIOS
-    Z0          : characteristic impedance [ohm]
-    length      : total line length [m]
-    f_array     : frequency array [Hz]
-    vf          : velocity factor (0 < vf <= 1.0)
-    fault_pos   : physical position of fault from input [m] (default: length / 2)
-    L_val       : inductance [H] for 'series_L' scenario
-    C_val       : capacitance [F] for 'shunt_C' scenario
-    ZL_mismatch : load impedance [ohm] for 'mismatch' scenario
-    noise_std   : standard deviation of complex Gaussian noise on Gamma
-    rng         : np.random.Generator (optional)
-
     Returns
     -------
     dict with:
-        'sweep': dict with keys ('f', 'zin', 'gamma', 'vswr', 'rl_db')
+        'sweep': SweepResult with keys ('f', 'zin', 'gamma', 'vswr', 'rl_db')
+                 plus metadata attributes .vf, .Z0, .length, .gamma_ideal
         'truth': ground truth metadata dict
     """
     if scenario not in FAULT_SCENARIOS:
@@ -177,31 +151,32 @@ def simulate_fault(
         "L_val": float(L_val),
         "C_val": float(C_val),
         "vf": float(vf),
+        "noise_std": float(noise_std),
     }
 
     if scenario == "healthy":
         ZL = complex(Z0)
         truth["ZL"] = ZL
         truth["fault_pos"] = None
-        zin = lm.input_impedance_at_freq(Z0, ZL, f_arr, length, vf=vf)
+        zin_ideal = lm.input_impedance_at_freq(Z0, ZL, f_arr, length, vf=vf)
 
     elif scenario == "mismatch":
         ZL = complex(ZL_mismatch)
         truth["ZL"] = ZL
         truth["fault_pos"] = float(length)
-        zin = lm.input_impedance_at_freq(Z0, ZL, f_arr, length, vf=vf)
+        zin_ideal = lm.input_impedance_at_freq(Z0, ZL, f_arr, length, vf=vf)
 
     elif scenario == "open":
         ZL = lm.OPEN
         truth["ZL"] = ZL
         truth["fault_pos"] = float(length)
-        zin = lm.input_impedance_at_freq(Z0, ZL, f_arr, length, vf=vf)
+        zin_ideal = lm.input_impedance_at_freq(Z0, ZL, f_arr, length, vf=vf)
 
     elif scenario == "short":
         ZL = 0.0 + 0j
         truth["ZL"] = ZL
         truth["fault_pos"] = float(length)
-        zin = lm.input_impedance_at_freq(Z0, ZL, f_arr, length, vf=vf)
+        zin_ideal = lm.input_impedance_at_freq(Z0, ZL, f_arr, length, vf=vf)
 
     elif scenario == "series_L":
         ZL = complex(Z0)
@@ -216,7 +191,7 @@ def simulate_fault(
         M2 = abcd_uniform_line(Z0, beta, d2)
 
         M_total = multiply_abcd(multiply_abcd(M1, M_disc), M2)
-        zin = zin_from_abcd(M_total, ZL)
+        zin_ideal = zin_from_abcd(M_total, ZL)
 
     elif scenario == "shunt_C":
         ZL = complex(Z0)
@@ -231,36 +206,57 @@ def simulate_fault(
         M2 = abcd_uniform_line(Z0, beta, d2)
 
         M_total = multiply_abcd(multiply_abcd(M1, M_disc), M2)
-        zin = zin_from_abcd(M_total, ZL)
+        zin_ideal = zin_from_abcd(M_total, ZL)
 
-    gamma = meas.reflection_coefficient(zin, Z0)
+    gamma_ideal = meas.reflection_coefficient(zin_ideal, Z0)
 
-    # Optional noise addition (S11 measurement noise)
+    # Realistic measurement noise modeling (UNCLIPPED)
+    num_non_passive = 0
     if noise_std > 0.0:
         if rng is None:
             rng = np.random.default_rng(42)
-        noise = rng.normal(0, noise_std / np.sqrt(2), len(f_arr)) + \
-                1j * rng.normal(0, noise_std / np.sqrt(2), len(f_arr))
-        gamma_noisy = gamma + noise
-        mag = np.abs(gamma_noisy)
-        overshoot = mag > 1.0
-        gamma_noisy[overshoot] = gamma_noisy[overshoot] / mag[overshoot]
-        gamma = gamma_noisy
-        # Recompute Zin from noisy Gamma for consistency
-        zin = Z0 * (1.0 + gamma) / (1.0 - gamma)
+        sigma_1d = noise_std / np.sqrt(2.0)
+        noise = rng.normal(0, sigma_1d, len(f_arr)) + 1j * rng.normal(0, sigma_1d, len(f_arr))
+        # Additive noise without silent clipping
+        gamma_observed = gamma_ideal + noise
+        non_passive_mask = np.abs(gamma_observed) > 1.0
+        num_non_passive = int(np.sum(non_passive_mask))
+    else:
+        gamma_observed = gamma_ideal.copy()
 
-    vswr_arr = meas.vswr(gamma)
-    rl_arr = meas.return_loss_db(gamma)
+    truth["num_non_passive_samples"] = num_non_passive
 
-    sweep_dict = {
-        "f": f_arr,
-        "zin": zin,
-        "gamma": gamma,
-        "vswr": vswr_arr,
-        "rl_db": rl_arr,
-    }
+    # Compute observed measurement metrics
+    vswr_arr = meas.vswr(gamma_observed)
+    rl_arr = meas.return_loss_db(gamma_observed)
+
+    # Zin calculated from observed S11
+    # Guard against singular points (1 - Gamma == 0)
+    denom = 1.0 - gamma_observed
+    singular = np.abs(denom) < 1e-15
+    zin_observed = np.empty_like(gamma_observed, dtype=complex)
+    zin_observed[singular] = np.inf
+    ok = ~singular
+    zin_observed[ok] = Z0 * (1.0 + gamma_observed[ok]) / denom[ok]
+
+    sweep_res = SweepResult(
+        {
+            "f": f_arr,
+            "zin": zin_observed,
+            "gamma": gamma_observed,
+            "vswr": vswr_arr,
+            "rl_db": rl_arr,
+        },
+        vf=vf,
+        Z0=Z0,
+        length=length,
+    )
+    # Store ideal noiseless reflection for verification
+    truth["gamma_ideal"] = gamma_ideal
+    sweep_res.gamma_ideal = gamma_ideal
+    sweep_res.s11 = gamma_observed
 
     return {
-        "sweep": sweep_dict,
+        "sweep": sweep_res,
         "truth": truth,
     }

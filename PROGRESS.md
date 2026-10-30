@@ -23,6 +23,7 @@
 | **Phase 5** | Member 4: Interactive Streamlit Web UI | `app.py`, `test_app.py` | **COMPLETED** | 64 / 64 (all modules passing) |
 | **Phase 6** | End-to-End System Integration & Master Verification | `reproducible_examples.py`, `test_integration.py`, `figures/`, `README.md` | **COMPLETED** | 72 / 72 (100% pass across all 7 test suites) |
 | **Phase 7** | Master Academic Engineering Expansion & Validation Laboratory | `core/`, `validation/`, `results/`, `docs/`, `requirements.txt`, 8-view `app.py` | **COMPLETED** | 80 / 80 (100% pass across 9 test suites) |
+| **Phase 8** | Post-Build Engineering Audit & Algorithmic Refinements | `measurements.py` (SweepResult), `fault_simulation.py` (unclipped noise), `diagnosis.py` (DC phase intercept), `matching.py` (contiguous BW), `validation/` (subtype matrix) | **COMPLETED** | 102 / 102 (100% pass across all 9 test suites) |
 
 ---
 
@@ -129,6 +130,18 @@
     - `validation.md`
     - `references.md`
 
+### Checkpoint: Phase 8 (Post-Build Engineering Audit & Algorithmic Refinements)
+- **Command:** `python -m pytest -v`
+- **Result:** 102 passed in 1.44s (100% pass across all 9 test suites)
+- **Verified items:**
+  - **Velocity Factor Propagation:** Introduced dictionary-compatible `SweepResult` retaining `vf`, `Z0`, `length`, and `gamma_ideal`. `classify` propagates actual configured `vf` to `extract_features` and IFFT de-embedding without breaking the frozen `classify(sweep_dict, Z0)` signature. Legacy plain dictionaries remain supported with documented fallback.
+  - **Unclipped Noise Modeling:** Replaced artificial `|Gamma| <= 1.0` clipping with realistic complex Gaussian noise where samples with $|S_{11}| > 1.0$ are preserved; `vswr(gamma)` returns `np.nan` for non-passive noisy points with clear UI warning banners; noiseless ideal response (`gamma_ideal`) is cleanly separated. Seeded noise verified reproducible.
+  - **Open vs Short Circuit Resolution:** Formulated physics-based DC phase intercept $\phi_0 = \lim_{f \to 0}\angle \Gamma(f)$ via unwrapped phase slope regression. At DC, line rotation $\beta l \to 0$, yielding $\cos\phi_0 = +1.0$ for open circuit and $-1.0$ for short circuit with 100% mathematical separation. Completely resolved the previous 18/40 open/short misclassification.
+  - **Internal Subtype Classification:** Full statistical evaluation across all 6 underlying physical scenarios (`healthy`, `mismatch`, `open`, `short`, `series_L`, `shunt_C`) alongside the 5 frozen public contract labels. Empirical accuracy: **99.58%** contract, **99.58%** subtype (239/240 correct).
+  - **Contiguous Matching Bandwidth:** `compare_matching` in `matching.py` now expands contiguous passband boundaries from exact design frequency $f_{\text{design}}$ where $\text{RL} \ge \text{threshold}$, returning $0.0\text{ Hz}$ if threshold is not met at $f_0$.
+  - **Rayleigh Range Resolution vs Interpolation:** Formally distinguished physical Rayleigh resolution limit $\Delta R = v_p / (2B)$ from zero-padded interpolation step $\delta d = v_p / (2 N_{\text{pad}} \Delta f)$ across code, validation outputs, and dashboard views. Documented reactive discontinuity phase-slope bias.
+  - **Automated Validation Suite:** Updated `validation/run_validation.py` to produce both 5-class contract (`confusion_matrix.csv`, `confusion_matrix.png`) and 6-scenario subtype (`subtype_confusion_matrix.csv`, `subtype_confusion_matrix.png`) artifacts, along with `location_errors.csv` (MAE = 0.16 cm) and `noise_sensitivity.csv`.
+
 ---
 
 ## 4. Known Bugs & Caveats
@@ -137,4 +150,4 @@
 ---
 
 ## 5. Next Immediate Step
-- Academic master build complete. Ready for presentation, review, and demonstration.
+- Push verified milestones to `origin/rf-line-doctor-build` and deliver final summary report.

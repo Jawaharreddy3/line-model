@@ -30,30 +30,40 @@ All module interfaces adhere strictly to the frozen contract in [`INTERFACES.md`
 ```
 line-model/
 ├── line_model.py            # Core lossless transmission-line model (Member 1)
-├── measurements.py          # Reflection coeff, VSWR, return loss, sweeps & Smith charts (Member 2)
-├── fault_simulation.py      # 6 canonical fault scenarios & cascaded ABCD modeling
-├── diagnosis.py             # Rule-based fault classifier & IFFT distance localization (Member 3)
-├── matching.py              # Quarter-wave transformer design & bandwidth evaluator (Member 3)
-├── app.py                   # Streamlit web dashboard (Member 4)
+├── measurements.py          # Reflection coeff, VSWR, return loss, sweeps, SweepResult & Smith charts (Member 2)
+├── fault_simulation.py      # 6 canonical fault scenarios, cascaded ABCD & unclipped noise modeling
+├── diagnosis.py             # Rule-based fault classifier, DC phase intercept & IFFT localization (Member 3)
+├── matching.py              # Quarter-wave transformer design & contiguous bandwidth evaluator (Member 3)
+├── app.py                   # Streamlit web dashboard with 8 dedicated interactive views (Member 4)
 ├── reproducible_examples.py # Script generating publication figures (F1-F4) & terminal report
+├── core/                    # Advanced academic diagnostic & signal processing engine
+│   ├── signal_analysis.py   # Spectral feature extraction & S11 metrics
+│   ├── fault_location.py    # Dual-method localization (IFFT TDR + Phase Slope)
+│   ├── fault_simulator.py   # High-level simulation interface
+│   └── diagnostic_explanations.py # Physical failure mode explanations
+├── validation/              # Empirical Monte Carlo validation laboratory
+│   ├── classification_metrics.py # Confusion matrix, precision, recall, F1
+│   ├── location_metrics.py  # MAE, RMSE, maximum error analysis
+│   └── run_validation.py    # Automated test runner exporting CSVs & figures
+├── results/                 # Empirical validation artifacts
+│   ├── csv/                 # confusion_matrix.csv, subtype_confusion_matrix.csv, etc.
+│   └── figures/             # Confusion matrices, noise sensitivity, error histograms
+├── docs/                    # Architectural and theoretical documentation
 ├── INTERFACES.md            # Frozen team interface contract (27 Oct 2026)
 ├── HAND_CALCULATIONS.md     # 7 analytical verification benchmarks
 ├── PROGRESS.md              # Long-running recovery and milestone log
 ├── IMPLEMENTATION_STATUS.md # Live interface compliance matrix
 ├── TECHNICAL_DECISIONS.md   # Architectural design and singularity handling record
-├── tests/
-│   ├── test_line_model.py       # Core physics and boundary condition tests (27 tests)
-│   ├── test_measurements.py     # Measurement functions and array broadcasting (9 tests)
-│   ├── test_fault_simulation.py # Discontinuity cascading & scenario tests (10 tests)
-│   ├── test_matching.py         # Quarter-wave matching and bandwidth tests (6 tests)
-│   ├── test_diagnosis.py        # Fault classification & IFFT TDR tests (10 tests)
-│   ├── test_app.py              # Streamlit headless integration tests (2 tests)
-│   └── test_integration.py      # End-to-end hand-calculation benchmark suite (8 tests)
-└── figures/                 # Generated publication-quality figures
-    ├── 1_scenario_sweeps.png
-    ├── 2_smith_chart_overlay.png
-    ├── 3_matching_before_after.png
-    └── 4_tdr_localization.png
+└── tests/                   # 102 comprehensive pytest unit and integration tests
+    ├── test_line_model.py       # Core physics and boundary condition tests (27 tests)
+    ├── test_measurements.py     # Measurement functions, SweepResult, non-passive VSWR (12 tests)
+    ├── test_fault_simulation.py # Discontinuity cascading & unclipped noise tests (10 tests)
+    ├── test_matching.py         # Quarter-wave matching and contiguous bandwidth tests (7 tests)
+    ├── test_diagnosis.py        # Fault classification, open/short separation & IFFT TDR tests (28 tests)
+    ├── test_location.py         # Fault location dual-method & range resolution tests (5 tests)
+    ├── test_validation.py       # Statistical validation metric tests (3 tests)
+    ├── test_app.py              # Streamlit headless integration tests (2 tests)
+    └── test_integration.py      # End-to-end hand-calculation benchmark suite (8 tests)
 ```
 
 ---
@@ -64,7 +74,13 @@ line-model/
 ```bash
 python -m pytest -v
 ```
-*(All 72 tests pass in < 3 seconds)*
+*(All 102 tests pass in < 2 seconds with zero failures)*
+
+### Run Automated Validation Laboratory
+```bash
+python validation/run_validation.py
+```
+*(Generates empirical CSV reports in `results/csv/` and publication heatmaps in `results/figures/`)*
 
 ### Run End-to-End Verification & Generate Publication Figures
 ```bash
@@ -112,3 +128,19 @@ All 7 analytical scenarios from `HAND_CALCULATIONS.md` ($Z_0 = 50\,\Omega, f = 1
 - **Characteristic Impedance:** $Z_t = \sqrt{Z_0 R_L}$
 - **Physical Length:** $l_t = \frac{\lambda_t}{4} = \frac{v_p}{4 f_0}$
 - **Passband:** Contiguous frequency band where $\text{RL} \ge 20\text{ dB}$ ($\text{VSWR} \le 1.222$).
+
+---
+
+## 6. Empirical Validation Results
+
+From the automated Monte Carlo test suite ($N = 240$ randomized lines, complex noise $\sigma = 0.02$):
+
+| Diagnostic Level | Accuracy | Open Recall | Short Recall | Healthy Recall | Mismatch Recall |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **5-Class Public Contract** | **99.58%** | 100.0% | 100.0% | 100.0% | 99.17% |
+| **6-Scenario Physical Subtype** | **99.58%** | 100.0% | 100.0% | 100.0% | 100.0% (mismatch & series L) / 97.5% (shunt C) |
+
+- **Fault Location Accuracy:** Mean Absolute Error (MAE) = **0.16 cm** (1.6 mm), RMSE = **0.22 cm**, Max Error = **0.75 cm** across all 200 faulty transmission lines.
+- **Physical Resolution vs Interpolation:** Physical Rayleigh resolution limit $\Delta R = v_p / (2B)$ is rigorously reported alongside zero-padded interpolation step $\delta d = v_p / (2 N_{\text{pad}} \Delta f)$.
+- **Unclipped Noise Architecture:** Realistic complex Gaussian noise preserved without artificial clipping; non-passive noisy points correctly return NaN for physical VSWR.
+- **Physical DC Phase Intercept:** $\phi_0 = \lim_{f \to 0}\angle \Gamma(f)$ eliminates high-frequency phase wrapping ambiguity, achieving 100% separation between open and short circuit terminations.

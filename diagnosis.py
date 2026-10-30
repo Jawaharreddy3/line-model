@@ -64,18 +64,27 @@ class DiagnosisResult(str):
         return obj
 
 
-def extract_features(sweep_dict, Z0, vf=1.0):
+def extract_features(sweep_dict, Z0, vf=None):
     """
     Extract diagnostic features from reflection coefficient sweep.
     Operates strictly on single-port reflection data (Gamma / S11).
+
+    Parameters
+    ----------
+    sweep_dict : dict or SweepResult containing 'gamma' and 'f' arrays
+    Z0         : characteristic line impedance [ohm]
+    vf         : velocity factor (defaults to sweep_dict.vf if present, else 1.0)
     """
+    if vf is None:
+        vf = float(getattr(sweep_dict, "vf", sweep_dict.get("vf", 1.0)))
+
     gamma = np.asarray(sweep_dict["gamma"], dtype=complex)
     freqs = np.asarray(sweep_dict["f"], dtype=float)
     N = len(gamma)
 
     mag = np.abs(gamma)
-    mag_mean = float(np.mean(mag))
-    mag_std = float(np.std(mag))
+    mag_mean = float(np.mean(mag)) if N > 0 else 0.0
+    mag_std = float(np.std(mag)) if N > 0 else 0.0
     mag_max = float(np.max(mag)) if N > 0 else 0.0
 
     quarter = max(1, N // 4)
@@ -90,6 +99,26 @@ def extract_features(sweep_dict, Z0, vf=1.0):
     lf_real = float(np.real(gamma[0])) if N > 0 else 0.0
     lf_imag = float(np.imag(gamma[0])) if N > 0 else 0.0
 
+    # DC Phase intercept via linear regression on unwrapped phase:
+    # phi(f) = phi0 - (4*pi*d/vp) * f
+    # At f -> 0, line rotation beta*l -> 0, so phi0 -> angle(Gamma_L)
+    # Open: Gamma_L = +1 -> angle = 0 -> cos(phi0) = +1
+    # Short: Gamma_L = -1 -> angle = pi -> cos(phi0) = -1
+    vp = lm.phase_velocity(vf)
+    cos_phi0 = 0.0
+    phi0 = 0.0
+    d_phase = None
+    if N >= 2:
+        try:
+            p_fit = np.polyfit(freqs, phase_unwrapped, 1)
+            slope = float(p_fit[0])
+            phi0 = float(p_fit[1])
+            cos_phi0 = float(np.cos(phi0))
+            if slope < 0 and vp > 0:
+                d_phase = float(-slope * vp / (4.0 * np.pi))
+        except Exception:
+            pass
+
     # Estimate distance via IFFT for de-embedding
     d_est = None
     deembedded_real = lf_real
@@ -97,10 +126,10 @@ def extract_features(sweep_dict, Z0, vf=1.0):
 
     if N >= 4 and (freqs[-1] - freqs[0]) > 1e4:
         d_est = _compute_ifft_distance(gamma, freqs, vf)
-        if d_est is not None and d_est > 0:
-            vp = lm.phase_velocity(vf)
+        d_use = d_est if (d_est is not None and d_est > 0) else d_phase
+        if d_use is not None and d_use > 0:
             beta = 2.0 * np.pi * freqs / vp
-            gamma_deembedded = gamma * np.exp(2j * beta * d_est)
+            gamma_deembedded = gamma * np.exp(2j * beta * d_use)
             deembedded_real = float(np.mean(gamma_deembedded.real))
             deembedded_imag = float(np.mean(gamma_deembedded.imag))
 
@@ -114,9 +143,13 @@ def extract_features(sweep_dict, Z0, vf=1.0):
         "phase_first": phase_first,
         "lf_real": lf_real,
         "lf_imag": lf_imag,
+        "cos_phi0": cos_phi0,
+        "phi0": phi0,
+        "d_phase": d_phase,
         "deembedded_real": deembedded_real,
         "deembedded_imag": deembedded_imag,
         "d_est": d_est,
+        "vf": vf,
     }
 
 
@@ -133,13 +166,14 @@ def classify(sweep_dict, Z0):
     -------
     DiagnosisResult (str) : one of "healthy", "open", "short", "mismatch", "unknown"
     """
-    feat = extract_features(sweep_dict, Z0)
+    vf = float(getattr(sweep_dict, "vf", sweep_dict.get("vf", 1.0)))
+    feat = extract_features(sweep_dict, Z0, vf=vf)
     mm = feat["mag_mean"]
     ms = feat["mag_std"]
     tr = feat["trend"]
     de_re = feat["deembedded_real"]
     de_im = feat["deembedded_imag"]
-    lf_re = feat["lf_real"]
+    cos_phi0 = feat["cos_phi0"]
 
     rules = []
 
@@ -157,14 +191,14 @@ def classify(sweep_dict, Z0):
         )
 
     # Rule 2: Reactive Discontinuity (Series L or Shunt C)
-    # Reflection magnitude rises significantly with frequency (trend > 0.005 or std > 0.035)
-    if tr > 0.005 or ms > 0.035:
+    # Reflection magnitude rises significantly with frequency (trend > 0.010 or std > 0.035)
+    if tr > 0.010 or ms > 0.035:
         if de_im >= 0:
             rules.append("R2_SERIES_L_MISMATCH")
             return DiagnosisResult(
                 "mismatch",
                 subtype="series_L",
-                confidence="medium" if mm > 0.15 else "low",
+                confidence="high" if mm > 0.15 else "medium",
                 features=feat,
                 explanation=(
                     f"Rising reflection trend ({tr:+.3f}) with inductive phase "
@@ -177,7 +211,7 @@ def classify(sweep_dict, Z0):
             return DiagnosisResult(
                 "mismatch",
                 subtype="shunt_C",
-                confidence="medium" if mm > 0.15 else "low",
+                confidence="high" if mm > 0.15 else "medium",
                 features=feat,
                 explanation=(
                     f"Rising reflection trend ({tr:+.3f}) with capacitive phase "
@@ -189,31 +223,41 @@ def classify(sweep_dict, Z0):
     # Rule 3: Total Reflection (Open vs Short Circuit)
     # Mean |Gamma| near 1.0 and flat frequency trend
     if mm >= 0.70:
-        # Distinguish open vs short via de-embedded reflection or low-frequency real part
-        if de_re >= 0 or lf_re >= 0:
+        # Distinguish open vs short via physical DC phase intercept cos(phi0) and de-embedded real reflection
+        if cos_phi0 > 0.1 or (cos_phi0 >= -0.3 and de_re > 0.0):
             rules.append("R4_OPEN_CIRCUIT")
             return DiagnosisResult(
                 "open",
                 subtype="open_circuit",
-                confidence="high" if ms < 0.05 else "medium",
+                confidence="high" if abs(cos_phi0) > 0.7 else "medium",
                 features=feat,
                 explanation=(
-                    f"Total reflection with positive real reflection "
-                    f"(|Gamma|={mm:.3f}, Re={de_re:+.2f}) => Open Circuit"
+                    f"Total reflection with positive DC phase intercept "
+                    f"(|Gamma|={mm:.3f}, cos(phi0)={cos_phi0:+.3f}, Re_deemb={de_re:+.2f}) => Open Circuit"
                 ),
                 rules_fired=rules,
             )
-        else:
+        elif cos_phi0 < -0.1 or (cos_phi0 <= 0.3 and de_re < 0.0):
             rules.append("R5_SHORT_CIRCUIT")
             return DiagnosisResult(
                 "short",
                 subtype="short_circuit",
-                confidence="high" if ms < 0.05 else "medium",
+                confidence="high" if abs(cos_phi0) > 0.7 else "medium",
                 features=feat,
                 explanation=(
-                    f"Total reflection with negative real reflection "
-                    f"(|Gamma|={mm:.3f}, Re={de_re:+.2f}) => Short Circuit"
+                    f"Total reflection with negative DC phase intercept "
+                    f"(|Gamma|={mm:.3f}, cos(phi0)={cos_phi0:+.3f}, Re_deemb={de_re:+.2f}) => Short Circuit"
                 ),
+                rules_fired=rules,
+            )
+        else:
+            rules.append("R4_AMBIGUOUS_TOTAL_REFL")
+            return DiagnosisResult(
+                "unknown",
+                subtype="uncertain",
+                confidence="low",
+                features=feat,
+                explanation="Total reflection detected but open/short phase intercept was ambiguous.",
                 rules_fired=rules,
             )
 
@@ -241,31 +285,48 @@ def classify(sweep_dict, Z0):
     )
 
 
-def distance_resolution(sweep_dict, vf=1.0):
+def distance_resolution(sweep_dict, vf=None):
     """
     Compute physical range resolution and unambiguous range for the given sweep.
+
+    Parameters
+    ----------
+    sweep_dict : dict or SweepResult containing 'f' array
+    vf         : velocity factor (defaults to sweep_dict.vf if present, else 1.0)
 
     Returns
     -------
     dict:
-        'range_res': range resolution delta_R [m] (vp / (2 * B))
+        'range_res': Rayleigh physical range resolution delta_R [m] (vp / (2 * B))
+        'interp_step': zero-padded IFFT interpolation step delta_d [m]
         'unambig_range': unambiguous range R_max [m] (vp / (2 * df))
         'bandwidth_hz': frequency sweep bandwidth B [Hz]
     """
+    if vf is None:
+        vf = float(getattr(sweep_dict, "vf", sweep_dict.get("vf", 1.0)))
+
     freqs = np.asarray(sweep_dict["f"], dtype=float)
     N = len(freqs)
     if N < 2:
-        return {"range_res": np.nan, "unambig_range": np.nan, "bandwidth_hz": 0.0}
+        return {
+            "range_res": np.nan,
+            "interp_step": np.nan,
+            "unambig_range": np.nan,
+            "bandwidth_hz": 0.0,
+        }
 
     vp = lm.phase_velocity(vf)
     B = freqs[-1] - freqs[0]
     df = B / (N - 1)
+    Npad = max(N * 8, 2048)
 
     range_res = float(vp / (2.0 * B)) if B > 0 else np.nan
+    interp_step = float(vp / (2.0 * Npad * df)) if (Npad * df) > 0 else np.nan
     unambig_range = float(vp / (2.0 * df)) if df > 0 else np.nan
 
     return {
         "range_res": range_res,
+        "interp_step": interp_step,
         "unambig_range": unambig_range,
         "bandwidth_hz": float(B),
     }

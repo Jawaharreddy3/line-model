@@ -116,3 +116,25 @@ def test_non_uniform_frequency_resampling():
     assert d_est is not None
     # Still resolves close to 0.8 m
     assert abs(d_est - 0.8) < 0.08
+
+
+@pytest.mark.parametrize("vf_val", [0.66, 0.70, 1.0])
+@pytest.mark.parametrize("length_val", [0.4, 0.9, 1.8])
+@pytest.mark.parametrize("scenario_val,expected_label", [("open", "open"), ("short", "short")])
+def test_open_vs_short_separation_across_vf_and_lengths(vf_val, length_val, scenario_val, expected_label):
+    freqs = np.linspace(400e6, 3.5e9, 250)
+    rng = np.random.default_rng(42)
+    sim = fs.simulate_fault(
+        scenario_val,
+        Z0=50.0,
+        length=length_val,
+        f_array=freqs,
+        vf=vf_val,
+        noise_std=0.02,
+        rng=rng,
+    )
+    res = diag.classify(sim["sweep"], 50.0)
+    assert res == expected_label, (
+        f"Failed for {scenario_val} at vf={vf_val}, length={length_val}m: got {res} (cos_phi0={res.features.get('cos_phi0')})"
+    )
+    assert res.subtype == f"{expected_label}_circuit"

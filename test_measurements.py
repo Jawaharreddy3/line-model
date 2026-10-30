@@ -99,9 +99,32 @@ def test_sweep_contract_keys_and_shapes():
     assert np.allclose(res["rl_db"], 20.0 * np.log10(3.0), rtol=1e-9)
 
 
-def test_vswr_rejects_active_loads():
-    with pytest.raises(ValueError):
-        meas.vswr(1.5)
+def test_vswr_handles_nonpassive_loads():
+    # Passive-line VSWR is physically undefined for |Gamma| > 1; returns np.nan
+    val = meas.vswr(1.5)
+    assert np.isnan(val)
+
+    arr = meas.vswr(np.array([0.5, 1.0, 1.2]))
+    assert np.isclose(arr[0], 3.0)
+    assert np.isinf(arr[1])
+    assert np.isnan(arr[2])
+
+
+@pytest.mark.parametrize("vf_test", [0.66, 0.70, 1.0])
+def test_sweep_preserves_vf_and_sweepresult(vf_test):
+    freqs = np.linspace(100e6, 500e6, 11)
+    res = meas.sweep(50.0, 75.0, 1.2, freqs, vf=vf_test)
+    assert isinstance(res, meas.SweepResult)
+    assert isinstance(res, dict)
+    assert res.vf == pytest.approx(vf_test)
+    assert res.Z0 == 50.0
+    assert res.length == pytest.approx(1.2)
+    # Dictionary access
+    assert "f" in res
+    assert "gamma" in res
+    assert "vswr" in res
+    assert "rl_db" in res
+    assert "zin" in res
 
 
 def test_smith_plot_generation():

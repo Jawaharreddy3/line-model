@@ -74,3 +74,24 @@ def test_usable_bandwidth_behavior():
     )
 
     assert res_small_mismatch["bandwidth_hz"] > res_large_mismatch["bandwidth_hz"]
+
+
+def test_contiguous_bandwidth_isolation():
+    f_arr = np.linspace(100e6, 3e9, 1000)
+    # Design at 1 GHz
+    res = match.compare_matching(50.0, 100.0, f_arr, vf=1.0, f_design=1e9, rl_threshold=20.0)
+
+    # 1. Contiguous bandwidth is non-zero around 1 GHz
+    bw = res["bandwidth_hz"]
+    assert bw > 0
+    f_lo, f_hi = res["bw_edges"]
+    assert f_lo <= 1e9 <= f_hi
+
+    # 2. Points within [f_lo, f_hi] meet threshold
+    mask_in_band = (f_arr >= f_lo) & (f_arr <= f_hi)
+    assert np.all(res["after"]["rl_db"][mask_in_band] >= 19.99)
+
+    # 3. If threshold is impossibly high (e.g. 500 dB), bandwidth is exactly 0.0
+    res_high = match.compare_matching(50.0, 100.0, f_arr, vf=1.0, f_design=1e9, rl_threshold=500.0)
+    assert res_high["bandwidth_hz"] == 0.0
+    assert res_high["bw_edges"] == (None, None)

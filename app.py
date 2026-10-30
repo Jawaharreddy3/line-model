@@ -243,11 +243,13 @@ else:
         rng = np.random.default_rng(42)
         noise = rng.normal(0, noise_std / np.sqrt(2), len(freqs)) + \
                 1j * rng.normal(0, noise_std / np.sqrt(2), len(freqs))
-        g_noisy = sweep_dict["gamma"] + noise
-        g_mag = np.abs(g_noisy)
-        g_noisy[g_mag > 1.0] /= g_mag[g_mag > 1.0]
+        g_ideal = sweep_dict["gamma"]
+        g_noisy = g_ideal + noise
+        # Unclipped noisy reflection: preserve values where |S11| > 1.0
         sweep_dict["gamma"] = g_noisy
         sweep_dict["vswr"] = meas.vswr(g_noisy)
+        sweep_dict["rl_db"] = meas.return_loss_db(g_noisy)
+        sweep_dict.gamma_ideal = g_ideal
         sweep_dict["rl_db"] = meas.return_loss_db(g_noisy)
 
 # Inferred Diagnosis (Strictly Single-Port S11 Only)
@@ -376,6 +378,14 @@ elif nav_section == "3. Signal Analysis & Smith Chart":
 
     with tab_rf:
         st.subheader("Reflection Magnitude, VSWR, and Return Loss")
+        if np.any(np.isnan(sweep_dict["vswr"])):
+            nan_cnt = int(np.sum(np.isnan(sweep_dict["vswr"])))
+            st.warning(
+                f"⚠️ Measurement noise caused |S11| > 1.0 at {nan_cnt} sample point(s). "
+                "For non-passive observations, passive-line VSWR is physically undefined and evaluated as NaN. "
+                "Ideal reflection data is preserved without artificial clipping."
+            )
+
         fig_rf, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(10, 8), sharex=True)
 
         # 1. |S11|
@@ -556,8 +566,17 @@ elif nav_section == "5. Fault Location (TDR & Phase)":
         if loc_dual["discrepancy_m"] is not None:
             st.write(f"- **Discrepancy |M1 - M2|:** `{loc_dual['discrepancy_m']*100:.2f} cm`")
 
-        st.write(f"- **Physical Range Resolution (ΔR):** `{res_info['range_res_m']*100:.2f} cm`")
+        st.write(f"- **Physical Rayleigh Resolution (ΔR):** `{res_info['range_res_m']*100:.2f} cm`")
+        if "interp_step_m" in res_info and np.isfinite(res_info["interp_step_m"]):
+            st.write(f"- **IFFT Interpolation Bin Step (δd):** `{res_info['interp_step_m']*100:.2f} cm`")
         st.write(f"- **Unambiguous Range (R_max):** `{res_info['unambig_range_m']:.2f} m`")
+
+        st.info(
+            "ℹ️ **Physical Principle:** Zero-padding interpolates the peak centroid between FFT bins, "
+            "but does NOT improve the physical Rayleigh resolution limit (ΔR = vp / 2B). "
+            "Two discontinuities closer than ΔR cannot be resolved as separate peaks. "
+            "Additionally, reactive discontinuities introduce frequency-dependent phase shifts that slightly bias phase-slope estimation."
+        )
 
         for w in loc_dual["warnings"]:
             st.warning(f"⚠️ {w}")
@@ -594,10 +613,11 @@ elif nav_section == "6. Quarter-Wave Matching Studio":
             match_res = match.compare_matching(Z0, RL_val, freqs, vf=vf, f_design=f_design, rl_threshold=20.0)
             st.metric("Transformer Impedance (Zt)", f"{match_res['Zt']:.2f} Ω")
             st.metric("Physical Length (lt)", f"{match_res['length_m']*1000:.1f} mm")
-            st.metric("Usable BW (RL ≥ 20 dB)", f"{match_res['bandwidth_hz']/1e6:.1f} MHz")
+            st.metric("Contiguous Usable BW (RL ≥ 20 dB)", f"{match_res['bandwidth_hz']/1e6:.1f} MHz")
 
             f0_rl = match_res["at_f_design"]["rl_db"]
-            st.metric("RL @ Design f₀", "∞ dB (Exact)" if np.isinf(f0_rl) else f"{f0_rl:.1f} dB")
+            st.metric("Return Loss @ Design f₀", "∞ dB (Exact)" if np.isinf(f0_rl) else f"{f0_rl:.1f} dB")
+            st.caption("Note: Load resistance RL [Ω] is the physical termination, while Return Loss [dB] evaluates reflected power.")
 
         with match_col2:
             st.subheader("Performance Comparison (Before vs After)")
@@ -654,9 +674,12 @@ elif nav_section == "7. Independent Validation Lab":
                     fp_r = float(rng_v.uniform(0.2 * len_r, 0.8 * len_r))
                     sim_v = fs.simulate_fault(sc, z0_r, len_r, freqs, vf=vf_r, fault_pos=fp_r, noise_std=0.02, rng=rng_v)
                     target = "healthy" if sc == "healthy" else ("open" if sc == "open" else ("short" if sc == "short" else "mismatch"))
+                    pred_res = diag.classify(sim_v["sweep"], z0_r)
                     v_dataset.append({
+                        "scenario": sc,
                         "target": target,
-                        "pred": str(diag.classify(sim_v["sweep"], z0_r)),
+                        "pred": str(pred_res),
+                        "subtype": pred_res.subtype,
                         "true_pos": fp_r if sc in ["series_L", "shunt_C"] else (len_r if sc != "healthy" else None),
                         "est_pos": diag.estimate_distance(sim_v["sweep"], vf_r, target),
                     })
@@ -667,7 +690,7 @@ elif nav_section == "7. Independent Validation Lab":
 
             v_col1, v_col2 = st.columns([1, 1])
             with v_col1:
-                st.subheader(f"Confusion Matrix (Accuracy = {val_rep['accuracy']*100:.1f}%)")
+                st.subheader(f"Contract Confusion Matrix (Accuracy = {val_rep['accuracy']*100:.1f}%)")
                 df_vcm = pd.DataFrame(
                     val_rep["confusion_matrix"],
                     index=[f"True: {l}" for l in contract_labels],
@@ -676,13 +699,48 @@ elif nav_section == "7. Independent Validation Lab":
                 st.dataframe(df_vcm)
 
             with v_col2:
-                st.subheader("Classification Performance Metrics")
+                st.subheader("Contract Classification Performance")
                 m_rows = []
                 for l in contract_labels:
                     r_dict = {"Class": l}
                     r_dict.update(val_rep["per_class"][l])
                     m_rows.append(r_dict)
                 st.dataframe(pd.DataFrame(m_rows))
+
+            # Subtype 6-scenario evaluation
+            st.subheader("Physical Subtype Diagnostics (6 Scenarios)")
+            sub_map = {
+                "matched": "healthy",
+                "resistive_mismatch": "mismatch",
+                "open_circuit": "open",
+                "short_circuit": "short",
+                "series_L": "series_L",
+                "shunt_C": "shunt_C",
+                "uncertain": "unknown",
+            }
+            scen_labels = ["healthy", "mismatch", "open", "short", "series_L", "shunt_C"]
+            y_s_true = [it["scenario"] for it in v_dataset]
+            y_s_pred = [sub_map.get(it["subtype"], "unknown") for it in v_dataset]
+            sub_rep = compute_classification_report(y_s_true, y_s_pred, scen_labels)
+
+            s_col1, s_col2 = st.columns([1, 1])
+            with s_col1:
+                st.write(f"**Subtype Confusion Matrix (Accuracy = {sub_rep['accuracy']*100:.1f}%):**")
+                df_scm = pd.DataFrame(
+                    sub_rep["confusion_matrix"],
+                    index=[f"True: {l}" for l in scen_labels],
+                    columns=[f"Pred: {l}" for l in scen_labels],
+                )
+                st.dataframe(df_scm)
+
+            with s_col2:
+                st.write("**Subtype Classification Metrics:**")
+                sm_rows = []
+                for l in scen_labels:
+                    sr_dict = {"Scenario": l}
+                    sr_dict.update(sub_rep["per_class"][l])
+                    sm_rows.append(sr_dict)
+                st.dataframe(pd.DataFrame(sm_rows))
 
             # Location errors
             t_locs = [it["true_pos"] for it in v_dataset if it["true_pos"] is not None]
