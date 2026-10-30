@@ -144,12 +144,12 @@ When navigating to **View 8: Theory & Hand Calculations**, explain these core eq
 1. Select **View 7: Independent Validation Lab**.
 2. Click the button: **`🚀 Run Live Monte Carlo Validation Test (N = 120 Trials)`**.
 3. **Walk through the generated results:**
-   - **Contract Confusion Matrix ($5 \times 5$):** Show $100\%$ accuracy across the frozen contract classes (`healthy`, `open`, `short`, `mismatch`, `unknown`).
+   - **Contract Confusion Matrix ($5 \times 5$):** Show $100\%$ accuracy across the 4 generated target classes (`healthy`, `open`, `short`, `mismatch`; 120/120 samples). Point out frankly to the professor that the evaluation suite generates scenarios from the 6 canonical classes only, so no true unknown cases are included (support = 0 for `unknown`); thus unknown-class rejection remains unvalidated in this test cohort.
    - **Physical Subtype Confusion Matrix ($6 \times 6$):** Show that the classifier accurately resolves intermediate series inductors and shunt capacitors based solely on their reflection signatures.
    - **Fault Location Metrics:** Show the reported MAE ($\approx 0.22\text{ cm}$) and RMSE ($\approx 0.28\text{ cm}$) on simulated reflection data.
 4. **Reference the Standalone Batch Validation:**
    - Explain to the professor that a larger standalone batch evaluation with $N = 240$ randomized trials ($40$ per scenario) was executed via `validation/run_validation.py`, achieving $99.58\%$ overall accuracy and generating permanent CSV records in `results/csv/`.
-   - Explain the **Noise Sensitivity Study**: Point out that at high noise levels ($\sigma = 0.18$), classification accuracy levels off at $50.0\%$, which represents the majority-class baseline (since `mismatch`, `series_L`, and `shunt_C` all map to contract class `mismatch`, comprising $60/120 = 50\%$ of the evaluation cohort).
+   - Explain the **Noise Sensitivity Study**: Point out that `results/csv/noise_sensitivity.csv` records scalar classification accuracy across discrete noise levels $\sigma \in \{0.0, 0.02, 0.05, 0.08, 0.12, 0.18\}$. Report that observed accuracy drops to $50.0\%$ under higher noise ($\sigma \ge 0.08$). Clarify that while $50\%$ numerically coincides with the proportion of mismatch-mapped cases ($60/120 = 50\%$), the exported CSV logs overall accuracy only (not per-class predictions or confusion matrices for each noise level), so this $50\%$ figure is presented strictly as the empirical overall accuracy under strong noise rather than asserted as proof of a majority-class predictor mode.
 
 ---
 

@@ -5,7 +5,7 @@
 **Branch Audited:** `rf-line-doctor-build`  
 **Latest Verification Commit:** `1911d55`  
 **Audit Date:** 2026-10-30  
-**Status:** **100% Verified — Fully Ready for Faculty Demonstration**
+**Status:** **All Listed Verification Checks Passed for Tested Configurations** (Software unit tests, simulation-based validation, and analytical benchmarks verified; physical hardware testing out of scope per proposal).
 
 ---
 
@@ -159,9 +159,9 @@ All three validation configurations were re-verified against live execution outp
 
 | Configuration | Sample Size | Noise ($\sigma$) | Random Seed | Key Outputs / Artifacts | Verified Accuracy / MAE |
 |---|---|---|---|---|---|
-| **Streamlit Live Validation** | $N = 120$ | $0.02$ | `42` | Interactive confusion matrices & metrics rendered in View 7 | **100% Contract Accuracy**<br>Location MAE: **$0.22\text{ cm}$** |
-| **Standalone Batch Validation** (`run_validation.py`) | $N = 240$ | $0.02$ | `42` | • `results/csv/confusion_matrix.csv`<br>• `results/csv/classification_metrics.csv`<br>• `results/csv/subtype_confusion_matrix.csv`<br>• `results/csv/subtype_classification_metrics.csv`<br>• `results/csv/location_errors.csv`<br>• Figures in `results/figures/` | **99.58% Contract Accuracy**<br>**99.58% Subtype Accuracy**<br>Location MAE: **$0.16\text{ cm}$**<br>Location RMSE: **$0.22\text{ cm}$** |
-| **Noise Sensitivity Study** | $N = 120$ per level (6 levels) | $0.00$ to $0.18$ | Distinct seeds: `100 + int(σ*100)` | • `results/csv/noise_sensitivity.csv`<br>• `results/figures/accuracy_vs_noise.png` | $\sigma=0.00: 98.3\%$, $\sigma=0.02: 100.0\%$, $\sigma=0.05: 61.7\%$, $\sigma \ge 0.08: 50.0\%$ (Majority baseline) |
+| **Streamlit Live Validation** | $N = 120$<br>(20/scenario) | $0.02$ | `42` | Interactive confusion matrices & metrics rendered in View 7 | **100% on 4 Tested Target Classes** (120/120)<br>*Unknown class support = 0 (unvalidated)*<br>Location MAE: **$0.22\text{ cm}$** |
+| **Standalone Batch Validation** (`run_validation.py`) | $N = 240$<br>(40/scenario) | $0.02$ | `42` | • `results/csv/confusion_matrix.csv`<br>• `results/csv/classification_metrics.csv`<br>• `results/csv/subtype_confusion_matrix.csv`<br>• `results/csv/subtype_classification_metrics.csv`<br>• `results/csv/location_errors.csv`<br>• Figures in `results/figures/` | **99.58% Contract Accuracy** (239/240)<br>**99.58% Subtype Accuracy** (239/240)<br>*Unknown class support = 0 (unvalidated)*<br>Location MAE: **$0.16\text{ cm}$**<br>Location RMSE: **$0.22\text{ cm}$** |
+| **Noise Sensitivity Study** | $N = 120$ per level (6 levels) | $0.00$ to $0.18$ | Distinct seeds: `100 + int(σ*100)` | • `results/csv/noise_sensitivity.csv`<br>• `results/figures/accuracy_vs_noise.png` | $\sigma=0.00: 98.3\%$, $\sigma=0.02: 100.0\%$, $\sigma=0.05: 61.7\%$, $\sigma \ge 0.08: 50.0\%$ overall accuracy<br>*(CSV records scalar accuracy only; per-class predictions not logged)* |
 
 ---
 
@@ -188,4 +188,6 @@ To maintain strict academic integrity during faculty review, the following limit
 2. **Single-Port Reflection Only:** Classifier operates strictly on $S_{11}(\omega)$ without peeking at ground truth.
 3. **Single Dominant Reflector:** Dual-method distance localization assumes one dominant reflector or discontinuity along the line.
 4. **Purely Real Quarter-Wave Loads:** Quarter-wave transformers match purely real load resistances ($R_L > 0$). Complex loads are explicitly flagged as requiring stub tuning.
-5. **Simulation-Based Validation:** All experimental data is numerically generated with complex Gaussian noise; no physical VNA hardware measurements are claimed.
+5. **Simulation-Based Validation vs Physical Testing:** All numerical evaluations are conducted on synthetic transmission-line data generated with controlled complex Gaussian noise; no physical VNA hardware measurements or real cable trials are claimed or required by the EC-3104 proposal.
+6. **Unknown-Class Limitation:** The synthetic test dataset generates cases across the 6 proposed physical scenarios, which map onto 4 contract classes (`healthy`, `open`, `short`, `mismatch`). Because no arbitrary non-canonical or broken-line states outside these 6 scenarios are generated (support = 0 for `unknown`), the classifier's ability to reject true unknown anomalies remains unvalidated.
+7. **Noise Sweep Reporting:** `results/csv/noise_sensitivity.csv` records scalar accuracy as a function of noise standard deviation ($\sigma$). The observed $50.0\%$ accuracy at $\sigma \ge 0.08$ is reported strictly as the overall empirical accuracy under strong noise; the dataset contains no per-class breakdowns or confusion matrices per noise level.
