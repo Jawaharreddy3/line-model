@@ -161,11 +161,11 @@ percentage.
 | # | Original proposal requirement | Implementation | Source | Status |
 |---|---|---|---|---|
 | G1 | Hand-calculation comparisons | 7 benchmark cases in `HAND_CALCULATIONS.md`; shown with LaTeX in View 8 | [`HAND_CALCULATIONS.md`](../HAND_CALCULATIONS.md), [`app.py` L754–776](../app.py#L754-L776) | **Complete** |
-| G2 | Labelled simulated test cases | Monte Carlo over 6 labelled scenarios with confusion matrix | [`app.py` L662–743](../app.py#L662-L743) | **Complete** |
-| G3 | Classification accuracy and relevant metrics | Accuracy, precision, recall, F1 per class computed and displayed | [`validation/classification_metrics.py`](../validation/classification_metrics.py) | **Complete** |
-| G4 | Estimated versus known fault distance | `true_pos` vs `est_pos` compared; MAE and RMSE reported in cm | [`app.py` L746–749](../app.py#L746-L749) | **Complete** |
-| G5 | Numerical error reporting | MAE and RMSE in cm displayed live after validation run | [`app.py` L749](../app.py#L749) | **Complete** |
-| G6 | Reproducible results | Fixed seed `np.random.default_rng(42)` used for all validation | [`app.py` L664](../app.py#L664) | **Complete** |
+| G2 | Labelled simulated test cases | Monte Carlo over 6 labelled scenarios: interactive Streamlit ($N=120$, 20/scenario) and standalone batch ($N=240$, 40/scenario) | [`app.py` L662–743](../app.py#L662-L743), [`validation/run_validation.py`](../validation/run_validation.py) | **Complete** |
+| G3 | Classification accuracy and relevant metrics | Overall accuracy, precision, recall, F1 per class computed and saved to `results/csv/classification_metrics.csv` and `subtype_classification_metrics.csv` | [`validation/classification_metrics.py`](../validation/classification_metrics.py), `results/csv/` | **Complete** |
+| G4 | Estimated versus known fault distance | `true_pos` vs `est_pos` compared; MAE, RMSE, and error distribution exported to `results/csv/location_errors.csv` | [`app.py` L746–749](../app.py#L746-L749), [`validation/run_validation.py`](../validation/run_validation.py) | **Complete** |
+| G5 | Numerical error reporting | MAE and RMSE in cm displayed live in Streamlit and logged in batch CSV files | [`app.py` L749](../app.py#L749), `results/csv/location_errors.csv` | **Complete** |
+| G6 | Reproducible results | Deterministic seeds: baseline experiments ($N=120$ in UI, $N=240$ in batch) use seed 42; noise-sensitivity sweeps use `seed = 100 + int(n_sigma * 100)` | [`app.py` L664](../app.py#L664), [`validation/run_validation.py`](../validation/run_validation.py) | **Complete** |
 | G7 | Clear simulation limitations stated | Noise sensitivity, unknown-class limitation, generator parameter ranges documented | `docs/research_gap_analysis.md`, `docs/assumption_register.md` | **Complete** |
 | G8 | Simulated validation never presented as physical lab validation | App caption: "Empirical Monte Carlo evaluation on randomized held-out test datasets"; disclaimer present | [`app.py` L655–660](../app.py#L655-L660) | **Complete** |
 
@@ -232,18 +232,47 @@ The 102 pytest tests verify **code contract correctness** only:
 
 ### What constitutes academic / physical validation for this project
 
-Per the proposal, the project is a **simulation-based educational prototype**. The relevant validation evidence is:
+Per the proposal, the project is a **simulation-based educational prototype**. The empirical validation evidence is divided into three distinct experimental configurations plus analytical benchmarks:
 
-| Validation type | Evidence in this project | Limitation |
-|---|---|---|
-| **Analytical benchmark** | 7 hand calculations in `HAND_CALCULATIONS.md` compared against `line_model.py` outputs | Covers specific parameter combinations only; not a proof for all inputs |
-| **Classification performance** | Monte Carlo over N = 120 cases (σ = 0.02 noise); accuracy reported in `results/csv/` | All data is synthetic; no physical cable measurements performed |
-| **Fault location accuracy** | MAE and RMSE vs known simulated positions reported live in Validation Lab | Distance estimates are from simulated S11, not measured S11 |
-| **Impedance matching** | Zt exact cancellation at f₀ verified analytically and numerically | Lossless transformer assumption; physical transformers have conductor and dielectric loss |
+#### Three Empirical Validation Configurations
+
+1. **Streamlit Live Validation (`app.py` View 7):**
+   - **Sample size:** $N = 120$ total (20 randomized trials for each of the 6 canonical scenarios: `healthy`, `mismatch`, `open`, `short`, `series_L`, `shunt_C`).
+   - **Noise level:** Controlled complex Gaussian noise at $\sigma = 0.02$.
+   - **Random seed:** Fixed seed `42` (`rng_v = np.random.default_rng(42)`) ensuring reproducible live in-browser demonstrations.
+   - **Outputs:** Live interactive confusion matrix, per-class metrics table, 6-scenario subtype diagnostic matrix, and distance localization MAE/RMSE rendered dynamically in the Streamlit UI.
+
+2. **Standalone Batch Validation (`validation/run_validation.py`):**
+   - **Sample size:** $N = 240$ total (40 randomized trials for each of the 6 canonical scenarios).
+   - **Noise level:** Nominal baseline noise $\sigma = 0.02$.
+   - **Random seed:** Fixed seed `42` (`generate_heldout_dataset(n_per_class=40, seed=42, noise_std=0.02)`).
+   - **Primary CSV artifacts generated:** This execution generates the authoritative, permanent benchmark CSV results stored in `results/csv/`:
+     - `confusion_matrix.csv`: Frozen 5-class contract confusion matrix ($5 \times 5$).
+     - `classification_metrics.csv`: Per-class precision, recall, and F1 scores for the contract classes.
+     - `subtype_confusion_matrix.csv`: 6-scenario physical subtype confusion matrix ($6 \times 6$).
+     - `subtype_classification_metrics.csv`: Detailed classification performance across all 6 physical fault modes.
+     - `location_errors.csv`: Detailed point-by-point true position, estimated position, and absolute error in cm for all reflector cases.
+
+3. **Noise Sensitivity Study (`validation/run_validation.py`):**
+   - **Sample size:** $N = 120$ per noise level (20 randomized trials per scenario $\times$ 6 scenarios).
+   - **Noise levels evaluated:** Discrete noise standard deviations $\sigma \in \{0.0, 0.02, 0.05, 0.08, 0.12, 0.18\}$.
+   - **Random seed:** Distinct deterministic seeds per noise level: `seed = 100 + int(n_sigma * 100)` (i.e. seeds 100, 102, 105, 108, 112, 118). Because seeds differ across noise levels, these cohorts represent independent, non-paired randomized transmission lines.
+   - **Primary CSV artifact generated:**
+     - `noise_sensitivity.csv`: 5-class contract classification accuracy across noise levels $\sigma$.
+
+#### Validation Summary Table
+
+| Configuration / Validation Type | Sample Size & Parameters | Seed Strategy | Artifacts / Deliverables | Limitation |
+|---|---|---|---|---|
+| **Analytical Benchmark** | 7 canonical cases (`HAND_CALCULATIONS.md`) | Deterministic formulas | `HAND_CALCULATIONS.md`, Dashboard View 8 | Specific analytical parameter combinations |
+| **Streamlit Live Validation** | $N = 120$ (20/class), $\sigma = 0.02$ | Fixed seed `42` | Interactive GUI dashboard (View 7) | In-memory evaluation; ephemeral session data |
+| **Standalone Batch Validation** | $N = 240$ (40/class), $\sigma = 0.02$ | Fixed seed `42` | `confusion_matrix.csv`, `classification_metrics.csv`, `subtype_confusion_matrix.csv`, `subtype_classification_metrics.csv`, `location_errors.csv` | Synthetic data generator; no physical cable measurements |
+| **Noise Sensitivity Study** | $N = 120$ per $\sigma$ (6 levels: 0.0 to 0.18) | Distinct seeds (`100 + int(σ*100)`) | `noise_sensitivity.csv`, `noise_sensitivity.png` | Non-paired cohorts; majority-class baseline under high noise |
+| **Impedance Matching Validation** | Exact analytical $f_0$ evaluation + sweep | Deterministic math | Dashboard View 6, `test_matching.py` | Lossless line assumption ($\alpha = 0$) |
 
 The project **correctly states** throughout its documentation and UI that it is a virtual educational simulator, not a field-certified instrument. These limitations are consistent with the proposal, which states: *"The final deliverable is an educational virtual prototype, not a field-tested cable diagnostic instrument."*
 
-**Conclusion:** The automated test suite confirms internal self-consistency. The hand-calculation comparisons and Monte Carlo evaluation constitute the project's simulation-based academic validation. No physical hardware measurements are claimed or required by the proposal.
+**Conclusion:** The automated test suite confirms internal code contract self-consistency. The hand-calculation comparisons, batch Monte Carlo benchmarks ($N=240$), noise sensitivity sweeps ($N=120$/level), and live interactive trials ($N=120$) constitute the project's simulation-based academic validation. No physical hardware measurements are claimed or required by the proposal.
 
 ---
 
