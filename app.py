@@ -396,17 +396,17 @@ with col_sf2:
     f_stop_mhz = st.number_input("fₘₐₓ (MHz)", min_value=5.0, max_value=50000.0, value=4000.0, step=100.0)
 
 if f_start_mhz >= f_stop_mhz:
-    st.sidebar.error("f_start must be strictly less than f_stop")
+    st.sidebar.error("Minimum frequency must be lower than maximum frequency.")
     st.stop()
 
-n_pts = st.sidebar.slider("Number of Points", min_value=50, max_value=1000, value=400, step=50)
+n_pts = st.sidebar.slider("Frequency sweep samples", min_value=50, max_value=1000, value=400, step=50)
 freqs = np.linspace(f_start_mhz * 1e6, f_stop_mhz * 1e6, n_pts)
 
 st.sidebar.subheader("⚡ Fault Injection & Termination")
 scenario_preset = st.sidebar.selectbox(
     "Fault Preset Scenario",
     [
-        "Case 1: Healthy Matched (ZL = Z0)",
+        "Case 1: Healthy matched (Zₗ = Z₀)",
         "Case 2: Resistive mismatch (Zₗ = Rₗ ≠ Z₀)",
         "Case 3: Open circuit (Zₗ = ∞)",
         "Case 4: Short circuit (Zₗ = 0)",
@@ -559,10 +559,10 @@ elif nav_section == "2. Transmission-Line Simulator":
     with col_sim1:
         st.subheader("Simulated Reflection Sweep Profile")
         fig_s, ax_s = plt.subplots(figsize=(8, 4))
-        ax_s.plot(f_ghz, np.abs(sweep_dict["gamma"]), color="#00e5ff", lw=2, label="|S11| (Input Reflection)")
+        ax_s.plot(f_ghz, np.abs(sweep_dict["gamma"]), color="#00e5ff", lw=2, label="|S₁₁| (input reflection)")
         ax_s.axhline(0.05, color="green", linestyle="--", alpha=0.6, label="Healthy Threshold (0.05)")
         ax_s.set_xlabel("Frequency (GHz)")
-        ax_s.set_ylabel("|S11| Magnitude")
+        ax_s.set_ylabel("|S₁₁| magnitude")
         ax_s.set_ylim(-0.05, 1.05)
         ax_s.grid(True, alpha=0.3)
         ax_s.legend(loc="upper right")
@@ -570,7 +570,7 @@ elif nav_section == "2. Transmission-Line Simulator":
         plt.close(fig_s)
 
     with col_sim2:
-        st.subheader("Simulation Ground Truth (Hidden from Classifier)")
+        st.subheader("Configured scenario reference (not used by classifier)")
         st.json({
             "injected_scenario": sim_scenario,
             "load_impedance": str(ZL_val),
@@ -612,12 +612,12 @@ elif nav_section == "3. Signal Analysis & Smith Chart":
 
     tab_rf, tab_z, tab_smith = st.tabs([
         "📊 Reflection metrics (|S₁₁|, VSWR, return loss)",
-        "🔌 Input Impedance (Rin, Xin, Phase)",
+        "🔌 Input impedance (Rᵢₙ, Xᵢₙ, phase)",
         "🧭 Normalized Smith Chart",
     ])
 
     with tab_rf:
-        st.subheader("Reflection Magnitude, VSWR, and Return Loss")
+        st.subheader("Reflection coefficient, VSWR and return loss")
         if np.any(np.isnan(sweep_dict["vswr"])):
             nan_cnt = int(np.sum(np.isnan(sweep_dict["vswr"])))
             st.warning(
@@ -629,9 +629,9 @@ elif nav_section == "3. Signal Analysis & Smith Chart":
         fig_rf, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(10, 8), sharex=True)
 
         # 1. |S11|
-        ax1.plot(f_ghz, np.abs(sweep_dict["gamma"]), color="#1f77b4", lw=2, label="|S11|")
+        ax1.plot(f_ghz, np.abs(sweep_dict["gamma"]), color="#1f77b4", lw=2, label="|S₁₁|")
         ax1.axhline(0.05, color="green", linestyle="--", alpha=0.7, label="Matched Threshold (0.05)")
-        ax1.set_ylabel("|S11| Magnitude")
+        ax1.set_ylabel("|S₁₁| magnitude")
         ax1.set_ylim(-0.05, 1.05)
         ax1.grid(True, alpha=0.3)
         ax1.legend(loc="upper right")
@@ -661,18 +661,18 @@ elif nav_section == "3. Signal Analysis & Smith Chart":
         plt.close(fig_rf)
 
     with tab_z:
-        st.subheader("Input Impedance Decomposition & Phase")
+        st.subheader("Input impedance and phase")
         fig_z, (ax_rin, ax_xin, ax_ph) = plt.subplots(3, 1, figsize=(10, 8), sharex=True)
 
         rin_plot = np.clip(rin, -100.0, 500.0)
-        ax_rin.plot(f_ghz, rin_plot, color="#9467bd", lw=2, label="Rin = Re(Zin)")
-        ax_rin.axhline(Z0, color="black", linestyle="--", alpha=0.5, label=f"Z0 = {Z0} Ω")
+        ax_rin.plot(f_ghz, rin_plot, color="#9467bd", lw=2, label="Rᵢₙ = Re(Zᵢₙ)")
+        ax_rin.axhline(Z0, color="black", linestyle="--", alpha=0.5, label=f"Z₀ = {Z0} Ω")
         ax_rin.set_ylabel("Resistance (Ω)")
         ax_rin.grid(True, alpha=0.3)
         ax_rin.legend(loc="upper right")
 
         xin_plot = np.clip(xin, -500.0, 500.0)
-        ax_xin.plot(f_ghz, xin_plot, color="#8c564b", lw=2, label="Xin = Im(Zin)")
+        ax_xin.plot(f_ghz, xin_plot, color="#8c564b", lw=2, label="Xᵢₙ = Im(Zᵢₙ)")
         ax_xin.axhline(0, color="black", linestyle="-", alpha=0.5)
         ax_xin.set_ylabel("Reactance (Ω)")
         ax_xin.grid(True, alpha=0.3)
@@ -729,7 +729,7 @@ elif nav_section == "4. Fault Diagnosis Engine":
             st.write(f"• {ev}")
 
     with diag_col2:
-        st.subheader("Electromagnetic Theory Justification")
+        st.subheader("Why this diagnosis?")
         st.info(diag_report["physics_explanation"])
 
         st.subheader("Potential Ambiguities & Failure Modes")
@@ -878,7 +878,7 @@ elif nav_section == "6. Quarter-Wave Matching Studio":
             match_res = match.compare_matching(Z0, RL_val, freqs, vf=vf, f_design=f_design, rl_threshold=20.0)
             st.metric("Transformer impedance Zₜ (Ω)", f"{match_res['Zt']:.2f} Ω")
             st.metric("Transformer length lₜ (mm)", f"{match_res['length_m']*1000:.1f} mm")
-            st.metric("Contiguous Usable BW (RL ≥ 20 dB)", f"{match_res['bandwidth_hz']/1e6:.1f} MHz")
+            st.metric("Usable bandwidth (return loss ≥ 20 dB)", f"{match_res['bandwidth_hz']/1e6:.1f} MHz")
 
             f0_rl = match_res["at_f_design"]["rl_db"]
             st.metric("Return loss at design frequency f₀", "∞ dB (Exact)" if np.isinf(f0_rl) else f"{f0_rl:.1f} dB")
@@ -891,7 +891,7 @@ elif nav_section == "6. Quarter-Wave Matching Studio":
             # VSWR
             ax_mv.plot(f_ghz, match_res["before"]["vswr"], "r--", lw=1.8, label="Before Matching (Unmatched)")
             ax_mv.plot(f_ghz, match_res["after"]["vswr"], "b-", lw=2, label="After Matching (λ/4 Transformer)")
-            ax_mv.axvline(f_design / 1e9, color="gray", linestyle=":", label=f"f0 = {f_design/1e9:.2f} GHz")
+            ax_mv.axvline(f_design / 1e9, color="gray", linestyle=":", label=f"f₀ = {f_design/1e9:.2f} GHz")
             ax_mv.set_ylabel("VSWR")
             ax_mv.set_ylim(1.0, 3.5)
             ax_mv.grid(True, alpha=0.3)
@@ -917,14 +917,13 @@ elif nav_section == "6. Quarter-Wave Matching Studio":
 # ─────────────────────────────────────────────────────────────────────────────
 elif nav_section == "7. Independent Validation Lab":
     st.header("7. Independent Validation Laboratory")
-    st.caption("Empirical Monte Carlo evaluation on randomized held-out test datasets.")
+    st.caption("Repeatable performance check across 120 randomized simulated line cases.")
 
     st.markdown("""
-    This section runs live automated validation across randomized transmission lines and held-out fault cases.
-    **Ground truth is explicitly compared against inferred diagnosis only in this evaluation view.**
+    This section runs a repeatable test across 120 randomized virtual line cases. The predicted fault category is compared with the known simulated case. This is software validation, not a physical cable or instrument test.
     """)
 
-    if st.button("🚀 Run Live Monte Carlo Validation Test (N = 120 Trials)"):
+    if st.button("▶ Run randomized validation (120 cases)"):
         with st.spinner("Executing randomized held-out trials..."):
             rng_v = np.random.default_rng(42)
             n_per_c = 20
@@ -955,7 +954,7 @@ elif nav_section == "7. Independent Validation Lab":
 
             v_col1, v_col2 = st.columns([1, 1])
             with v_col1:
-                st.subheader(f"Contract Confusion Matrix (Accuracy = {val_rep['accuracy']*100:.1f}%)")
+                st.subheader(f"Fault-category confusion matrix (accuracy = {val_rep['accuracy']*100:.1f}%)")
                 df_vcm = pd.DataFrame(
                     val_rep["confusion_matrix"],
                     index=[f"True: {l}" for l in contract_labels],
@@ -964,7 +963,7 @@ elif nav_section == "7. Independent Validation Lab":
                 st.dataframe(df_vcm)
 
             with v_col2:
-                st.subheader("Contract Classification Performance")
+                st.subheader("Fault-category performance")
                 m_rows = []
                 for l in contract_labels:
                     r_dict = {"Class": l}
@@ -973,7 +972,7 @@ elif nav_section == "7. Independent Validation Lab":
                 st.dataframe(pd.DataFrame(m_rows))
 
             # Subtype 6-scenario evaluation
-            st.subheader("Physical Subtype Diagnostics (6 Scenarios)")
+            st.subheader("Detailed fault-type performance (6 scenarios)")
             sub_map = {
                 "matched": "healthy",
                 "resistive_mismatch": "mismatch",
@@ -1011,4 +1010,4 @@ elif nav_section == "7. Independent Validation Lab":
             t_locs = [it["true_pos"] for it in v_dataset if it["true_pos"] is not None]
             e_locs = [it["est_pos"] for it in v_dataset if it["true_pos"] is not None]
             l_stats = compute_location_metrics(t_locs, e_locs)
-            st.success(f"**Fault Location Performance:** MAE = `{l_stats['mae_m']*100:.2f} cm` | RMSE = `{l_stats['rmse_m']*100:.2f} cm` (Valid: {l_stats['valid_count']}/{len(t_locs)})")
+            st.success(f"**Fault-location error:** MAE = `{l_stats['mae_m']*100:.2f} cm` | RMSE = `{l_stats['rmse_m']*100:.2f} cm` (Valid: {l_stats['valid_count']}/{len(t_locs)})")
