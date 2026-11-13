@@ -51,3 +51,33 @@ def test_locate_fault_dual_method_reactive_discrepancy():
     assert abs(out["dist_ifft_m"] - 0.5) < 0.03
     # Check that discrepancy or warnings are populated
     assert len(out["warnings"]) >= 0
+
+
+def test_secondary_peaks_detection():
+    # Test that compute_ifft_tdr returns secondary_peaks list
+    sim = fs.simulate_fault("open", Z0, 0.6, FREQS, vf=VF)
+    tdr_res = fl.compute_ifft_tdr(sim["sweep"]["gamma"], FREQS, vf=VF)
+    assert "secondary_peaks" in tdr_res
+    assert isinstance(tdr_res["secondary_peaks"], list)
+    if len(tdr_res["secondary_peaks"]) > 0:
+        dom = [p for p in tdr_res["secondary_peaks"] if p["is_dominant"]]
+        assert len(dom) >= 1
+        assert abs(dom[0]["dist_m"] - 0.6) < 0.03
+
+
+def test_secondary_peaks_multipath_harmonic():
+    # Synthetic dual-reflection: primary at d = 0.5 m, secondary round-trip at d = 1.0 m
+    vp = lm.phase_velocity(VF)
+    beta = 2.0 * np.pi * FREQS / vp
+    gamma_synth = 0.6 * np.exp(-2j * beta * 0.5) + 0.2 * np.exp(-2j * beta * 1.0)
+    out = fl.locate_fault_dual_method(gamma_synth, FREQS, vf=VF, fault_class="mismatch")
+    assert out["dist_ifft_m"] is not None
+    assert abs(out["dist_ifft_m"] - 0.5) < 0.03
+    assert "secondary_peaks" in out
+    secondaries = [p for p in out["secondary_peaks"] if not p["is_dominant"] and p["magnitude"] > 0.05]
+    assert len(secondaries) >= 1
+    # Check that the secondary peak near 1.0 m was detected and flagged as multipath echo
+    sec = secondaries[0]
+    assert abs(sec["dist_m"] - 1.0) < 0.05
+    assert sec["is_multipath_echo"] is True
+

@@ -345,20 +345,28 @@ This is independent of automated tests.
 ## Part 7 — Automated Test Status
 
 ```
-102 passed, 1 warning, 0 failures  (pytest 9.2.0, Python 3.13.13)
+176 passed, 0 warnings, 0 failures  (pytest 9.2.0, Python 3.13.13)
 ```
 
 | Test file | Tests | Scope |
 |---|---|---|
-| `test_line_model.py` | 27 | Core physics, boundary cases, broadcasting |
-| `test_diagnosis.py` | 28 | Classifier contract labels, rule logic, DiagnosisResult |
-| `test_measurements.py` | 12 | Reflection, VSWR, RL, SweepResult, non-passive handling |
-| `test_integration.py` | 8 | End-to-end module composition |
-| `test_fault_simulation.py` | 10 | ABCD cascade, scenario outputs |
-| `test_matching.py` | 7 | Quarter-wave design, compare_matching |
-| `test_location.py` | 5 | IFFT, phase-slope, resolution metrics |
-| `test_validation.py` | 3 | Metric helper structures |
-| `test_app.py` | 2 | Importability only |
+| `test_app.py` | 9 | Clean importability of Streamlit application, core pipeline execution, and all 7 navigation views rendered via AppTest |
+| `test_benchmarks.py` | 10 | 10 independent closed-form analytical benchmark suites |
+| `test_classification_labels.py` | 11 | Exhaustive verification of all 5 frozen labels and extreme finite loads |
+| `test_consistency.py` | 5 | Cross-coupling & bidirectional consistency tests |
+| `test_data_alignment_and_plotting.py` | 3 | Sweep array alignment & Smith chart polar trajectory integrity |
+| `test_diagnosis.py` | 39 | Classifier contract labels, rule logic, DiagnosisResult, extreme loads, abstention challenges |
+| `test_fault_simulation.py` | 7 | ABCD cascade, scenario outputs, noise modeling |
+| `test_integration.py` | 8 | End-to-end module composition, all 7 analytical hand calculations |
+| `test_line_model.py` | 51 | Core physics, RLGC equations, boundary cases, broadcasting, skin effect |
+| `test_location.py` | 7 | IFFT, phase-slope, resolution metrics, secondary peaks |
+| `test_matching.py` | 8 | Quarter-wave design, compare_matching, passband evaluation |
+| `test_measurements.py` | 14 | Reflection, VSWR numerical tolerance (`rtol=1e-12`), RL, SweepResult, non-passive handling |
+| `test_numerical_edge_cases.py` | 7 | Edge cases, negative inputs, NaNs, division-by-zero |
+| `test_qucs_cross_validation.py` | 1 | Qucsator RF circuit simulator cross-validation |
+| `test_regressions.py` | 5 | Interface compliance & contract regression tests |
+| `test_validation.py` | 3 | Confusion matrix and location metric helper structures |
+| **Total** | **176** | **Full system coverage without breaking frozen contracts (100% pass)** |
 
 > [!NOTE]
 > The test suite confirms **internal code contract consistency**. It does not constitute academic

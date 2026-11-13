@@ -61,34 +61,63 @@ line-model/
 │   ├── location_metrics.py     # MAE, RMSE, location error curves
 │   └── run_validation.py       # Automated Monte Carlo experiment runner
 │
-├── tests/                      # Automated Pytest suite (72 passing tests)
-│   ├── test_line_model.py      # 27 core physics & boundary tests
-│   ├── test_measurements.py    # 9 measurement & broadcasting tests
-│   ├── test_fault_simulation.py# 10 scenario & ABCD cascade tests
-│   ├── test_matching.py        # 6 quarter-wave & bandwidth tests
-│   ├── test_diagnosis.py       # 10 classification & TDR tests
-│   ├── test_location.py        # 5 dual-method & range resolution tests
-│   ├── test_app.py             # 2 Streamlit headless tests
-│   ├── test_integration.py     # 8 end-to-end benchmark tests
-│   └── test_validation.py      # 3 metrics calculation tests
+├── tests/                      # Automated Pytest suite (176 passing tests)
+│   ├── __init__.py
+│   ├── conftest.py             # Fixtures, path setup, non-interactive matplotlib backend
+│   ├── analytical_benchmarks.py # Independent closed-form textbook models
+│   ├── test_app.py             # Streamlit headless integration tests
+│   ├── test_benchmarks.py      # 10 canonical benchmark suites
+│   ├── test_classification_labels.py # Verification of all 5 frozen labels & extreme loads
+│   ├── test_consistency.py     # Cross-coupling & bidirectional consistency tests
+│   ├── test_data_alignment_and_plotting.py # Sweep array alignment & Smith chart integrity
+│   ├── test_diagnosis.py       # Fault diagnosis, open/short separation & TDR
+│   ├── test_fault_simulation.py# 6 scenarios & ABCD cascading tests
+│   ├── test_integration.py     # Hand-calculation integration benchmarks
+│   ├── test_line_model.py      # Core physics, RLGC equations, branch cuts, skin effect
+│   ├── test_location.py        # Dual-method fault location & resolution metrics
+│   ├── test_matching.py        # Quarter-wave matching & passband bandwidth
+│   ├── test_measurements.py    # Reflection, VSWR numerical tolerance, return loss, SweepResult
+│   ├── test_numerical_edge_cases.py # Edge cases, negative inputs, NaNs, division-by-zero
+│   ├── test_qucs_cross_validation.py # Qucsator circuit simulator cross-validation
+│   ├── test_regressions.py     # Interface compliance & contract regression tests
+│   └── test_validation.py      # Statistical metrics (confusion matrix, MAE/RMSE)
 │
 ├── results/                    # Validation outputs (Real experimental data)
-│   ├── csv/                    # Confusion matrix, classification metrics, location errors
-│   └── figures/                # Publication-quality PNG plots
+│   ├── csv/                    # Confusion matrix, classification metrics, location errors, challenge results
+│   └── figures/                # Publication-quality PNG plots & heatmaps
+│
+├── Qucs_Cross_Validation/      # Independent circuit simulator cross-validation
+│   ├── run_qucs_cross_validation.py
+│   ├── qucs_mismatch.sch       # Native schematic
+│   ├── qucs_mismatch.net       # Native netlist
+│   ├── qucs_mismatch.s1p       # Standard Touchstone S-parameter file
+│   ├── comparison_table.csv    # 201-point comparative verification data
+│   └── Qucs_Cross_Validation_Report.md
+│
+├── .github/
+│   └── workflows/
+│       └── tests.yml           # GitHub Actions CI matrix (Python 3.10-3.13)
+│
+├── .streamlit/
+│   └── config.toml             # Streamlit server & theme configuration
 │
 ├── docs/                       # Technical documentation suite
 │   ├── theory.md               # Mathematical foundations & derivations
 │   ├── architecture.md         # Architecture, interface contracts & data flow
 │   ├── validation.md           # Empirical validation report & error analysis
-│   └── references.md           # Academic citations & license notices
+│   ├── assumption_register.md  # Comprehensive model assumption register
+│   ├── equation_traceability.md# Mathematical equation traceability matrix
+│   ├── technical_decisions.md  # Architectural design record
+│   ├── deployment.md           # Streamlit Community Cloud & local deployment guide
+│   └── final_software_verification_report.md # Final software verification report
 │
 ├── figures/                    # Reproducible demonstration figures
 ├── reproducible_examples.py    # End-to-end demonstration & verification script
-├── INTERFACES.md               # Frozen team contract (27 Oct 2026)
+├── INTERFACES.md               # Frozen team contract
 ├── HAND_CALCULATIONS.md        # Canonical hand-calculation benchmarks
-├── PROGRESS.md                 # Checkpoints, recovery logs & task history
-├── IMPLEMENTATION_STATUS.md    # Interface compliance matrix
-├── TECHNICAL_DECISIONS.md      # Architectural design record
+├── FINAL_QA_REPORT.md          # Comprehensive quality assurance audit report
+├── TECHNICAL_DOCUMENTATION.md  # 585-line academic reference manual
+├── TESTING.md                  # Detailed testing guide and benchmark tolerances
 ├── requirements.txt            # Python dependencies
 └── .gitignore                  # Git ignore rules
 ```

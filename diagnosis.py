@@ -75,12 +75,30 @@ def extract_features(sweep_dict, Z0, vf=None):
     Z0         : characteristic line impedance [ohm]
     vf         : velocity factor (defaults to sweep_dict.vf if present, else 1.0)
     """
+    if not hasattr(sweep_dict, "__getitem__"):
+        raise TypeError("sweep_dict must be a mapping/dict containing 'f' and 'gamma'")
+    if "f" not in sweep_dict or "gamma" not in sweep_dict:
+        raise KeyError("sweep_dict must contain 'f' and 'gamma' arrays")
+
     if vf is None:
         vf = float(getattr(sweep_dict, "vf", sweep_dict.get("vf", 1.0)))
+    lm._check_vf(vf)
+
+    Z0_val = complex(Z0)
+    if not np.isfinite(Z0_val) or Z0_val.real <= 0:
+        raise ValueError(f"Line characteristic impedance Z0 must have positive real part (got {Z0})")
 
     gamma = np.asarray(sweep_dict["gamma"], dtype=complex)
     freqs = np.asarray(sweep_dict["f"], dtype=float)
     N = len(gamma)
+
+    if N == 0 or len(freqs) == 0:
+        return {
+            "mag_mean": 0.0, "mag_std": 0.0, "mag_max": 0.0, "mag_low": 0.0, "mag_high": 0.0,
+            "trend": 0.0, "phase_first": 0.0, "lf_real": 0.0, "lf_imag": 0.0,
+            "cos_phi0": 0.0, "phi0": 0.0, "d_phase": None, "deembedded_real": 0.0,
+            "deembedded_imag": 0.0, "d_est": None, "vf": vf,
+        }
 
     mag = np.abs(gamma)
     mag_mean = float(np.mean(mag)) if N > 0 else 0.0
@@ -166,6 +184,57 @@ def classify(sweep_dict, Z0):
     -------
     DiagnosisResult (str) : one of "healthy", "open", "short", "mismatch", "unknown"
     """
+    if not hasattr(sweep_dict, "__getitem__"):
+        raise TypeError("sweep_dict must be a mapping/dict containing 'f' and 'gamma'")
+    if "f" not in sweep_dict or "gamma" not in sweep_dict:
+        raise KeyError("sweep_dict must contain 'f' and 'gamma' arrays")
+
+    Z0_val = complex(Z0)
+    if not np.isfinite(Z0_val) or Z0_val.real <= 0:
+        raise ValueError(f"Characteristic line impedance Z0 must have positive real part, got {Z0}")
+
+    gamma = np.asarray(sweep_dict["gamma"], dtype=complex)
+    freqs = np.asarray(sweep_dict["f"], dtype=float)
+
+    if len(gamma) == 0 or len(freqs) == 0:
+        return DiagnosisResult(
+            "unknown",
+            subtype="uncertain",
+            confidence="low",
+            explanation="Empty frequency sweep provided.",
+            rules_fired=["R_EMPTY_DATA"],
+        )
+
+    if not np.all(np.isfinite(gamma)) or not np.all(np.isfinite(freqs)):
+        return DiagnosisResult(
+            "unknown",
+            subtype="uncertain",
+            confidence="low",
+            explanation="Sweep data contains non-finite (NaN or Inf) values.",
+            rules_fired=["R_NON_FINITE_DATA"],
+        )
+
+    # Insufficient frequency samples (minimum N = 4 required for regression and IFFT)
+    if len(freqs) < 4:
+        return DiagnosisResult(
+            "unknown",
+            subtype="uncertain",
+            confidence="low",
+            explanation=f"Insufficient frequency points (N = {len(freqs)} < 4) for diagnostic feature extraction.",
+            rules_fired=["R_INSUFFICIENT_POINTS"],
+        )
+
+    # Insufficient sweep bandwidth (minimum B = 5 MHz required for spatial reflectometry)
+    bandwidth_hz = float(abs(freqs[-1] - freqs[0]))
+    if bandwidth_hz < 5e6:
+        return DiagnosisResult(
+            "unknown",
+            subtype="uncertain",
+            confidence="low",
+            explanation=f"Sweep bandwidth ({bandwidth_hz/1e6:.2f} MHz < 5.0 MHz) is insufficient for spatial reflectometry.",
+            rules_fired=["R_INSUFFICIENT_BANDWIDTH"],
+        )
+
     vf = float(getattr(sweep_dict, "vf", sweep_dict.get("vf", 1.0)))
     feat = extract_features(sweep_dict, Z0, vf=vf)
     mm = feat["mag_mean"]
@@ -176,6 +245,20 @@ def classify(sweep_dict, Z0):
     cos_phi0 = feat["cos_phi0"]
 
     rules = []
+
+    # Check for excessive noise or unphysical chaotic profiles obscuring transmission-line signature.
+    # In genuine physical reactive discontinuities, trend is dominant (trend >= 1.2 * mag_std).
+    # If mag_std > 0.12 without a dominant positive trend, noise/chaos prevents reliable diagnosis.
+    if ms > 0.12 and tr < 1.2 * ms:
+        rules.append("R_EXCESSIVE_NOISE")
+        return DiagnosisResult(
+            "unknown",
+            subtype="uncertain",
+            confidence="low",
+            features=feat,
+            explanation=f"Excessive measurement variance/noise (std = {ms:.3f} > 0.12) obscures transmission-line signature.",
+            rules_fired=rules,
+        )
 
     # Rule 1: Healthy Matched Line
     # Negligible reflection across all frequencies
@@ -191,8 +274,8 @@ def classify(sweep_dict, Z0):
         )
 
     # Rule 2: Reactive Discontinuity (Series L or Shunt C)
-    # Reflection magnitude rises significantly with frequency (trend > 0.010 or std > 0.035)
-    if tr > 0.010 or ms > 0.035:
+    # Reflection magnitude rises significantly with frequency
+    if (tr > 0.010 and ms <= 0.12) or (ms > 0.12 and tr >= 1.2 * ms) or (ms > 0.035 and tr > 0.005 and ms <= 0.12):
         if de_im >= 0:
             rules.append("R2_SERIES_L_MISMATCH")
             return DiagnosisResult(
@@ -220,16 +303,18 @@ def classify(sweep_dict, Z0):
                 rules_fired=rules,
             )
 
-    # Rule 3: Total Reflection (Open vs Short Circuit)
-    # Mean |Gamma| near 1.0 and flat frequency trend
-    if mm >= 0.70:
+    # Rule 3: Near-Total Reflection (Open vs Short Circuit)
+    # True open and short circuits exhibit near-unity reflection (|Gamma| >= 0.975).
+    # Finite resistive mismatches (even extreme: 500 ohm, 5 ohm, 1000 ohm, 2.5 ohm)
+    # exhibit |Gamma| <= 0.952 and are correctly handled by Rule 4.
+    if mm >= 0.975:
         # Distinguish open vs short via physical DC phase intercept cos(phi0) and de-embedded real reflection
-        if cos_phi0 > 0.1 or (cos_phi0 >= -0.3 and de_re > 0.0):
+        if cos_phi0 > 0.60 and de_re > 0.40:
             rules.append("R4_OPEN_CIRCUIT")
             return DiagnosisResult(
                 "open",
                 subtype="open_circuit",
-                confidence="high" if abs(cos_phi0) > 0.7 else "medium",
+                confidence="high" if cos_phi0 > 0.85 else "medium",
                 features=feat,
                 explanation=(
                     f"Total reflection with positive DC phase intercept "
@@ -237,12 +322,12 @@ def classify(sweep_dict, Z0):
                 ),
                 rules_fired=rules,
             )
-        elif cos_phi0 < -0.1 or (cos_phi0 <= 0.3 and de_re < 0.0):
+        elif cos_phi0 < -0.60 and de_re < -0.40:
             rules.append("R5_SHORT_CIRCUIT")
             return DiagnosisResult(
                 "short",
                 subtype="short_circuit",
-                confidence="high" if abs(cos_phi0) > 0.7 else "medium",
+                confidence="high" if cos_phi0 < -0.85 else "medium",
                 features=feat,
                 explanation=(
                     f"Total reflection with negative DC phase intercept "
@@ -257,19 +342,31 @@ def classify(sweep_dict, Z0):
                 subtype="uncertain",
                 confidence="low",
                 features=feat,
-                explanation="Total reflection detected but open/short phase intercept was ambiguous.",
+                explanation="Total reflection detected (|Gamma| >= 0.975) but open/short phase intercept was ambiguous.",
                 rules_fired=rules,
             )
 
-    # Rule 4: Steady Resistive Mismatch
-    if 0.05 <= mm < 0.70:
+    # Rule 4: Steady Resistive Mismatch (including extreme loads)
+    # 0.05 <= mm < 0.975
+    if 0.05 <= mm < 0.975:
+        # Check boundary ambiguity: near total reflection threshold with noise variance
+        if mm >= 0.94 and ms > 0.025:
+            rules.append("R6_BOUNDARY_AMBIGUITY")
+            return DiagnosisResult(
+                "unknown",
+                subtype="uncertain",
+                confidence="low",
+                features=feat,
+                explanation=f"Boundary ambiguity between high mismatch and total reflection (|Gamma| = {mm:.3f}, std = {ms:.3f}).",
+                rules_fired=rules,
+            )
         rules.append("R6_RESISTIVE_MISMATCH")
         return DiagnosisResult(
             "mismatch",
             subtype="resistive_mismatch",
             confidence="high" if ms < 0.05 else "medium",
             features=feat,
-            explanation=f"Uniform moderate reflection: mean |Gamma| = {mm:.3f}, std = {ms:.3f}",
+            explanation=f"Uniform resistive reflection: mean |Gamma| = {mm:.3f}, std = {ms:.3f}",
             rules_fired=rules,
         )
 
@@ -304,10 +401,14 @@ def distance_resolution(sweep_dict, vf=None):
     """
     if vf is None:
         vf = float(getattr(sweep_dict, "vf", sweep_dict.get("vf", 1.0)))
+    lm._check_vf(vf)
+
+    if not hasattr(sweep_dict, "__getitem__") or "f" not in sweep_dict:
+        raise KeyError("sweep_dict must contain 'f' frequency array")
 
     freqs = np.asarray(sweep_dict["f"], dtype=float)
     N = len(freqs)
-    if N < 2:
+    if N < 2 or not np.all(np.isfinite(freqs)):
         return {
             "range_res": np.nan,
             "interp_step": np.nan,
@@ -346,14 +447,19 @@ def estimate_distance(sweep_dict, vf, fault_class):
     -------
     float : distance to fault in metres, or None if not applicable / undetectable
     """
+    lm._check_vf(vf)
+
     # Matched / healthy line has no fault reflection echo
     if str(fault_class).lower() == "healthy":
         return None
 
+    if not hasattr(sweep_dict, "__getitem__") or "f" not in sweep_dict or "gamma" not in sweep_dict:
+        raise KeyError("sweep_dict must contain 'f' and 'gamma' arrays")
+
     gamma = np.asarray(sweep_dict["gamma"], dtype=complex)
     freqs = np.asarray(sweep_dict["f"], dtype=float)
 
-    if len(freqs) < 4:
+    if len(freqs) < 4 or not np.all(np.isfinite(gamma)) or not np.all(np.isfinite(freqs)):
         return None
 
     return _compute_ifft_distance(gamma, freqs, vf)
@@ -363,6 +469,9 @@ def _compute_ifft_distance(gamma, freqs, vf):
     """Internal IFFT TDR peak detection with grid uniformity validation."""
     N = len(freqs)
     if N < 4:
+        return None
+
+    if not np.all(np.isfinite(gamma)) or not np.all(np.isfinite(freqs)):
         return None
 
     # Step 1: Validate frequency spacing uniformity

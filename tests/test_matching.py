@@ -95,3 +95,34 @@ def test_contiguous_bandwidth_isolation():
     res_high = match.compare_matching(50.0, 100.0, f_arr, vf=1.0, f_design=1e9, rl_threshold=500.0)
     assert res_high["bandwidth_hz"] == 0.0
     assert res_high["bw_edges"] == (None, None)
+
+
+def test_matching_validation_and_boundaries():
+    freqs = np.linspace(80e6, 120e6, 41)
+
+    # 1. Negative or zero Z0
+    with pytest.raises(ValueError, match="Line impedance Z0 must be finite and > 0"):
+        match.design_quarter_wave(-50.0, 100.0, F0)
+    with pytest.raises(ValueError, match="Line impedance Z0 must be finite and > 0"):
+        match.design_quarter_wave(0.0, 100.0, F0)
+
+    # 2. Design frequency out of swept band in compare_matching
+    with pytest.raises(ValueError, match="outside swept band"):
+        match.compare_matching(Z0, 100.0, freqs, f_design=200e6)
+    with pytest.raises(ValueError, match="outside swept band"):
+        match.compare_matching(Z0, 100.0, freqs, f_design=10e6)
+
+    # 3. Invalid frequency arrays
+    with pytest.raises(ValueError, match="at least 2 points"):
+        match.compare_matching(Z0, 100.0, np.array([100e6]))
+    with pytest.raises(ValueError, match="strictly positive"):
+        match.compare_matching(Z0, 100.0, np.array([0.0, 100e6]))
+    with pytest.raises(ValueError, match="strictly monotonically increasing"):
+        match.compare_matching(Z0, 100.0, np.array([120e6, 80e6]))
+
+    # 4. Invalid rl_threshold
+    with pytest.raises(ValueError, match="Return loss threshold must be finite and > 0"):
+        match.compare_matching(Z0, 100.0, freqs, rl_threshold=-5.0)
+    with pytest.raises(ValueError, match="Return loss threshold must be finite and > 0"):
+        match.compare_matching(Z0, 100.0, freqs, rl_threshold=0.0)
+

@@ -43,14 +43,28 @@ class SweepResult(dict):
 
 def reflection_coefficient(Z, Z0):
     """
-    Complex reflection coefficient:
+    Equation 7: Complex reflection coefficient:
         Gamma = (Z - Z0) / (Z + Z0)
 
-    Handles Z = np.inf (open circuit) exactly -> +1.0 + 0.0j.
-    Supports scalar and array inputs via NumPy broadcasting.
+    Electromagnetic Theory & Boundary Conditions:
+      * At a termination boundary ZL, Gamma represents the ratio of the reflected
+        voltage wave phasor V0^- to incident voltage wave phasor V0^+.
+      * For Z = Z0 (matched load): Gamma = 0 (zero reflection, total transmission).
+      * For Z = 0 (short circuit): Gamma = -1.0 + 0.0j (180 deg phase reversal).
+      * For Z = np.inf (open circuit): Gamma = +1.0 + 0.0j (in-phase reflection).
+      * Handles Z = np.inf exactly without numerical overflow -> +1.0 + 0.0j.
+      * Supports scalar and array inputs via NumPy broadcasting.
     """
-    Z_arr = np.asarray(Z, dtype=complex)
     Z0_arr = np.asarray(Z0, dtype=complex)
+    if np.any(np.isnan(Z0_arr)):
+        raise ValueError("Reference impedance Z0 cannot contain NaN")
+    if np.any(np.real(Z0_arr) <= 0):
+        raise ValueError("Reference impedance Z0 must have strictly positive real part")
+
+    Z_arr = np.asarray(Z, dtype=complex)
+    if np.any(np.isnan(Z_arr)):
+        raise ValueError("Impedance Z cannot contain NaN")
+
     Z_b, Z0_b = np.broadcast_arrays(Z_arr, Z0_arr)
 
     out = np.empty(Z_b.shape, dtype=complex)
@@ -72,25 +86,34 @@ def reflection_coefficient(Z, Z0):
 
 def vswr(gamma):
     """
-    Voltage Standing Wave Ratio (VSWR):
-        VSWR = (1 + |Gamma|) / (1 - |Gamma|)
+    Equation 8: Voltage Standing Wave Ratio (VSWR):
+        VSWR = V_max / V_min = (1 + |Gamma|) / (1 - |Gamma|)
 
-    Behavior:
-      - |Gamma| == 1.0: returns np.inf (total reflection).
-      - 0 <= |Gamma| < 1.0: returns physical ratio in [1.0, inf).
-      - |Gamma| > 1.0: returns np.nan for non-passive noisy samples
-        rather than crashing or returning negative values.
+    Electromagnetic Theory & Numerical Stability:
+      * Defined for passive transmission lines where 0 <= |Gamma| <= 1.0.
+      * |Gamma| == 0: VSWR = 1.0 (perfect match, constant voltage envelope).
+      * |Gamma| == 1.0: returns np.inf (total reflection, standing wave nodes).
+      * 0 <= |Gamma| < 1.0: returns physical ratio in [1.0, inf).
+      * |Gamma| > 1.0: returns np.nan for non-passive noisy samples
+        rather than crashing or returning negative unphysical values.
+      * Controlled tolerance: uses explicit relative (rtol=1e-12) and absolute
+        (atol=1e-12) tolerances to avoid misclassifying values near unity
+        (e.g., 0.99999) as exactly 1.0.
     """
     g = np.asarray(gamma, dtype=complex)
     mag = np.abs(g)
 
     out = np.full(mag.shape, np.nan, dtype=float)
 
-    # Passive samples: 0 <= |Gamma| <= 1.0 (with 1e-12 tolerance for float precision)
-    total_refl = np.isclose(mag, 1.0, atol=1e-12)
+    # Total reflection: |Gamma| == 1.0 with explicitly controlled relative and absolute tolerances.
+    # Explicitly pass rtol=1e-12 to override NumPy's default rtol=1e-5, which would otherwise
+    # misclassify values like 0.99999 as exactly 1.0.
+    tol = 1e-12
+    total_refl = np.isclose(mag, 1.0, rtol=tol, atol=tol)
     out[total_refl] = np.inf
 
-    valid_passive = (mag >= 0.0) & (mag < 1.0 - 1e-12)
+    # Valid passive transmission line region: 0 <= |Gamma| < 1 (strictly below total reflection tolerance)
+    valid_passive = (mag >= 0.0) & (mag < 1.0) & (~total_refl)
     out[valid_passive] = (1.0 + mag[valid_passive]) / (1.0 - mag[valid_passive])
 
     return out if out.ndim else out.item()
@@ -98,13 +121,15 @@ def vswr(gamma):
 
 def return_loss_db(gamma):
     """
-    Return Loss in dB:
-        RL = -20 * log10(|Gamma|)
+    Equation 9: Return Loss in dB:
+        RL = -20 * log10(|Gamma|) = 10 * log10(P_incident / P_reflected)
 
-    Behavior:
-      - Matched load (|Gamma| == 0): returns np.inf without log warnings.
-      - Passive reflection (0 < |Gamma| <= 1): returns positive dB.
-      - Non-passive noisy reflection (|Gamma| > 1): returns negative dB.
+    Electromagnetic Theory & Decibel Conversion:
+      * Quantifies the power reflected from an impedance discontinuity.
+      * Matched load (|Gamma| == 0): returns np.inf without divide-by-zero log warnings.
+      * Passive total reflection (|Gamma| == 1.0): returns exactly 0.0 dB.
+      * Intermediate passive reflection (0 < |Gamma| < 1): returns positive dB.
+      * Non-passive noisy reflection (|Gamma| > 1): returns negative dB without clipping.
     """
     g = np.asarray(gamma, dtype=complex)
     mag = np.abs(g)
@@ -140,8 +165,23 @@ def sweep(Z0, ZL, length, f_array, vf=1.0):
         'vswr'  : VSWR array (contains np.nan for non-passive noisy points)
         'rl_db' : Return loss array [dB]
     """
+    if length is None:
+        raise ValueError("Line length must be provided")
+    l_val = float(length)
+    if not np.isfinite(l_val) or l_val < 0:
+        raise ValueError(f"Line length must be a finite, non-negative number (got {length})")
+
     f_arr = np.asarray(f_array, dtype=float)
-    zin = lm.input_impedance_at_freq(Z0, ZL, f_arr, length, vf=vf)
+    if f_arr.size == 0:
+        raise ValueError("Frequency array cannot be empty")
+    if np.any(~np.isfinite(f_arr)) or np.any(f_arr <= 0):
+        raise ValueError("Frequencies must be finite and strictly positive (> 0)")
+    if len(f_arr) > 1 and np.any(np.diff(f_arr) <= 0):
+        raise ValueError("Frequency sweep array must be strictly monotonically increasing")
+
+    lm._check_vf(vf)
+
+    zin = lm.input_impedance_at_freq(Z0, ZL, f_arr, l_val, vf=vf)
     gamma = reflection_coefficient(zin, Z0)
     swr = vswr(gamma)
     rl = return_loss_db(gamma)
@@ -156,7 +196,7 @@ def sweep(Z0, ZL, length, f_array, vf=1.0):
         },
         vf=vf,
         Z0=Z0,
-        length=length,
+        length=l_val,
     )
 
 
@@ -219,12 +259,14 @@ def smith_plot(gamma_array, ax=None, **kw):
     ax.axhline(0, color="black", linewidth=0.8, alpha=0.5, zorder=1)
 
     g = np.asarray(gamma_array, dtype=complex)
+    valid = np.isfinite(g.real) & np.isfinite(g.imag)
+    g_plot = g[valid]
+
     default_kw = {"color": "crimson", "linewidth": 1.8, "label": "Gamma"}
     default_kw.update(kw)
-    ax.plot(g.real, g.imag, **default_kw)
-
-    if len(g) > 0:
-        ax.scatter([g.real[0]], [g.imag[0]], color="crimson", s=30, zorder=5)
+    if len(g_plot) > 0:
+        ax.plot(g_plot.real, g_plot.imag, **default_kw)
+        ax.scatter([g_plot.real[0]], [g_plot.imag[0]], color="crimson", s=30, zorder=5)
 
     ax.set_xlim(-1.15, 1.15)
     ax.set_ylim(-1.15, 1.15)

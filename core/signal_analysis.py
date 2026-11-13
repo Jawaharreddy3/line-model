@@ -146,7 +146,11 @@ def add_measurement_noise(gamma, noise_std, rng=None, clip_passive=False):
     noisy_gamma : complex array
     info        : dict with 'snr_db', 'num_non_passive'
     """
-    if noise_std <= 0.0:
+    if not np.isfinite(noise_std) or noise_std < 0.0:
+        raise ValueError(
+            f"noise_std must be a finite, non-negative number (>= 0), got {noise_std}"
+        )
+    if noise_std == 0.0:
         return gamma.copy(), {"snr_db": float("inf"), "num_non_passive": 0}
 
     if rng is None:

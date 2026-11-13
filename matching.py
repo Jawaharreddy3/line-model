@@ -24,6 +24,17 @@ def design_quarter_wave(Z0, RL, f, vf=1.0):
     """
     Design a quarter-wave transformer matching real load resistance RL to line Z0.
 
+    Electromagnetic Theory:
+      * Transformer characteristic impedance:
+            Zt = sqrt(Z0 * RL)
+      * Physical length lt is one quarter of the guided wavelength at f0:
+            lt = lambda_t / 4 = vp / (4 * f0)
+      * At design frequency f0, electrical length beta*lt = (2*pi/lambda_t)*(lambda_t/4) = pi/2 rad (90 deg).
+      * Quarter-wave impedance inversion:
+            Zin(f0) = Zt^2 / RL = (sqrt(Z0 * RL))^2 / RL = Z0
+      * Hence, input reflection Gamma(f0) = (Zin - Z0)/(Zin + Z0) = 0.
+      * VSWR(f0) = 1.0, and Return Loss RL(f0) -> infinity dB.
+
     Parameters
     ----------
     Z0 : characteristic impedance of line [ohm], real > 0
@@ -47,12 +58,13 @@ def design_quarter_wave(Z0, RL, f, vf=1.0):
             "Quarter-wave transformer requires purely real impedances: "
             f"Z0={Z0}, RL={RL}"
         )
-    if Z0_val <= 0:
-        raise ValueError(f"Line impedance Z0 must be > 0 (got {Z0_val})")
-    if RL_val <= 0:
-        raise ValueError(f"Load resistance RL must be > 0 (got {RL_val})")
-    if f_val <= 0:
-        raise ValueError(f"Design frequency must be > 0 (got {f_val})")
+    if not np.isfinite(Z0_val) or Z0_val <= 0:
+        raise ValueError(f"Line impedance Z0 must be finite and > 0 (got {Z0_val})")
+    if not np.isfinite(RL_val) or RL_val <= 0:
+        raise ValueError(f"Load resistance RL must be finite and > 0 (got {RL_val})")
+    if not np.isfinite(f_val) or f_val <= 0:
+        raise ValueError(f"Design frequency must be finite and > 0 (got {f_val})")
+    lm._check_vf(vf_val)
 
     Zt = float(np.sqrt(Z0_val * RL_val))
     vp = lm.phase_velocity(vf_val)
@@ -97,16 +109,37 @@ def compare_matching(
         'at_f_design'  : dict of exact metrics evaluated at f_design
     """
     ZL_c = complex(ZL)
+    if not np.isfinite(ZL_c.real) or not np.isfinite(ZL_c.imag):
+        raise ValueError("Load impedance ZL must be finite (no NaN or Inf)")
     if abs(ZL_c.imag) > 1e-6 * max(abs(ZL_c.real), 1e-9):
         raise ValueError(
             f"Quarter-wave matching requires real load resistance RL. "
             f"Received complex load ZL = {ZL_c}."
         )
     RL = ZL_c.real
+    if RL <= 0:
+        raise ValueError(f"Load resistance RL must be strictly positive (got {RL})")
 
     f_arr = np.asarray(f_array, dtype=float)
+    if f_arr.size < 2:
+        raise ValueError("Frequency array must contain at least 2 points")
+    if np.any(~np.isfinite(f_arr)) or np.any(f_arr <= 0):
+        raise ValueError("Frequencies must be finite and strictly positive (> 0)")
+    if len(f_arr) > 1 and np.any(np.diff(f_arr) <= 0):
+        raise ValueError("Frequency array must be strictly monotonically increasing")
+
+    if not np.isfinite(rl_threshold) or rl_threshold <= 0:
+        raise ValueError(f"Return loss threshold must be finite and > 0 (got {rl_threshold})")
+
     if f_design is None:
         f_design = float(np.mean(f_arr))
+    else:
+        f_design = float(f_design)
+        if f_design < np.min(f_arr) or f_design > np.max(f_arr):
+            raise ValueError(
+                f"Design frequency f_design={f_design:.2e} Hz is outside swept band "
+                f"[{np.min(f_arr):.2e}, {np.max(f_arr):.2e}] Hz."
+            )
 
     # Design quarter-wave transformer at exact f_design
     design = design_quarter_wave(Z0, RL, f_design, vf=vf)

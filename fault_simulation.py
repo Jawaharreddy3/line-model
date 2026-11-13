@@ -43,7 +43,21 @@ __all__ = [
 
 
 def abcd_uniform_line(Z0, beta, length):
-    """ABCD matrix for a lossless uniform transmission-line section."""
+    """
+    ABCD 2-port transmission matrix for a uniform lossless line section.
+
+    Electromagnetic Theory:
+      For a transmission line section of length l with propagation constant gamma = alpha + j*beta:
+          [ V1 ] = [ cosh(gamma*l)       Z0*sinh(gamma*l) ] [ V2 ]
+          [ I1 ]   [ Y0*sinh(gamma*l)    cosh(gamma*l)    ] [ I2 ]
+      In the lossless limit (alpha = 0, gamma = j*beta):
+          cosh(j*beta*l) = cos(beta*l)
+          sinh(j*beta*l) = j * sin(beta*l)
+      giving:
+          A = cos(beta*l),       B = j * Z0 * sin(beta*l)
+          C = j * sin(beta*l)/Z0, D = cos(beta*l)
+      Reciprocity condition: A*D - B*C = cos^2(beta*l) + sin^2(beta*l) == 1.
+    """
     bl = np.asarray(beta, dtype=float) * float(length)
     cos_bl = np.cos(bl)
     sin_bl = np.sin(bl)
@@ -57,7 +71,12 @@ def abcd_uniform_line(Z0, beta, length):
 
 
 def abcd_series_impedance(Z):
-    """ABCD matrix for a series impedance [ [1, Z], [0, 1] ]."""
+    """
+    ABCD matrix for a series lumped impedance:
+        [ [1, Z],
+          [0, 1] ]
+    where for series inductance Z = j * omega * L [ohm].
+    """
     Z = np.asarray(Z, dtype=complex)
     ones = np.ones_like(Z, dtype=complex)
     zeros = np.zeros_like(Z, dtype=complex)
@@ -65,7 +84,12 @@ def abcd_series_impedance(Z):
 
 
 def abcd_shunt_admittance(Y):
-    """ABCD matrix for a shunt admittance [ [1, 0], [Y, 1] ]."""
+    """
+    ABCD matrix for a shunt lumped admittance:
+        [ [1, 0],
+          [Y, 1] ]
+    where for shunt capacitance Y = j * omega * C [S].
+    """
     Y = np.asarray(Y, dtype=complex)
     ones = np.ones_like(Y, dtype=complex)
     zeros = np.zeros_like(Y, dtype=complex)
@@ -73,7 +97,11 @@ def abcd_shunt_admittance(Y):
 
 
 def multiply_abcd(M1, M2):
-    """Multiply two ABCD matrix tuples (A1, B1, C1, D1) @ (A2, B2, C2, D2)."""
+    """
+    Multiply two 2-port ABCD matrices:
+        M_total = M1 @ M2
+    where M = (A, B, C, D).
+    """
     A1, B1, C1, D1 = M1
     A2, B2, C2, D2 = M2
     A = A1 * A2 + B1 * C2
@@ -84,7 +112,14 @@ def multiply_abcd(M1, M2):
 
 
 def zin_from_abcd(ABCD, ZL):
-    """Input impedance from ABCD matrix and load impedance ZL."""
+    """
+    Input impedance Zin from cascaded 2-port ABCD matrix and termination ZL:
+        Zin = Vin / Iin = (A * ZL + B) / (C * ZL + D)
+
+    Boundary Conditions:
+      * Open circuit (ZL -> inf): Zin = A / C
+      * Short circuit (ZL = 0):   Zin = B / D
+    """
     A, B, C, D = ABCD
     ZL_val = complex(ZL)
 
@@ -132,21 +167,48 @@ def simulate_fault(
             f"Unknown scenario '{scenario}'. Choose from {FAULT_SCENARIOS}"
         )
 
+    Z0_val = float(np.real(Z0))
+    if not np.isfinite(Z0_val) or Z0_val <= 0:
+        raise ValueError(f"Line characteristic impedance Z0 must be finite and > 0 (got {Z0})")
+
+    len_val = float(length)
+    if not np.isfinite(len_val) or len_val <= 0:
+        raise ValueError(f"Physical line length must be finite and > 0 (got {length})")
+
     f_arr = np.asarray(f_array, dtype=float)
-    if np.any(f_arr <= 0):
-        raise ValueError("Frequencies must be > 0")
+    if f_arr.size < 2:
+        raise ValueError("Frequency array must contain at least 2 points")
+    if np.any(~np.isfinite(f_arr)) or np.any(f_arr <= 0):
+        raise ValueError("Frequencies must be finite and strictly positive (> 0)")
+    if len(f_arr) > 1 and np.any(np.diff(f_arr) <= 0):
+        raise ValueError("Frequency array must be strictly monotonically increasing")
+
+    lm._check_vf(vf)
+
+    if not np.isfinite(L_val) or L_val < 0:
+        raise ValueError(f"Discontinuity inductance L_val must be non-negative (>= 0), got {L_val}")
+    if not np.isfinite(C_val) or C_val < 0:
+        raise ValueError(f"Discontinuity capacitance C_val must be non-negative (>= 0), got {C_val}")
+    if not np.isfinite(ZL_mismatch) or ZL_mismatch <= 0:
+        raise ValueError(f"Mismatch resistance ZL_mismatch must be strictly positive (> 0), got {ZL_mismatch}")
+    if not np.isfinite(noise_std) or noise_std < 0:
+        raise ValueError(f"Measurement noise noise_std must be non-negative (>= 0), got {noise_std}")
 
     if fault_pos is None:
-        fault_pos = length / 2.0
-    fault_pos = float(np.clip(fault_pos, 0.0, length))
+        fault_pos = len_val / 2.0
+    else:
+        fp_val = float(fault_pos)
+        if not np.isfinite(fp_val) or fp_val < 0 or fp_val > len_val:
+            raise ValueError(f"Discontinuity position fault_pos must be within [0, {len_val}] (got {fault_pos})")
+        fault_pos = fp_val
 
     beta = lm.phase_constant(f_arr, vf=vf)
     omega = 2.0 * np.pi * f_arr
 
     truth = {
         "scenario": scenario,
-        "Z0": float(Z0),
-        "length": float(length),
+        "Z0": float(Z0_val),
+        "length": float(len_val),
         "fault_pos": fault_pos,
         "L_val": float(L_val),
         "C_val": float(C_val),

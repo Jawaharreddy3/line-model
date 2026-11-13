@@ -27,21 +27,28 @@
 The full automated regression suite was executed via `python -m pytest -v`:
 
 ```
-======================= 102 passed, 1 warning in 1.40s =======================
+======================= 176 passed in 7.12s =======================
 ```
 
 | Test Module | Test Count | Scope Verified | Result |
 |---|---|---|---|
-| `test_line_model.py` | 27 | Closed-form lossless equations, boundary conditions, singular limits ($\lambda/4, \lambda/2$), broadcasting | **27 / 27 PASS** |
-| `test_measurements.py` | 12 | Reflection coefficient, VSWR, return loss, SweepResult metadata, non-passive sample handling, Smith plot generation | **12 / 12 PASS** |
-| `test_fault_simulation.py` | 10 | 6 canonical scenarios, 2-port ABCD cascading for series-L/shunt-C, zero-limit convergence, unclipped noise modeling | **10 / 10 PASS** |
-| `test_diagnosis.py` | 28 | Frozen contract classification (`healthy`, `mismatch`, `open`, `short`, `unknown`), subtype extraction, DC phase intercept, frequency grid uniformity validation | **28 / 28 PASS** |
-| `test_matching.py` | 7 | Quarter-wave transformer design, exact cancellation at $f_0$, complex load rejection, contiguous passband evaluation | **7 / 7 PASS** |
-| `test_location.py` | 5 | Hann-windowed IFFT pseudo-TDR, phase-slope estimation, dual-method discrepancy detection, Rayleigh resolution | **5 / 5 PASS** |
+| `test_app.py` | 9 | Clean importability of Streamlit application, core pipeline execution, and all 7 navigation views rendered via AppTest | **9 / 9 PASS** |
+| `test_benchmarks.py` | 10 | 10 independent closed-form analytical benchmark suites | **10 / 10 PASS** |
+| `test_classification_labels.py` | 11 | Exhaustive verification of all 5 frozen labels, extreme finite loads, and abstention challenge conditions | **11 / 11 PASS** |
+| `test_consistency.py` | 5 | Cross-coupling & bidirectional consistency tests | **5 / 5 PASS** |
+| `test_data_alignment_and_plotting.py` | 3 | Sweep array alignment & Smith chart polar trajectory integrity | **3 / 3 PASS** |
+| `test_diagnosis.py` | 39 | Frozen contract classification, subtype extraction, DC phase intercept, extreme mismatch separation ($500\,\Omega, 5\,\Omega$), abstention challenges | **39 / 39 PASS** |
+| `test_fault_simulation.py` | 7 | 6 canonical scenarios, 2-port ABCD cascading for series-L/shunt-C, unclipped noise modeling | **7 / 7 PASS** |
 | `test_integration.py` | 8 | End-to-end data pipeline, type stability, all 7 analytical hand-calculation benchmarks | **8 / 8 PASS** |
+| `test_line_model.py` | 51 | Closed-form lossless equations, boundary conditions, singular limits ($\lambda/4, \lambda/2$), broadcasting, frequency-dependent skin effect | **51 / 51 PASS** |
+| `test_location.py` | 7 | Hann-windowed IFFT pseudo-TDR, phase-slope estimation, dual-method discrepancy detection, Rayleigh resolution, harmonic peaks | **7 / 7 PASS** |
+| `test_matching.py` | 8 | Quarter-wave transformer design, exact cancellation at $f_0$, complex load rejection, contiguous passband evaluation | **8 / 8 PASS** |
+| `test_measurements.py` | 14 | Reflection coefficient, VSWR numerical tolerance (`rtol=1e-12, atol=1e-12`), return loss, SweepResult metadata, non-passive handling, Smith plot | **14 / 14 PASS** |
+| `test_numerical_edge_cases.py` | 7 | Edge cases, negative inputs, NaNs, division-by-zero, singular grids | **7 / 7 PASS** |
+| `test_qucs_cross_validation.py` | 1 | Qucsator RF circuit simulator Touchstone S11 cross-validation ($\Delta < 8.23\times 10^{-14}$) | **1 / 1 PASS** |
+| `test_regressions.py` | 5 | Interface compliance & contract regression tests | **5 / 5 PASS** |
 | `test_validation.py` | 3 | Confusion matrix math, classification report generation, location metrics error calculations | **3 / 3 PASS** |
-| `test_app.py` | 2 | Clean importability of Streamlit application and core pipeline execution | **2 / 2 PASS** |
-| **Total** | **102** | **Full system coverage without breaking frozen contracts** | **102 / 102 PASS (100%)** |
+| **Total** | **176** | **Full system coverage without breaking frozen contracts** | **176 / 176 PASS (100%)** |
 
 ---
 
@@ -160,8 +167,8 @@ All three validation configurations were re-verified against live execution outp
 | Configuration | Sample Size | Noise ($\sigma$) | Random Seed | Key Outputs / Artifacts | Verified Accuracy / MAE |
 |---|---|---|---|---|---|
 | **Streamlit Live Validation** | $N = 120$<br>(20/scenario) | $0.02$ | `42` | Interactive confusion matrices & metrics rendered in View 7 | **100% on 4 Tested Target Classes** (120/120)<br>*Unknown class support = 0 (unvalidated)*<br>Location MAE: **$0.22\text{ cm}$** |
-| **Standalone Batch Validation** (`run_validation.py`) | $N = 240$<br>(40/scenario) | $0.02$ | `42` | • `results/csv/confusion_matrix.csv`<br>• `results/csv/classification_metrics.csv`<br>• `results/csv/subtype_confusion_matrix.csv`<br>• `results/csv/subtype_classification_metrics.csv`<br>• `results/csv/location_errors.csv`<br>• Figures in `results/figures/` | **99.58% Contract Accuracy** (239/240)<br>**99.58% Subtype Accuracy** (239/240)<br>*Unknown class support = 0 (unvalidated)*<br>Location MAE: **$0.16\text{ cm}$**<br>Location RMSE: **$0.22\text{ cm}$** |
-| **Noise Sensitivity Study** | $N = 120$ per level (6 levels) | $0.00$ to $0.18$ | Distinct seeds: `100 + int(σ*100)` | • `results/csv/noise_sensitivity.csv`<br>• `results/figures/accuracy_vs_noise.png` | $\sigma=0.00: 98.3\%$, $\sigma=0.02: 100.0\%$, $\sigma=0.05: 61.7\%$, $\sigma \ge 0.08: 50.0\%$ overall accuracy<br>*(CSV records scalar accuracy only; per-class predictions not logged)* |
+| **Standalone Batch Validation** (`run_validation.py`) | $N = 240$<br>(40/scenario) + $N = 70$<br>Challenge cases | $0.02$ | `42` | • `results/csv/confusion_matrix.csv`<br>• `results/csv/classification_metrics.csv`<br>• `results/csv/subtype_confusion_matrix.csv`<br>• `results/csv/subtype_classification_metrics.csv`<br>• `results/csv/abstention_challenge_results.csv`<br>• `results/csv/location_errors.csv`<br>• Figures in `results/figures/` | **99.58% Contract Accuracy** (239/240)<br>**99.58% Subtype Accuracy** (239/240)<br>**98.57% Challenge Abstention Recall** (69/70)<br>**0.00% False Abstentions on Physical Cases**<br>Location MAE: **$0.16\text{ cm}$**<br>Location RMSE: **$0.22\text{ cm}$** |
+| **Noise Sensitivity Study** | $N = 120$ per level (6 levels) | $0.00$ to $0.18$ | Distinct seeds: `100 + int(σ*100)` | • `results/csv/noise_sensitivity.csv`<br>• `results/figures/accuracy_vs_noise.png` | $\sigma=0.00: 98.3\%$, $\sigma=0.02: 100.0\%$, $\sigma=0.05: 77.5\%$, $\sigma=0.08: 68.3\%$, $\sigma=0.12: 69.2\%$, $\sigma=0.18: 20.8\%$ overall accuracy |
 
 ---
 

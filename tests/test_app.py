@@ -53,3 +53,27 @@ def test_app_core_integration_pipeline():
 def test_app_imports_cleanly():
     import app
     assert app is not None
+
+
+@pytest.mark.parametrize("nav_view", [
+    "Overview",
+    "Line simulator",
+    "Signal analysis",
+    "Fault diagnosis",
+    "Fault location",
+    "Quarter-wave matching",
+    "Validation lab",
+])
+def test_streamlit_app_views_navigation(nav_view):
+    """
+    Exercise each of the 7 Streamlit navigation views via AppTest.
+    Verifies that all views render without exceptions or broken imports.
+    """
+    from streamlit.testing.v1 import AppTest
+
+    root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    app_path = os.path.join(root_dir, "app.py")
+    at = AppTest.from_file(app_path, default_timeout=30)
+    at.run()
+    at.sidebar.radio[0].set_value(nav_view).run()
+    assert len(at.exception) == 0, f"View '{nav_view}' raised exceptions: {[e.value for e in at.exception]}"
