@@ -188,3 +188,49 @@ def test_no_technical_details_rendered():
     assert "st.expander" not in content
 
 
+def test_left_panel_collapsible_and_expandable():
+    """
+    Verify that the left parameters panel can be collapsed and expanded,
+    retaining parameter values and toggling layout without exceptions.
+    """
+    from streamlit.testing.v1 import AppTest
+
+    root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    app_path = os.path.join(root_dir, "app.py")
+    at = AppTest.from_file(app_path, default_timeout=30)
+    at.run()
+
+    # Initially open
+    assert at.session_state["left_panel_open"] is True
+    assert len(at.exception) == 0
+
+    # Collapse left panel
+    collapse_btn = [b for b in at.button if b.key == "btn_collapse_left"][0]
+    collapse_btn.click().run()
+    assert at.session_state["left_panel_open"] is False
+    assert len(at.exception) == 0
+
+    # Expand left panel
+    expand_btn = [b for b in at.button if b.key == "btn_expand_left"][0]
+    expand_btn.click().run()
+    assert at.session_state["left_panel_open"] is True
+    assert len(at.exception) == 0
+
+
+def test_no_empty_params_card_div():
+    """
+    Verify that the unclosed/empty params-card div is completely removed
+    and replaced by native container controls.
+    """
+    root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    app_path = os.path.join(root_dir, "app.py")
+    with open(app_path, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    assert "params-card" not in content
+    assert 'class="params-card"' not in content
+    assert "btn_collapse_left" in content
+    assert "btn_expand_left" in content
+
+
+

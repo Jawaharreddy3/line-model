@@ -220,14 +220,75 @@ html, body, [class*="css"], button, input, select, textarea {
     border-left-color: #64748b;
 }
 
-/* Parameters card on the left */
-.params-card {
-    background-color: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 1.15rem;
-    box-sizing: border-box;
-    margin-bottom: 1.5rem;
+/* Parameters panel container and toggle controls */
+[data-testid="stVerticalBlockBorderWrapper"] {
+    background-color: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    padding: 0.5rem 0.75rem !important;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03) !important;
+}
+
+div[data-testid="column"]:first-child:has([data-testid="stVerticalBlockBorderWrapper"]) {
+    animation: slideInLeft 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-18px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.st-key-btn_collapse_left button {
+    background: transparent !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 6px !important;
+    color: #475569 !important;
+    padding: 0.15rem !important;
+    font-size: 1.15rem !important;
+    line-height: 1 !important;
+    min-height: 1.85rem !important;
+    width: 2rem !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: none !important;
+    transition: all 0.15s ease !important;
+}
+
+.st-key-btn_collapse_left button:hover {
+    background: #e2e8f0 !important;
+    border-color: #94a3b8 !important;
+    color: #0f172a !important;
+}
+
+.st-key-btn_expand_left button {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.35rem !important;
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 6px !important;
+    color: #1e293b !important;
+    padding: 0.35rem 0.85rem !important;
+    font-size: 0.85rem !important;
+    font-weight: 500 !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+    margin-bottom: 0.85rem !important;
+    transition: all 0.15s ease !important;
+}
+
+.st-key-btn_expand_left button:hover {
+    background: #f8fafc !important;
+    border-color: #94a3b8 !important;
+    color: #0284c7 !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08) !important;
 }
 
 .status-title {
@@ -464,154 +525,230 @@ nav_section = st.sidebar.radio(
 st.sidebar.markdown('<div style="height: 1px; background: #e2e8f0; margin: 0.8rem 0;"></div>', unsafe_allow_html=True)
 
 
-# ── Main Two-Column Layout: Parameters on Left, Simulation on Right ──────────
-col_params, col_sim = st.columns([1, 3.2], gap="medium")
+FAULT_MAP = {
+    "Healthy line": "healthy",
+    "Resistive mismatch": "mismatch",
+    "Open circuit": "open",
+    "Short circuit": "short",
+    "Series inductance": "series_L",
+    "Shunt capacitance": "shunt_C",
+}
 
-with col_params:
-    st.markdown('<div class="params-card">', unsafe_allow_html=True)
-    st.markdown('<div class="sidebar-heading" style="margin-top:0;">Line Parameters</div>', unsafe_allow_html=True)
-    
-    Z0 = st.number_input(
-        "Characteristic Impedance Z0 (Ohms)",
-        min_value=5.0,
-        max_value=1000.0,
-        value=50.0,
-        step=5.0,
-        key="param_z0",
-    )
-    
-    length = st.number_input(
-        "Line Length (m)",
-        min_value=0.05,
-        max_value=100.0,
-        value=1.0,
-        step=0.1,
-        key="param_length",
-    )
-    
-    vf = st.number_input(
-        "Velocity Factor (v/c)",
-        min_value=0.01,
-        max_value=1.0,
-        value=0.66,
-        step=0.01,
-        key="param_vf",
-    )
-    
-    st.markdown('<div class="sidebar-heading">Frequency Settings</div>', unsafe_allow_html=True)
-    
-    col_f1, col_f2 = st.columns(2)
-    with col_f1:
-        f_start_mhz = st.number_input(
-            "Start (MHz)",
-            min_value=1.0,
-            max_value=50000.0,
-            value=500.0,
-            step=50.0,
-            key="param_f_start",
-        )
-    with col_f2:
-        f_stop_mhz = st.number_input(
-            "Stop (MHz)",
-            min_value=2.0,
-            max_value=50000.0,
-            value=4000.0,
-            step=50.0,
-            key="param_f_stop",
-        )
-    
-    n_points = st.number_input(
-        "Frequency Points",
-        min_value=21,
-        max_value=2001,
-        value=201,
-        step=20,
-        key="param_n_points",
-    )
-    
-    st.markdown('<div class="sidebar-heading">Line Condition</div>', unsafe_allow_html=True)
-    
-    FAULT_MAP = {
-        "Healthy line": "healthy",
-        "Resistive mismatch": "mismatch",
-        "Open circuit": "open",
-        "Short circuit": "short",
-        "Series inductance": "series_L",
-        "Shunt capacitance": "shunt_C",
+
+def toggle_left_panel():
+    st.session_state["left_panel_open"] = not st.session_state.get("left_panel_open", True)
+
+
+if "left_panel_open" not in st.session_state:
+    st.session_state["left_panel_open"] = True
+
+if "saved_params" not in st.session_state:
+    st.session_state["saved_params"] = {
+        "z0": 50.0,
+        "length": 1.0,
+        "vf": 0.66,
+        "f_start": 500.0,
+        "f_stop": 4000.0,
+        "n_points": 201,
+        "fault_label": "Healthy line",
+        "rl": 100.0,
+        "l": 5.0,
+        "c": 2.0,
+        "fault_pos": 0.5,
+        "noise": 0.0,
     }
-    
-    fault_label = st.selectbox(
-        "Select Condition",
-        list(FAULT_MAP.keys()),
-        index=0,
-        key="param_fault_label",
-    )
-    selected_scenario = FAULT_MAP[fault_label]
-    
+
+
+# ── Main Layout: Collapsible Parameters on Left, Simulation on Right ─────────
+if st.session_state["left_panel_open"]:
+    col_params, col_sim = st.columns([1, 3.2], gap="medium")
+
+    with col_params:
+        with st.container(border=True):
+            col_head_title, col_head_btn = st.columns([4, 1])
+            with col_head_title:
+                st.markdown('<div class="sidebar-heading" style="margin-top:0.25rem; margin-bottom:0;">Line Parameters</div>', unsafe_allow_html=True)
+            with col_head_btn:
+                st.button("‹", key="btn_collapse_left", help="Hide Line Parameters", on_click=toggle_left_panel)
+
+            Z0 = st.number_input(
+                "Characteristic Impedance Z0 (Ohms)",
+                min_value=5.0,
+                max_value=1000.0,
+                value=float(st.session_state["saved_params"]["z0"]),
+                step=5.0,
+                key="param_z0",
+            )
+            st.session_state["saved_params"]["z0"] = Z0
+
+            length = st.number_input(
+                "Line Length (m)",
+                min_value=0.05,
+                max_value=100.0,
+                value=float(st.session_state["saved_params"]["length"]),
+                step=0.1,
+                key="param_length",
+            )
+            st.session_state["saved_params"]["length"] = length
+
+            vf = st.number_input(
+                "Velocity Factor (v/c)",
+                min_value=0.01,
+                max_value=1.0,
+                value=float(st.session_state["saved_params"]["vf"]),
+                step=0.01,
+                key="param_vf",
+            )
+            st.session_state["saved_params"]["vf"] = vf
+
+            st.markdown('<div class="sidebar-heading">Frequency Settings</div>', unsafe_allow_html=True)
+
+            col_f1, col_f2 = st.columns(2)
+            with col_f1:
+                f_start_mhz = st.number_input(
+                    "Start (MHz)",
+                    min_value=1.0,
+                    max_value=50000.0,
+                    value=float(st.session_state["saved_params"]["f_start"]),
+                    step=50.0,
+                    key="param_f_start",
+                )
+                st.session_state["saved_params"]["f_start"] = f_start_mhz
+            with col_f2:
+                f_stop_mhz = st.number_input(
+                    "Stop (MHz)",
+                    min_value=2.0,
+                    max_value=50000.0,
+                    value=float(st.session_state["saved_params"]["f_stop"]),
+                    step=50.0,
+                    key="param_f_stop",
+                )
+                st.session_state["saved_params"]["f_stop"] = f_stop_mhz
+
+            n_points = st.number_input(
+                "Frequency Points",
+                min_value=21,
+                max_value=2001,
+                value=int(st.session_state["saved_params"]["n_points"]),
+                step=20,
+                key="param_n_points",
+            )
+            st.session_state["saved_params"]["n_points"] = n_points
+
+            st.markdown('<div class="sidebar-heading">Line Condition</div>', unsafe_allow_html=True)
+
+            fault_options = list(FAULT_MAP.keys())
+            saved_label = st.session_state["saved_params"]["fault_label"]
+            default_fault_idx = fault_options.index(saved_label) if saved_label in fault_options else 0
+            fault_label = st.selectbox(
+                "Select Condition",
+                fault_options,
+                index=default_fault_idx,
+                key="param_fault_label",
+            )
+            st.session_state["saved_params"]["fault_label"] = fault_label
+            selected_scenario = FAULT_MAP[fault_label]
+
+            fault_args = {}
+            if selected_scenario == "mismatch":
+                RL = st.number_input(
+                    "Load Resistance RL (Ohms)",
+                    min_value=0.1,
+                    max_value=10000.0,
+                    value=float(st.session_state["saved_params"]["rl"]),
+                    step=10.0,
+                    key="param_rl",
+                )
+                st.session_state["saved_params"]["rl"] = RL
+                fault_args["ZL_mismatch"] = RL
+            elif selected_scenario == "series_L":
+                L_nH = st.number_input(
+                    "Discontinuity Inductance L (nH)",
+                    min_value=0.01,
+                    max_value=500.0,
+                    value=float(st.session_state["saved_params"]["l"]),
+                    step=0.5,
+                    key="param_l",
+                )
+                st.session_state["saved_params"]["l"] = L_nH
+                d_fault = st.number_input(
+                    "Discontinuity Position (m)",
+                    min_value=0.01,
+                    max_value=float(length),
+                    value=min(float(st.session_state["saved_params"]["fault_pos"]), float(length)),
+                    step=0.05,
+                    key="param_fault_pos",
+                )
+                st.session_state["saved_params"]["fault_pos"] = d_fault
+                fault_args["L_val"] = L_nH * 1e-9
+                fault_args["fault_pos"] = d_fault
+            elif selected_scenario == "shunt_C":
+                C_pF = st.number_input(
+                    "Discontinuity Capacitance C (pF)",
+                    min_value=0.01,
+                    max_value=500.0,
+                    value=float(st.session_state["saved_params"]["c"]),
+                    step=0.2,
+                    key="param_c",
+                )
+                st.session_state["saved_params"]["c"] = C_pF
+                d_fault = st.number_input(
+                    "Discontinuity Position (m)",
+                    min_value=0.01,
+                    max_value=float(length),
+                    value=min(float(st.session_state["saved_params"]["fault_pos"]), float(length)),
+                    step=0.05,
+                    key="param_fault_pos",
+                )
+                st.session_state["saved_params"]["fault_pos"] = d_fault
+                fault_args["C_val"] = C_pF * 1e-12
+                fault_args["fault_pos"] = d_fault
+
+            st.markdown('<div class="sidebar-heading">Measurement Settings</div>', unsafe_allow_html=True)
+
+            noise_std = st.number_input(
+                "Measurement Noise (std dev)",
+                min_value=0.0,
+                max_value=0.2,
+                value=float(st.session_state["saved_params"]["noise"]),
+                step=0.005,
+                format="%.3f",
+                key="param_noise",
+            )
+            st.session_state["saved_params"]["noise"] = noise_std
+
+            run_clicked = st.button("Run Simulation", type="primary", use_container_width=True, key="param_run_btn")
+else:
+    # Left panel is collapsed: simulation container takes full width
+    col_expand_btn, _ = st.columns([1.8, 8.2])
+    with col_expand_btn:
+        st.button("› Line Parameters", key="btn_expand_left", help="Show Line Parameters", on_click=toggle_left_panel)
+
+    col_sim = st.container()
+
+    # Retrieve preserved parameters from session state
+    saved = st.session_state["saved_params"]
+    Z0 = float(saved["z0"])
+    length = float(saved["length"])
+    vf = float(saved["vf"])
+    f_start_mhz = float(saved["f_start"])
+    f_stop_mhz = float(saved["f_stop"])
+    n_points = int(saved["n_points"])
+    fault_label = str(saved["fault_label"])
+    selected_scenario = FAULT_MAP.get(fault_label, "healthy")
+
     fault_args = {}
     if selected_scenario == "mismatch":
-        RL = st.number_input(
-            "Load Resistance RL (Ohms)",
-            min_value=0.1,
-            max_value=10000.0,
-            value=100.0,
-            step=10.0,
-            key="param_rl",
-        )
-        fault_args["ZL_mismatch"] = RL
+        fault_args["ZL_mismatch"] = float(saved["rl"])
     elif selected_scenario == "series_L":
-        L_nH = st.number_input(
-            "Discontinuity Inductance L (nH)",
-            min_value=0.01,
-            max_value=500.0,
-            value=5.0,
-            step=0.5,
-            key="param_l",
-        )
-        d_fault = st.number_input(
-            "Discontinuity Position (m)",
-            min_value=0.01,
-            max_value=float(length),
-            value=min(0.5, float(length)),
-            step=0.05,
-            key="param_fault_pos",
-        )
-        fault_args["L_val"] = L_nH * 1e-9
-        fault_args["fault_pos"] = d_fault
+        fault_args["L_val"] = float(saved["l"]) * 1e-9
+        fault_args["fault_pos"] = float(min(saved["fault_pos"], length))
     elif selected_scenario == "shunt_C":
-        C_pF = st.number_input(
-            "Discontinuity Capacitance C (pF)",
-            min_value=0.01,
-            max_value=500.0,
-            value=2.0,
-            step=0.2,
-            key="param_c",
-        )
-        d_fault = st.number_input(
-            "Discontinuity Position (m)",
-            min_value=0.01,
-            max_value=float(length),
-            value=min(0.5, float(length)),
-            step=0.05,
-            key="param_fault_pos",
-        )
-        fault_args["C_val"] = C_pF * 1e-12
-        fault_args["fault_pos"] = d_fault
-    
-    st.markdown('<div class="sidebar-heading">Measurement Settings</div>', unsafe_allow_html=True)
-    
-    noise_std = st.number_input(
-        "Measurement Noise (std dev)",
-        min_value=0.0,
-        max_value=0.2,
-        value=0.0,
-        step=0.005,
-        format="%.3f",
-        key="param_noise",
-    )
-    
-    run_clicked = st.button("Run Simulation", type="primary", use_container_width=True, key="param_run_btn")
-    st.markdown('</div>', unsafe_allow_html=True)
+        fault_args["C_val"] = float(saved["c"]) * 1e-12
+        fault_args["fault_pos"] = float(min(saved["fault_pos"], length))
+
+    noise_std = float(saved["noise"])
+    run_clicked = False
 
 
 # ── Validation & Simulation Execution ─────────────────────────────────────────

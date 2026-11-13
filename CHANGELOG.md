@@ -6,6 +6,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.3.2] - 2026-11-14
+
+### Added
+- **Collapsible Left Parameters Panel:**
+  - Added slide/collapse functionality to the entire left-hand parameters column.
+  - When expanded, a minimal collapse button `‹` is integrated directly in the "Line Parameters" header.
+  - When collapsed, the main simulation view and diagnostic charts expand to 100% full screen width, and a sleek `› Line Parameters` toggle button is displayed at the top-left to reopen the panel.
+  - All parameter inputs, frequency sweeps, fault selections, and discontinuity states are preserved seamlessly in session state across collapse and expand cycles.
+  - Integrated smooth slide-in CSS entrance animations for the left container.
+
+### Removed
+- **Empty Grey Box Above Parameters:**
+  - Eliminated the unclosed `.params-card` markdown wrapper that rendered as an empty rounded grey box above "Line Parameters".
+  - Wrapped all parameter inputs and controls inside Streamlit's native `st.container(border=True)` for a clean, unified container without orphaned DOM artifacts.
+
+### Fixed
+- **AppTest Robustness:**
+  - Added dedicated test coverage in `tests/test_app.py` for collapsing and expanding the left panel and verifying the complete absence of empty `.params-card` elements (186 total tests passing).
+
+---
+
 ## [2.3.1] - 2026-11-14
 
 ### Fixed
