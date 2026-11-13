@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.3.1] - 2026-11-14
+
+### Fixed
+- **Top Header Bar Clearance & Title Visibility:** Increased `.block-container` top padding to `5.25rem !important` (up from `1.5rem`), preventing Streamlit's fixed top header/toolbar bar from slicing off and occluding the upper half of page titles and parameter cards across all pages.
+
+---
+
 ## [2.3.0] - 2026-11-14
 
 ### Removed

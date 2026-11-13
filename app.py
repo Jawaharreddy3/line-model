@@ -42,7 +42,7 @@ html, body, [class*="css"], button, input, select, textarea {
 
 /* Page container constraints */
 .block-container {
-    padding-top: 1.5rem;
+    padding-top: 5.25rem !important;
     padding-bottom: 2.5rem;
     padding-left: 1.8rem;
     padding-right: 1.8rem;
