@@ -142,3 +142,30 @@ def test_metric_cards_rendering_and_styling():
     assert "Input Impedance" in grid_html
     assert "21.5 + j46.6" in grid_html
     assert "word-break: break-all" not in grid_html
+
+
+def test_right_sidebar_layout_styling():
+    """
+    Verify that app.py injects the CSS required to position the
+    entire navigation sidebar cleanly on the RIGHT side of the desktop screen.
+    """
+    root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    app_path = os.path.join(root_dir, "app.py")
+    with open(app_path, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    # Flex row-reverse on app view container
+    assert '[data-testid="stAppViewContainer"]' in content
+    assert "flex-direction: row-reverse !important;" in content
+
+    # Sidebar border on left side
+    assert "border-left: 1px solid #e2e8f0 !important;" in content
+    assert "border-right: none !important;" in content
+
+    # Sidebar collapse behavior and controls flipped for right-side orientation
+    assert 'section[data-testid="stSidebar"][data-collapsed="true"]' in content
+    assert "transform: translateX(100%) !important;" in content
+    assert '[data-testid="stSidebarCollapseButton"] button' in content
+    assert "transform: scaleX(-1) !important;" in content
+    assert '[data-testid="stExpandSidebarButton"]' in content
+

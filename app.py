@@ -174,10 +174,80 @@ html, body, [class*="css"], button, input, select, textarea {
     line-height: 1.45;
 }
 
+/* Layout: Position Navigation Sidebar on the RIGHT */
+[data-testid="stAppViewContainer"] {
+    flex-direction: row-reverse !important;
+}
+
 /* Sidebar styling */
 section[data-testid="stSidebar"] {
     background-color: #f8fafc;
-    border-right: 1px solid #e2e8f0;
+    border-left: 1px solid #e2e8f0 !important;
+    border-right: none !important;
+}
+
+/* Sidebar collapse/expand behavior for right positioning */
+section[data-testid="stSidebar"][data-collapsed="true"] {
+    transform: translateX(100%) !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
+    width: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+}
+
+/* Flip collapse button arrow inside sidebar to point right */
+[data-testid="stSidebarCollapseButton"] button {
+    transform: scaleX(-1) !important;
+}
+
+/* Position expand button in top right when sidebar is collapsed */
+[data-testid="stExpandSidebarButton"] {
+    position: fixed !important;
+    right: 1.25rem !important;
+    top: 0.75rem !important;
+    z-index: 1000000 !important;
+    transform: scaleX(-1) !important;
+}
+
+[data-testid="collapsedControl"] {
+    left: auto !important;
+    right: 1.25rem !important;
+    transform: scaleX(-1) !important;
+}
+
+/* Ensure resize handle is on the left of the sidebar */
+[data-testid="stSidebarResizeHandle"] {
+    left: 0 !important;
+    right: auto !important;
+}
+
+/* Main content styling */
+section[data-testid="stMain"] {
+    flex: 1 1 0% !important;
+    width: 100% !important;
+    overflow-x: hidden !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    [data-testid="stAppViewContainer"] {
+        flex-direction: column !important;
+    }
+    section[data-testid="stSidebar"] {
+        border-left: none !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    section[data-testid="stSidebar"][data-collapsed="true"] {
+        transform: translateY(-100%) !important;
+        height: 0 !important;
+    }
+    [data-testid="stExpandSidebarButton"] {
+        right: 0.75rem !important;
+        top: 0.5rem !important;
+    }
 }
 .sidebar-title {
     font-size: 1.1rem;
