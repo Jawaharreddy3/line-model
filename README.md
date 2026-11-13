@@ -3,7 +3,7 @@
 > **Educational Virtual Transmission-Line Diagnostics, Fault Localization, and Impedance Matching Simulator**  
 > *Course / Subject:* EC-3104 Microwave Engineering / Computational Electromagnetics  
 > *Primary Branch:* `main` | *Platform:* Python 3.10+ (Streamlit / NumPy / SciPy / Matplotlib / scikit-rf)  
-> *Test Status:* [![Tests](https://img.shields.io/badge/pytest-176%20passed%20%2F%20176%20tests-brightgreen.svg)](TESTING.md) [![Validation](https://img.shields.io/badge/Heldout%20Accuracy-99.58%25-blue.svg)](validation/run_validation.py) [![Abstention Recall](https://img.shields.io/badge/Abstention%20Recall-98.6%25-brightgreen.svg)](validation/run_validation.py) [![Qucs-S](https://img.shields.io/badge/Qucsator%20Cross--Check-%CE%94%20%3C%208.23e--14-success.svg)](Qucs_Cross_Validation/Qucs_Cross_Validation_Report.md)
+> *Test Status:* [![Tests](https://img.shields.io/badge/pytest-181%20passed%20%2F%20181%20tests-brightgreen.svg)](TESTING.md) [![Validation](https://img.shields.io/badge/Heldout%20Accuracy-99.58%25-blue.svg)](validation/run_validation.py) [![Abstention Recall](https://img.shields.io/badge/Abstention%20Recall-98.6%25-brightgreen.svg)](validation/run_validation.py) [![Qucs-S](https://img.shields.io/badge/Qucsator%20Cross--Check-%CE%94%20%3C%208.23e--14-success.svg)](Qucs_Cross_Validation/Qucs_Cross_Validation_Report.md)
 
 ---
 
@@ -201,7 +201,7 @@ All functions adhere strictly to the frozen public contracts specified in [`INTE
 
 ## 5. Automated Testing Framework & Verification Results
 
-The automated testing framework is structured inside `tests/` and executed via `pytest`. All 176 tests pass with zero failures and zero warnings.
+The automated testing framework is structured inside `tests/` and executed via `pytest`. All 181 tests pass with zero failures and zero warnings.
 
 ### 5.1 Test Suite Summary
 ```
@@ -210,16 +210,16 @@ platform win32 -- Python 3.13.13, pytest-9.2.0, pluggy-1.7.0
 rootdir: C:\Users\pc\Documents\GitHub\line-model
 configfile: pytest.ini
 testpaths: tests
-collected 176 items
+collected 181 items
 
-tests/test_app.py .........                                              [  5%]
-tests/test_benchmarks.py ..........                                      [ 10%]
-tests/test_classification_labels.py ...........                          [ 17%]
-tests/test_consistency.py .....                                          [ 19%]
-tests/test_data_alignment_and_plotting.py ...                            [ 21%]
-tests/test_diagnosis.py .......................................          [ 43%]
-tests/test_fault_simulation.py .......                                   [ 47%]
-tests/test_integration.py ........                                       [ 52%]
+tests/test_app.py ..............                                         [  8%]
+tests/test_benchmarks.py ..........                                      [ 13%]
+tests/test_classification_labels.py ...........                          [ 19%]
+tests/test_consistency.py .....                                          [ 22%]
+tests/test_data_alignment_and_plotting.py ...                            [ 24%]
+tests/test_diagnosis.py .......................................          [ 45%]
+tests/test_fault_simulation.py .......                                   [ 49%]
+tests/test_integration.py ........                                       [ 54%]
 tests/test_line_model.py ................................................ [ 81%]
 tests/test_location.py .......                                           [ 85%]
 tests/test_matching.py ........                                          [ 89%]
@@ -229,7 +229,7 @@ tests/test_qucs_cross_validation.py .                                    [ 98%]
 tests/test_regressions.py .....                                          [ 99%]
 tests/test_validation.py ...                                             [100%]
 
-============================= 176 passed in 7.12s =============================
+============================= 181 passed in 22.30s =============================
 ```
 
 ### 5.2 Ten Canonical Benchmark Cases (from `tests/analytical_benchmarks.py`)
@@ -486,7 +486,7 @@ font = "sans serif"
 
 - [`TECHNICAL_DOCUMENTATION.md`](TECHNICAL_DOCUMENTATION.md) — Comprehensive 585-line university-grade technical reference covering full mathematical derivations, Telegrapher's equations, distributed R-L-G-C representation, complex branch cut selection, classification rules, TDR theory, and software architecture.
 - [`FINAL_QA_REPORT.md`](FINAL_QA_REPORT.md) — Comprehensive independent quality-assurance audit across all 9 architectural components.
-- [`TESTING.md`](TESTING.md) — Detailed benchmark specifications, numerical tolerances, actual execution results, and regression test suites for 176 automated tests.
+- [`TESTING.md`](TESTING.md) — Detailed benchmark specifications, numerical tolerances, actual execution results, and regression test suites for 181 automated tests.
 - [`HAND_CALCULATIONS.md`](HAND_CALCULATIONS.md) — Step-by-step textbook hand calculations for all 10 canonical benchmark scenarios with exact analytical substitutions.
 - [`FINAL_INTEGRATION_REPORT.md`](FINAL_INTEGRATION_REPORT.md) — Comprehensive 12-checkpoint final integration audit and deployment readiness report.
 - [`REPOSITORY_AUDIT.md`](REPOSITORY_AUDIT.md) — Software quality audit, interface compliance matrix, and technical risk assessment.

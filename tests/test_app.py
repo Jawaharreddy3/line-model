@@ -56,18 +56,16 @@ def test_app_imports_cleanly():
 
 
 @pytest.mark.parametrize("nav_view", [
-    "Overview",
-    "Line simulator",
-    "Signal analysis",
-    "Fault diagnosis",
-    "Fault location",
-    "Quarter-wave matching",
-    "Validation lab",
+    "Simulation",
+    "Diagnosis",
+    "Fault Location",
+    "Impedance Matching",
+    "Results",
 ])
 def test_streamlit_app_views_navigation(nav_view):
     """
-    Exercise each of the 7 Streamlit navigation views via AppTest.
-    Verifies that all views render without exceptions or broken imports.
+    Exercise each of the 5 Streamlit navigation views via AppTest.
+    Verifies that all views render cleanly without exceptions.
     """
     from streamlit.testing.v1 import AppTest
 
@@ -77,3 +75,46 @@ def test_streamlit_app_views_navigation(nav_view):
     at.run()
     at.sidebar.radio[0].set_value(nav_view).run()
     assert len(at.exception) == 0, f"View '{nav_view}' raised exceptions: {[e.value for e in at.exception]}"
+
+
+@pytest.mark.parametrize("fault_condition", [
+    "Healthy line",
+    "Resistive mismatch",
+    "Open circuit",
+    "Short circuit",
+    "Series inductance",
+    "Shunt capacitance",
+])
+def test_streamlit_app_fault_scenarios(fault_condition):
+    """
+    Exercise each of the 6 fault conditions in the Streamlit app.
+    Verifies that all conditions simulate properly and update output.
+    """
+    from streamlit.testing.v1 import AppTest
+
+    root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    app_path = os.path.join(root_dir, "app.py")
+    at = AppTest.from_file(app_path, default_timeout=30)
+    at.run()
+    at.sidebar.selectbox[0].set_value(fault_condition).run()
+    at.sidebar.button[0].click().run()
+    assert len(at.exception) == 0, f"Condition '{fault_condition}' raised exceptions: {[e.value for e in at.exception]}"
+
+
+def test_no_emojis_in_app_code():
+    """Verify that app.py contains zero emojis or decorative unicode icons."""
+    root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    app_path = os.path.join(root_dir, "app.py")
+    with open(app_path, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    for i, ch in enumerate(content):
+        code = ord(ch)
+        is_emoji = (
+            (0x1F300 <= code <= 0x1FAD6) or
+            (0x1F900 <= code <= 0x1F9FF) or
+            (0x2600 <= code <= 0x26FF) or
+            (0x2700 <= code <= 0x27BF) or
+            (0x1F600 <= code <= 0x1F64F)
+        )
+        assert not is_emoji, f"Found forbidden emoji character '{ch}' (U+{code:04X}) at index {i}"
