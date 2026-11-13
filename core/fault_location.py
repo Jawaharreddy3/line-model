@@ -58,9 +58,10 @@ def calculate_resolution_metrics(freqs, vf=1.0, pad_factor=8, min_pad=2048):
         vp_m_s          : propagation phase velocity [m/s]
         resolution_note : physical explanation of Rayleigh vs interpolation step
     """
+    lm._check_vf(vf)
     f = np.asarray(freqs, dtype=float)
     N = len(f)
-    if N < 2:
+    if N < 2 or not np.all(np.isfinite(f)):
         return {
             "bandwidth_hz": 0.0,
             "delta_f_hz": 0.0,
@@ -121,11 +122,12 @@ def compute_ifft_tdr(gamma, freqs, vf=1.0, pad_factor=8, min_pad=2048):
         tdr_mag      : IFFT impulse response magnitude array
         was_resampled: bool, whether non-uniform grid was resampled
     """
+    lm._check_vf(vf)
     g = np.asarray(gamma, dtype=complex)
     f = np.asarray(freqs, dtype=float)
     N = len(f)
 
-    if N < 4:
+    if N < 4 or not np.all(np.isfinite(f)) or not np.all(np.isfinite(g)):
         return {"dist_m": None, "tdr_mag": np.array([]), "d_axis_m": np.array([]), "was_resampled": False}
 
     # Validate uniform frequency spacing
@@ -180,6 +182,30 @@ def compute_ifft_tdr(gamma, freqs, vf=1.0, pad_factor=8, min_pad=2048):
     else:
         dist_m = float(d_axis_m[peak_idx])
 
+    # Detect secondary peaks & multipath reflection candidates
+    secondary_peaks = []
+    causal_limit = Npad // 2
+    for i in range(3, causal_limit - 1):
+        if search_mag[i] > 0.01 and search_mag[i] > search_mag[i - 1] and search_mag[i] >= search_mag[i + 1]:
+            pk_dist = float(d_axis_m[i])
+            pk_mag = float(search_mag[i])
+            is_dominant = (abs(i - peak_idx) <= 3)
+            is_multipath = False
+            if dist_m is not None and not is_dominant and dist_m > 0:
+                ratio = pk_dist / dist_m
+                if abs(ratio - round(ratio)) < 0.08 and round(ratio) >= 2:
+                    is_multipath = True
+            rel_amp_db = float(20.0 * np.log10(pk_mag / peak_val)) if peak_val > 0 else 0.0
+            secondary_peaks.append({
+                "index": i,
+                "dist_m": pk_dist,
+                "magnitude": pk_mag,
+                "is_dominant": is_dominant,
+                "is_multipath_echo": is_multipath,
+                "relative_amplitude_db": rel_amp_db,
+            })
+    secondary_peaks.sort(key=lambda p: p["magnitude"], reverse=True)
+
     return {
         "dist_m": dist_m,
         "peak_idx": peak_idx,
@@ -187,6 +213,7 @@ def compute_ifft_tdr(gamma, freqs, vf=1.0, pad_factor=8, min_pad=2048):
         "t_axis_s": t_axis_s,
         "d_axis_m": d_axis_m,
         "tdr_mag": tdr_mag,
+        "secondary_peaks": secondary_peaks,
         "was_resampled": was_resampled,
     }
 
@@ -199,9 +226,10 @@ def compute_phase_slope_distance(gamma, freqs, vf=1.0):
 
     Note: Biased when discontinuity introduces frequency-dependent phase.
     """
+    lm._check_vf(vf)
     g = np.asarray(gamma, dtype=complex)
     f = np.asarray(freqs, dtype=float)
-    if len(f) < 2:
+    if len(f) < 2 or not np.all(np.isfinite(f)) or not np.all(np.isfinite(g)):
         return None
 
     mag = np.abs(g)
@@ -241,6 +269,7 @@ def locate_fault_dual_method(gamma, freqs, vf=1.0, fault_class="mismatch"):
         warnings          : list of warning strings
         tdr_data          : dict from compute_ifft_tdr
     """
+    lm._check_vf(vf)
     warnings = []
     if str(fault_class).lower() == "healthy":
         return {
@@ -252,6 +281,21 @@ def locate_fault_dual_method(gamma, freqs, vf=1.0, fault_class="mismatch"):
             "unambig_range_m": None,
             "is_reliable": True,
             "warnings": ["Line is healthy/matched; no reflection echo present."],
+            "tdr_data": {},
+        }
+
+    g = np.asarray(gamma, dtype=complex)
+    f = np.asarray(freqs, dtype=float)
+    if len(f) < 4 or not np.all(np.isfinite(f)) or not np.all(np.isfinite(g)):
+        return {
+            "dist_ifft_m": None,
+            "dist_phase_m": None,
+            "discrepancy_m": None,
+            "range_res_m": None,
+            "interp_step_m": None,
+            "unambig_range_m": None,
+            "is_reliable": False,
+            "warnings": ["Invalid or non-finite sweep data provided."],
             "tdr_data": {},
         }
 
@@ -280,6 +324,26 @@ def locate_fault_dual_method(gamma, freqs, vf=1.0, fault_class="mismatch"):
         is_reliable = False
         warnings.append("No dominant reflection peak detected above noise floor.")
 
+    # Check for secondary reflection peaks / multipath echoes
+    secondary_peaks = tdr_out.get("secondary_peaks", [])
+    distinct_secondaries = [
+        p for p in secondary_peaks
+        if not p.get("is_dominant", False) and p.get("magnitude", 0.0) >= 0.15 * tdr_out.get("peak_val", 1.0)
+    ]
+    if len(distinct_secondaries) > 0:
+        strongest_sec = distinct_secondaries[0]
+        if strongest_sec.get("is_multipath_echo", False):
+            warnings.append(
+                f"Secondary reflection detected at d = {strongest_sec['dist_m']:.3f} m "
+                f"({strongest_sec['relative_amplitude_db']:.1f} dB relative to primary). "
+                "Classified as likely multipath round-trip harmonic echo."
+            )
+        else:
+            warnings.append(
+                f"Secondary distinct discontinuity detected at d = {strongest_sec['dist_m']:.3f} m "
+                f"({strongest_sec['relative_amplitude_db']:.1f} dB relative to primary)."
+            )
+
     return {
         "dist_ifft_m": d1,
         "dist_phase_m": d2,
@@ -287,6 +351,7 @@ def locate_fault_dual_method(gamma, freqs, vf=1.0, fault_class="mismatch"):
         "range_res_m": res_metrics["range_res_m"],
         "interp_step_m": res_metrics["interp_step_m"],
         "unambig_range_m": res_metrics["unambig_range_m"],
+        "secondary_peaks": secondary_peaks,
         "is_reliable": is_reliable,
         "warnings": warnings,
         "tdr_data": tdr_out,

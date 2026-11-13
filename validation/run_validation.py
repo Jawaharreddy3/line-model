@@ -58,7 +58,8 @@ def generate_heldout_dataset(n_per_class=40, seed=42, noise_std=0.02):
             fp = float(rng.uniform(0.15 * length, 0.85 * length))
             L_val = float(rng.uniform(2e-9, 40e-9))
             C_val = float(rng.uniform(2e-12, 40e-12))
-            ZL_mismatch = float(rng.choice([1.5 * Z0, 2.5 * Z0, 0.4 * Z0, 0.7 * Z0]))
+            # Test standard mismatches as well as extreme finite mismatches (e.g. 500 ohm, 1000 ohm, 5 ohm, 2.5 ohm)
+            ZL_mismatch = float(rng.choice([1.5 * Z0, 2.5 * Z0, 0.4 * Z0, 0.7 * Z0, 10.0 * Z0, 20.0 * Z0, 0.1 * Z0, 0.05 * Z0]))
 
             sim = fs.simulate_fault(
                 scenario,
@@ -102,6 +103,119 @@ def generate_heldout_dataset(n_per_class=40, seed=42, noise_std=0.02):
             })
 
     return dataset
+
+
+def generate_abstention_challenge_suite(seed=42):
+    """
+    Generate dedicated challenge dataset of unclassifiable, out-of-distribution,
+    and ambiguous cases to evaluate classifier abstention ('unknown').
+
+    Challenge Categories (10 cases each = 70 total):
+      U1: Empty / Missing Data
+      U2: Corrupted Data (NaN / Inf)
+      U3: Severe Noise (sigma = 0.35, SNR < 0 dB)
+      U4: Insufficient Bandwidth (B < 5 MHz)
+      U5: Non-Canonical Ripple / Chaotic profiles
+      U6: Ambiguous Boundary Cases (indeterminate phase / high boundary variance)
+      U7: Insufficient Frequency Points (N < 4)
+    """
+    rng = np.random.default_rng(seed)
+    suite = []
+
+    # U1: Empty / Missing Data
+    for i in range(10):
+        suite.append({
+            "category": "U1_empty_data",
+            "description": "Empty frequency or reflection arrays",
+            "sweep": {"f": np.array([]), "gamma": np.array([])},
+            "Z0": 50.0,
+            "target": "unknown",
+        })
+
+    # U2: Corrupted Data (NaN / Inf)
+    for i in range(10):
+        freqs = np.linspace(500e6, 3e9, 100)
+        gamma = np.full(100, 0.2 + 0.1j)
+        nan_indices = rng.choice(100, size=int(rng.integers(1, 10)), replace=False)
+        gamma[nan_indices] = np.nan if i % 2 == 0 else np.inf
+        suite.append({
+            "category": "U2_corrupted_data",
+            "description": "Sweep data containing NaN or Inf values",
+            "sweep": {"f": freqs, "gamma": gamma},
+            "Z0": 50.0,
+            "target": "unknown",
+        })
+
+    # U3: Severe Noise (sigma = 0.35, SNR < 0 dB)
+    for i in range(10):
+        freqs = np.linspace(400e6, 3.5e9, 200)
+        noise = rng.normal(0, 0.35, 200) + 1j * rng.normal(0, 0.35, 200)
+        suite.append({
+            "category": "U3_severe_noise",
+            "description": "Severe noise sigma=0.35 obscuring physical signature",
+            "sweep": {"f": freqs, "gamma": noise},
+            "Z0": 50.0,
+            "target": "unknown",
+        })
+
+    # U4: Insufficient Bandwidth (B < 5 MHz)
+    for i in range(10):
+        bw = float(rng.uniform(0.5e6, 4.0e6))
+        f0 = float(rng.uniform(100e6, 2e9))
+        freqs = np.linspace(f0, f0 + bw, 50)
+        gamma = np.full(50, 0.5 + 0.2j)
+        suite.append({
+            "category": "U4_insufficient_bw",
+            "description": f"Narrowband sweep B={bw/1e6:.2f} MHz < 5 MHz",
+            "sweep": {"f": freqs, "gamma": gamma},
+            "Z0": 50.0,
+            "target": "unknown",
+        })
+
+    # U5: Non-Canonical Ripple / Chaotic profiles
+    for i in range(10):
+        freqs = np.linspace(500e6, 3e9, 200)
+        mag = rng.uniform(0.1, 0.9, 200)
+        phase = rng.uniform(-np.pi, np.pi, 200)
+        gamma = mag * np.exp(1j * phase)
+        suite.append({
+            "category": "U5_non_canonical_ripple",
+            "description": "Chaotic unphysical reflection profile",
+            "sweep": {"f": freqs, "gamma": gamma},
+            "Z0": 50.0,
+            "target": "unknown",
+        })
+
+    # U6: Ambiguous Boundary Cases
+    for i in range(10):
+        freqs = np.linspace(500e6, 3e9, 200)
+        if i % 2 == 0:
+            gamma = np.full(200, 0.0 + 0.99j)  # 90 deg orthogonal phase
+        else:
+            noise = rng.normal(0, 0.04, 200)
+            gamma = np.clip(0.955 + noise, 0, 1.0) * np.exp(1j * float(rng.uniform(0.8, 1.4)))
+        suite.append({
+            "category": "U6_boundary_ambiguity",
+            "description": "Near-total reflection with ambiguous phase or threshold variance",
+            "sweep": {"f": freqs, "gamma": gamma},
+            "Z0": 50.0,
+            "target": "unknown",
+        })
+
+    # U7: Insufficient Frequency Points (N < 4)
+    for i in range(10):
+        n_pts = int(rng.choice([1, 2, 3]))
+        freqs = np.linspace(500e6, 2e9, n_pts)
+        gamma = np.full(n_pts, 0.5 + 0.0j)
+        suite.append({
+            "category": "U7_insufficient_points",
+            "description": f"Insufficient points N={n_pts} < 4",
+            "sweep": {"f": freqs, "gamma": gamma},
+            "Z0": 50.0,
+            "target": "unknown",
+        })
+
+    return suite
 
 
 def run_full_validation():
@@ -198,6 +312,64 @@ def run_full_validation():
     print(f"\n--- Subtype Classification Metrics Summary (Accuracy = {subtype_report['accuracy']*100:.2f}%) ---")
     print(df_sub_metrics.to_string(index=False))
     print(f"Saved: {sub_metrics_path}")
+
+    # 2c. Evaluate Abstention Challenge Suite (Unclassifiable / Ambiguous Data)
+    print("\n--- Evaluating Abstention Challenge Suite (70 Ambiguous / Corrupt Cases) ---")
+    challenge_suite = generate_abstention_challenge_suite(seed=42)
+    challenge_records = []
+    category_counts = {}
+    category_abstained = {}
+
+    for ch in challenge_suite:
+        pred_res = diag.classify(ch["sweep"], ch["Z0"])
+        pred_str = str(pred_res)
+        cat = ch["category"]
+        category_counts[cat] = category_counts.get(cat, 0) + 1
+        is_abstained = (pred_str == "unknown")
+        if is_abstained:
+            category_abstained[cat] = category_abstained.get(cat, 0) + 1
+
+        challenge_records.append({
+            "category": cat,
+            "description": ch["description"],
+            "target": ch["target"],
+            "predicted": pred_str,
+            "subtype": pred_res.subtype,
+            "abstained_as_unknown": is_abstained,
+            "rules_fired": ";".join(pred_res.rules_fired),
+        })
+
+    df_challenge = pd.DataFrame(challenge_records)
+    challenge_csv_path = os.path.join(RESULTS_CSV_DIR, "abstention_challenge_results.csv")
+    df_challenge.to_csv(challenge_csv_path, index=False)
+    print(f"Saved: {challenge_csv_path}")
+
+    # Compute per-category breakdown
+    breakdown_rows = []
+    for cat in sorted(category_counts.keys()):
+        total_c = category_counts[cat]
+        abst_c = category_abstained.get(cat, 0)
+        breakdown_rows.append({
+            "Challenge_Category": cat,
+            "Total_Cases": total_c,
+            "Abstained_Unknown": abst_c,
+            "Abstention_Rate_Pct": (abst_c / total_c) * 100.0,
+        })
+    df_breakdown = pd.DataFrame(breakdown_rows)
+    print("\n--- Abstention Performance Breakdown by Category ---")
+    print(df_breakdown.to_string(index=False))
+
+    total_challenge = len(challenge_suite)
+    total_abstained = sum(category_abstained.values())
+    abstention_recall = (total_abstained / total_challenge) * 100.0
+    print(f"\nOverall Abstention Recall on Challenge Suite: {total_abstained}/{total_challenge} ({abstention_recall:.1f}%)")
+
+    # False abstentions on valid physical lines
+    false_abstentions = sum(1 for p in y_pred_contract if p == "unknown")
+    false_abstention_rate = (false_abstentions / len(dataset)) * 100.0
+    coverage_physical = 100.0 - false_abstention_rate
+    print(f"False Abstentions on Physical Cases: {false_abstentions}/{len(dataset)} ({false_abstention_rate:.2f}%)")
+    print(f"Coverage on Physical Dataset: {coverage_physical:.2f}%")
 
     # 3. Compute Fault Location Metrics
     loc_metrics = compute_location_metrics(true_positions, est_positions)
@@ -313,6 +485,29 @@ def run_full_validation():
     fig_h.savefig(f_hist_path, dpi=150)
     plt.close(fig_h)
     print(f"Saved figure: {f_hist_path}")
+
+    # ── Figure 4: Abstention Challenge Breakdown Bar Chart ────────────────────
+    fig_abs, ax_abs = plt.subplots(figsize=(8, 4.5))
+    cats_plot = df_breakdown["Challenge_Category"].tolist()
+    rates_plot = df_breakdown["Abstention_Rate_Pct"].tolist()
+    bars = ax_abs.bar(range(len(cats_plot)), rates_plot, color="#2ca02c", edgecolor="black", alpha=0.85)
+    ax_abs.axhline(90.0, color="red", linestyle="--", lw=2, label="Target Threshold (90%)")
+    ax_abs.set_ylabel("Abstention Rate (% Classified as 'unknown')")
+    ax_abs.set_title(f"Classifier Abstention Recall Across Challenge Categories (Overall: {abstention_recall:.1f}%)")
+    ax_abs.set_ylim(0, 115)
+    ax_abs.set_xticks(range(len(cats_plot)))
+    ax_abs.set_xticklabels(cats_plot, rotation=35, ha="right")
+    ax_abs.grid(True, axis="y", alpha=0.3)
+    ax_abs.legend(loc="lower right")
+
+    for bar, rate in zip(bars, rates_plot):
+        ax_abs.text(bar.get_x() + bar.get_width() / 2, rate + 2, f"{rate:.0f}%", ha="center", va="bottom", fontweight="bold")
+
+    plt.tight_layout()
+    f_abs_path = os.path.join(RESULTS_FIG_DIR, "abstention_challenge_breakdown.png")
+    fig_abs.savefig(f_abs_path, dpi=150)
+    plt.close(fig_abs)
+    print(f"Saved figure: {f_abs_path}")
 
     print("=" * 80)
     print("Independent Validation Laboratory Execution Finished Successfully!")

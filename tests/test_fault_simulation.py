@@ -125,3 +125,42 @@ def test_noisy_simulation_unclipped_and_reproducible():
 def test_invalid_scenario_raises():
     with pytest.raises(ValueError):
         fs.simulate_fault("invalid_scenario", Z0, LENGTH, FREQ)
+
+
+def test_simulate_fault_input_validations():
+    # Invalid Z0
+    with pytest.raises(ValueError, match="characteristic impedance Z0"):
+        fs.simulate_fault("healthy", -50.0, LENGTH, FREQ)
+    with pytest.raises(ValueError, match="characteristic impedance Z0"):
+        fs.simulate_fault("healthy", 0.0, LENGTH, FREQ)
+
+    # Invalid length
+    with pytest.raises(ValueError, match="Physical line length"):
+        fs.simulate_fault("healthy", Z0, -1.0, FREQ)
+    with pytest.raises(ValueError, match="Physical line length"):
+        fs.simulate_fault("healthy", Z0, 0.0, FREQ)
+
+    # Invalid frequencies
+    with pytest.raises(ValueError, match="at least 2 points"):
+        fs.simulate_fault("healthy", Z0, LENGTH, np.array([100e6]))
+    with pytest.raises(ValueError, match="strictly positive"):
+        fs.simulate_fault("healthy", Z0, LENGTH, np.array([0.0, 100e6]))
+    with pytest.raises(ValueError, match="strictly monotonically increasing"):
+        fs.simulate_fault("healthy", Z0, LENGTH, np.array([200e6, 100e6]))
+
+    # Negative reactive / mismatch values
+    with pytest.raises(ValueError, match="L_val must be non-negative"):
+        fs.simulate_fault("series_L", Z0, LENGTH, FREQ, L_val=-1e-9)
+    with pytest.raises(ValueError, match="C_val must be non-negative"):
+        fs.simulate_fault("shunt_C", Z0, LENGTH, FREQ, C_val=-1e-12)
+    with pytest.raises(ValueError, match="ZL_mismatch must be strictly positive"):
+        fs.simulate_fault("mismatch", Z0, LENGTH, FREQ, ZL_mismatch=-10.0)
+    with pytest.raises(ValueError, match="noise_std must be non-negative"):
+        fs.simulate_fault("healthy", Z0, LENGTH, FREQ, noise_std=-0.05)
+
+    # Discontinuity position out of bounds
+    with pytest.raises(ValueError, match="fault_pos must be within"):
+        fs.simulate_fault("series_L", Z0, LENGTH, FREQ, fault_pos=-0.1)
+    with pytest.raises(ValueError, match="fault_pos must be within"):
+        fs.simulate_fault("series_L", Z0, LENGTH, FREQ, fault_pos=1.5)
+

@@ -1,0 +1,71 @@
+category,description,target,predicted,subtype,abstained_as_unknown,rules_fired
+U1_empty_data,Empty frequency or reflection arrays,unknown,unknown,uncertain,True,R_EMPTY_DATA
+U1_empty_data,Empty frequency or reflection arrays,unknown,unknown,uncertain,True,R_EMPTY_DATA
+U1_empty_data,Empty frequency or reflection arrays,unknown,unknown,uncertain,True,R_EMPTY_DATA
+U1_empty_data,Empty frequency or reflection arrays,unknown,unknown,uncertain,True,R_EMPTY_DATA
+U1_empty_data,Empty frequency or reflection arrays,unknown,unknown,uncertain,True,R_EMPTY_DATA
+U1_empty_data,Empty frequency or reflection arrays,unknown,unknown,uncertain,True,R_EMPTY_DATA
+U1_empty_data,Empty frequency or reflection arrays,unknown,unknown,uncertain,True,R_EMPTY_DATA
+U1_empty_data,Empty frequency or reflection arrays,unknown,unknown,uncertain,True,R_EMPTY_DATA
+U1_empty_data,Empty frequency or reflection arrays,unknown,unknown,uncertain,True,R_EMPTY_DATA
+U1_empty_data,Empty frequency or reflection arrays,unknown,unknown,uncertain,True,R_EMPTY_DATA
+U2_corrupted_data,Sweep data containing NaN or Inf values,unknown,unknown,uncertain,True,R_NON_FINITE_DATA
+U2_corrupted_data,Sweep data containing NaN or Inf values,unknown,unknown,uncertain,True,R_NON_FINITE_DATA
+U2_corrupted_data,Sweep data containing NaN or Inf values,unknown,unknown,uncertain,True,R_NON_FINITE_DATA
+U2_corrupted_data,Sweep data containing NaN or Inf values,unknown,unknown,uncertain,True,R_NON_FINITE_DATA
+U2_corrupted_data,Sweep data containing NaN or Inf values,unknown,unknown,uncertain,True,R_NON_FINITE_DATA
+U2_corrupted_data,Sweep data containing NaN or Inf values,unknown,unknown,uncertain,True,R_NON_FINITE_DATA
+U2_corrupted_data,Sweep data containing NaN or Inf values,unknown,unknown,uncertain,True,R_NON_FINITE_DATA
+U2_corrupted_data,Sweep data containing NaN or Inf values,unknown,unknown,uncertain,True,R_NON_FINITE_DATA
+U2_corrupted_data,Sweep data containing NaN or Inf values,unknown,unknown,uncertain,True,R_NON_FINITE_DATA
+U2_corrupted_data,Sweep data containing NaN or Inf values,unknown,unknown,uncertain,True,R_NON_FINITE_DATA
+U3_severe_noise,Severe noise sigma=0.35 obscuring physical signature,unknown,unknown,uncertain,True,R_EXCESSIVE_NOISE
+U3_severe_noise,Severe noise sigma=0.35 obscuring physical signature,unknown,unknown,uncertain,True,R_EXCESSIVE_NOISE
+U3_severe_noise,Severe noise sigma=0.35 obscuring physical signature,unknown,unknown,uncertain,True,R_EXCESSIVE_NOISE
+U3_severe_noise,Severe noise sigma=0.35 obscuring physical signature,unknown,unknown,uncertain,True,R_EXCESSIVE_NOISE
+U3_severe_noise,Severe noise sigma=0.35 obscuring physical signature,unknown,unknown,uncertain,True,R_EXCESSIVE_NOISE
+U3_severe_noise,Severe noise sigma=0.35 obscuring physical signature,unknown,unknown,uncertain,True,R_EXCESSIVE_NOISE
+U3_severe_noise,Severe noise sigma=0.35 obscuring physical signature,unknown,unknown,uncertain,True,R_EXCESSIVE_NOISE
+U3_severe_noise,Severe noise sigma=0.35 obscuring physical signature,unknown,unknown,uncertain,True,R_EXCESSIVE_NOISE
+U3_severe_noise,Severe noise sigma=0.35 obscuring physical signature,unknown,unknown,uncertain,True,R_EXCESSIVE_NOISE
+U3_severe_noise,Severe noise sigma=0.35 obscuring physical signature,unknown,unknown,uncertain,True,R_EXCESSIVE_NOISE
+U4_insufficient_bw,Narrowband sweep B=1.87 MHz < 5 MHz,unknown,unknown,uncertain,True,R_INSUFFICIENT_BANDWIDTH
+U4_insufficient_bw,Narrowband sweep B=0.62 MHz < 5 MHz,unknown,unknown,uncertain,True,R_INSUFFICIENT_BANDWIDTH
+U4_insufficient_bw,Narrowband sweep B=2.16 MHz < 5 MHz,unknown,unknown,uncertain,True,R_INSUFFICIENT_BANDWIDTH
+U4_insufficient_bw,Narrowband sweep B=0.61 MHz < 5 MHz,unknown,unknown,uncertain,True,R_INSUFFICIENT_BANDWIDTH
+U4_insufficient_bw,Narrowband sweep B=2.02 MHz < 5 MHz,unknown,unknown,uncertain,True,R_INSUFFICIENT_BANDWIDTH
+U4_insufficient_bw,Narrowband sweep B=1.37 MHz < 5 MHz,unknown,unknown,uncertain,True,R_INSUFFICIENT_BANDWIDTH
+U4_insufficient_bw,Narrowband sweep B=2.03 MHz < 5 MHz,unknown,unknown,uncertain,True,R_INSUFFICIENT_BANDWIDTH
+U4_insufficient_bw,Narrowband sweep B=2.53 MHz < 5 MHz,unknown,unknown,uncertain,True,R_INSUFFICIENT_BANDWIDTH
+U4_insufficient_bw,Narrowband sweep B=3.68 MHz < 5 MHz,unknown,unknown,uncertain,True,R_INSUFFICIENT_BANDWIDTH
+U4_insufficient_bw,Narrowband sweep B=2.08 MHz < 5 MHz,unknown,unknown,uncertain,True,R_INSUFFICIENT_BANDWIDTH
+U5_non_canonical_ripple,Chaotic unphysical reflection profile,unknown,unknown,uncertain,True,R_EXCESSIVE_NOISE
+U5_non_canonical_ripple,Chaotic unphysical reflection profile,unknown,unknown,uncertain,True,R_EXCESSIVE_NOISE
+U5_non_canonical_ripple,Chaotic unphysical reflection profile,unknown,unknown,uncertain,True,R_EXCESSIVE_NOISE
+U5_non_canonical_ripple,Chaotic unphysical reflection profile,unknown,unknown,uncertain,True,R_EXCESSIVE_NOISE
+U5_non_canonical_ripple,Chaotic unphysical reflection profile,unknown,unknown,uncertain,True,R_EXCESSIVE_NOISE
+U5_non_canonical_ripple,Chaotic unphysical reflection profile,unknown,unknown,uncertain,True,R_EXCESSIVE_NOISE
+U5_non_canonical_ripple,Chaotic unphysical reflection profile,unknown,unknown,uncertain,True,R_EXCESSIVE_NOISE
+U5_non_canonical_ripple,Chaotic unphysical reflection profile,unknown,unknown,uncertain,True,R_EXCESSIVE_NOISE
+U5_non_canonical_ripple,Chaotic unphysical reflection profile,unknown,unknown,uncertain,True,R_EXCESSIVE_NOISE
+U5_non_canonical_ripple,Chaotic unphysical reflection profile,unknown,unknown,uncertain,True,R_EXCESSIVE_NOISE
+U6_boundary_ambiguity,Near-total reflection with ambiguous phase or threshold variance,unknown,unknown,uncertain,True,R4_AMBIGUOUS_TOTAL_REFL
+U6_boundary_ambiguity,Near-total reflection with ambiguous phase or threshold variance,unknown,unknown,uncertain,True,R6_BOUNDARY_AMBIGUITY
+U6_boundary_ambiguity,Near-total reflection with ambiguous phase or threshold variance,unknown,unknown,uncertain,True,R4_AMBIGUOUS_TOTAL_REFL
+U6_boundary_ambiguity,Near-total reflection with ambiguous phase or threshold variance,unknown,unknown,uncertain,True,R6_BOUNDARY_AMBIGUITY
+U6_boundary_ambiguity,Near-total reflection with ambiguous phase or threshold variance,unknown,unknown,uncertain,True,R4_AMBIGUOUS_TOTAL_REFL
+U6_boundary_ambiguity,Near-total reflection with ambiguous phase or threshold variance,unknown,unknown,uncertain,True,R6_BOUNDARY_AMBIGUITY
+U6_boundary_ambiguity,Near-total reflection with ambiguous phase or threshold variance,unknown,unknown,uncertain,True,R4_AMBIGUOUS_TOTAL_REFL
+U6_boundary_ambiguity,Near-total reflection with ambiguous phase or threshold variance,unknown,mismatch,series_L,False,R2_SERIES_L_MISMATCH
+U6_boundary_ambiguity,Near-total reflection with ambiguous phase or threshold variance,unknown,unknown,uncertain,True,R4_AMBIGUOUS_TOTAL_REFL
+U6_boundary_ambiguity,Near-total reflection with ambiguous phase or threshold variance,unknown,unknown,uncertain,True,R6_BOUNDARY_AMBIGUITY
+U7_insufficient_points,Insufficient points N=3 < 4,unknown,unknown,uncertain,True,R_INSUFFICIENT_POINTS
+U7_insufficient_points,Insufficient points N=3 < 4,unknown,unknown,uncertain,True,R_INSUFFICIENT_POINTS
+U7_insufficient_points,Insufficient points N=1 < 4,unknown,unknown,uncertain,True,R_INSUFFICIENT_POINTS
+U7_insufficient_points,Insufficient points N=3 < 4,unknown,unknown,uncertain,True,R_INSUFFICIENT_POINTS
+U7_insufficient_points,Insufficient points N=1 < 4,unknown,unknown,uncertain,True,R_INSUFFICIENT_POINTS
+U7_insufficient_points,Insufficient points N=3 < 4,unknown,unknown,uncertain,True,R_INSUFFICIENT_POINTS
+U7_insufficient_points,Insufficient points N=2 < 4,unknown,unknown,uncertain,True,R_INSUFFICIENT_POINTS
+U7_insufficient_points,Insufficient points N=3 < 4,unknown,unknown,uncertain,True,R_INSUFFICIENT_POINTS
+U7_insufficient_points,Insufficient points N=3 < 4,unknown,unknown,uncertain,True,R_INSUFFICIENT_POINTS
+U7_insufficient_points,Insufficient points N=2 < 4,unknown,unknown,uncertain,True,R_INSUFFICIENT_POINTS

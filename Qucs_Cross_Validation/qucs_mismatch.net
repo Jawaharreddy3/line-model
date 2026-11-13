@@ -1,0 +1,5 @@
+# Qucs 1.0.7 Netlist -- RF LINE DOCTOR Benchmark
+Pac:P1 _net0 gnd f="1 GHz" Z="50.0 Ohm" Num="1" P="0 dBm"
+RLCG:Line1 _net0 _net1 R="0.0" L="2.527000721198e-07" C="1.010800288479e-10" G="0.0" Length="1.0"
+R:R1 _net1 gnd R="120.0 Ohm"
+.SP:SP1 Type="lin" Start="500000000Hz" Stop="2500000000Hz" Points="201" Noise="no"
