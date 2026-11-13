@@ -188,9 +188,9 @@ platform win32 -- Python 3.13.13, pytest-9.2.0, pluggy-1.7.0
 rootdir: C:\Users\pc\Documents\GitHub\line-model
 configfile: pytest.ini
 testpaths: tests
-collected 183 items
+collected 184 items
 
-tests\test_app.py ................                                       [  8%]
+tests\test_app.py .................                                      [  9%]
 tests\test_benchmarks.py ..........                                      [ 14%]
 tests\test_classification_labels.py ...........                          [ 20%]
 tests\test_consistency.py .....                                          [ 22%]
@@ -207,12 +207,12 @@ tests\test_qucs_cross_validation.py .                                    [ 98%]
 tests\test_regressions.py .....                                          [ 99%]
 tests\test_validation.py ...                                             [100%]
 
-============================= 183 passed in 24.59s =============================
+============================= 184 passed in 26.30s =============================
 ```
 
-* **Total Test Cases Executed:** **183**
-* **Total Passed:** **183**
+* **Total Test Cases Executed:** **184**
+* **Total Passed:** **184**
 * **Total Failed:** **0**
 * **Total Warnings:** **0**
-* **Execution Time:** **24.59 seconds**
+* **Execution Time:** **26.30 seconds**
 * **Public Interface Breaking Changes:** **0 (100% backward compatible)**

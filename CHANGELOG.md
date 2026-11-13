@@ -6,6 +6,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.3.0] - 2026-11-14
+
+### Removed
+- **Technical Details & Internal Debug Sections:** Completely removed the "Technical details and rules" expander, internal rules-fired listings, classifier feature tables, and academic math derivations from the UI while preserving all underlying computational and diagnostic logic.
+
+### Changed
+- **Comprehensive UI & Content Refinement (Screenshot-Driven):**
+  - **Metric Cards Typography & Wrapping:** Enforced `white-space: nowrap !important` on metric card values and replaced rigid columns (`st.columns(4)`, `st.columns(5)`) with responsive CSS grids (`.metrics-grid-4`, `.metrics-grid-5`, `.metrics-grid-3`), permanently preventing awkward value/unit line wrapping across all pages.
+  - **Non-Academic Terminology & Clear Units:** Rewrote labels and subtitles across the entire application:
+    - Replaced raw mathematical expressions (`sqrt(Z0 * RL)`, `lambda / 4 (0.0220 m)`, `vp / (2 * delta_f)`) with clear engineering descriptions ("Quarter-wave characteristic impedance", "Quarter-wavelength physical length", "Unambiguous measurement limit").
+    - Replaced theoretical academic terms ("Rayleigh limit (vp / 2B)") with intuitive concepts ("Minimum resolvable distance").
+  - **Layout & Container Proportions:** Increased container constraint to `max-width: 1480px` and optimized two-column split (`[1, 3.2], gap="medium"`), providing spacious, professional display proportions.
+  - **Impedance Matching Studio:** Added structured transformer design summary table and enhanced before/after comparison plots with clear threshold references.
+  - **Results & Export:** Standardized tabular column headers with explicit units, tabular numerical formatting, and prominent CSV export.
+  - **Automated Tests:** Expanded regression suite to 184 passing tests, including dedicated validation for complete absence of technical details expanders.
+
+---
+
 ## [2.2.3] - 2026-11-14
 
 ### Changed
