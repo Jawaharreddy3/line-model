@@ -188,18 +188,18 @@ platform win32 -- Python 3.13.13, pytest-9.2.0, pluggy-1.7.0
 rootdir: C:\Users\pc\Documents\GitHub\line-model
 configfile: pytest.ini
 testpaths: tests
-collected 169 items
+collected 176 items
 
-tests\test_app.py ..                                                    [  1%]
-tests\test_benchmarks.py ..........                                      [  7%]
-tests\test_classification_labels.py ...........                          [ 13%]
-tests\test_consistency.py .....                                          [ 16%]
-tests\test_data_alignment_and_plotting.py ...                            [ 18%]
-tests\test_diagnosis.py .......................................          [ 41%]
-tests\test_fault_simulation.py .......                                   [ 45%]
-tests\test_integration.py ........                                       [ 50%]
-tests\test_line_model.py ................................................ [ 80%]
-tests\test_location.py .......                                           [ 84%]
+tests\test_app.py .........                                              [  5%]
+tests\test_benchmarks.py ..........                                      [ 10%]
+tests\test_classification_labels.py ...........                          [ 17%]
+tests\test_consistency.py .....                                          [ 19%]
+tests\test_data_alignment_and_plotting.py ...                            [ 21%]
+tests\test_diagnosis.py .......................................          [ 43%]
+tests\test_fault_simulation.py .......                                   [ 47%]
+tests\test_integration.py ........                                       [ 52%]
+tests\test_line_model.py ................................................ [ 81%]
+tests\test_location.py .......                                           [ 85%]
 tests\test_matching.py ........                                          [ 89%]
 tests\test_measurements.py ..............                                [ 97%]
 tests\test_numerical_edge_cases.py .......                               [ 98%]
@@ -207,12 +207,12 @@ tests\test_qucs_cross_validation.py .                                    [ 98%]
 tests\test_regressions.py .....                                          [ 99%]
 tests\test_validation.py ...                                             [100%]
 
-============================= 169 passed in 1.52s =============================
+============================= 176 passed in 7.12s =============================
 ```
 
-* **Total Test Cases Executed:** **169**
-* **Total Passed:** **169**
+* **Total Test Cases Executed:** **176**
+* **Total Passed:** **176**
 * **Total Failed:** **0**
 * **Total Warnings:** **0**
-* **Execution Time:** **1.55 seconds**
+* **Execution Time:** **7.12 seconds**
 * **Public Interface Breaking Changes:** **0 (100% backward compatible)**

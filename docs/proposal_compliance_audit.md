@@ -345,12 +345,12 @@ This is independent of automated tests.
 ## Part 7 — Automated Test Status
 
 ```
-169 passed, 0 warnings, 0 failures  (pytest 9.2.0, Python 3.13.13)
+176 passed, 0 warnings, 0 failures  (pytest 9.2.0, Python 3.13.13)
 ```
 
 | Test file | Tests | Scope |
 |---|---|---|
-| `test_app.py` | 2 | Clean importability of Streamlit application and core pipeline execution |
+| `test_app.py` | 9 | Clean importability of Streamlit application, core pipeline execution, and all 7 navigation views rendered via AppTest |
 | `test_benchmarks.py` | 10 | 10 independent closed-form analytical benchmark suites |
 | `test_classification_labels.py` | 11 | Exhaustive verification of all 5 frozen labels and extreme finite loads |
 | `test_consistency.py` | 5 | Cross-coupling & bidirectional consistency tests |
@@ -366,7 +366,7 @@ This is independent of automated tests.
 | `test_qucs_cross_validation.py` | 1 | Qucsator RF circuit simulator cross-validation |
 | `test_regressions.py` | 5 | Interface compliance & contract regression tests |
 | `test_validation.py` | 3 | Confusion matrix and location metric helper structures |
-| **Total** | **169** | **Full system coverage without breaking frozen contracts (100% pass)** |
+| **Total** | **176** | **Full system coverage without breaking frozen contracts (100% pass)** |
 
 > [!NOTE]
 > The test suite confirms **internal code contract consistency**. It does not constitute academic

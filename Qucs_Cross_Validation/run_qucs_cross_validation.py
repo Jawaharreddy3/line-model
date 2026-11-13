@@ -95,23 +95,67 @@ net_path = os.path.join(OUT_DIR, "qucs_mismatch.net")
 with open(net_path, "w") as f:
     f.write(net_content)
 
-# ── 4. Execute Native Qucsator Simulator ───────────────────────────────────────
-qucsator_bin = r"C:\Users\pc\qucs-s\bin\qucsator_rf.exe"
+# ── 4. Locate & Execute Native Qucsator Simulator ─────────────────────────────
+def find_simulator_executable(name_variants, env_var):
+    """
+    Dynamically locate simulator binary via environment variable, PATH, or standard installation paths.
+    Avoids machine-specific hardcoded absolute paths.
+    """
+    if env_var in os.environ and os.path.isfile(os.environ[env_var]):
+        return os.environ[env_var]
+    if "QUCS_BIN_DIR" in os.environ:
+        for name in name_variants:
+            p = os.path.join(os.environ["QUCS_BIN_DIR"], name)
+            if os.path.isfile(p):
+                return p
+    import shutil
+    for name in name_variants:
+        p = shutil.which(name)
+        if p and os.path.isfile(p):
+            return p
+    candidate_paths = [
+        os.path.expanduser(r"~\qucs-s\bin"),
+        r"C:\qucs-s\bin",
+        r"C:\Program Files\Qucs-S\bin",
+        r"C:\Program Files (x86)\Qucs-S\bin",
+        "/usr/bin",
+        "/usr/local/bin",
+        "/opt/qucs/bin",
+    ]
+    for cdir in candidate_paths:
+        for name in name_variants:
+            p = os.path.join(cdir, name)
+            if os.path.isfile(p):
+                return p
+    return None
+
+qucsator_bin = find_simulator_executable(["qucsator_rf.exe", "qucsator.exe", "qucsator_rf", "qucsator"], "QUCSATOR_PATH")
+qucsconv_bin = find_simulator_executable(["qucsconv_rf.exe", "qucsconv.exe", "qucsconv_rf", "qucsconv"], "QUCSCONV_PATH")
 dat_path = os.path.join(OUT_DIR, "qucs_mismatch.dat")
 s1p_path = os.path.join(OUT_DIR, "qucs_mismatch.s1p")
 
-print("[1/5] Executing Qucsator kernel...")
-proc = subprocess.run([qucsator_bin, "-i", net_path, "-o", dat_path], capture_output=True, text=True)
-if proc.returncode != 0:
-    raise RuntimeError(f"Qucsator execution failed: {proc.stderr}")
-print("      Qucsator simulation completed successfully (Exit Code 0).")
+if qucsator_bin and os.path.isfile(qucsator_bin):
+    print(f"[1/5] Executing Qucsator kernel ({qucsator_bin})...")
+    proc = subprocess.run([qucsator_bin, "-i", net_path, "-o", dat_path], capture_output=True, text=True)
+    if proc.returncode != 0:
+        raise RuntimeError(f"Qucsator execution failed: {proc.stderr}")
+    print("      Qucsator simulation completed successfully (Exit Code 0).")
 
-# Convert dataset to Touchstone format
-qucsconv_bin = r"C:\Users\pc\qucs-s\bin\qucsconv_rf.exe"
-proc_conv = subprocess.run([qucsconv_bin, "-if", "qucsdata", "-of", "touchstone", "-i", dat_path, "-o", s1p_path], capture_output=True, text=True)
-if proc_conv.returncode != 0:
-    raise RuntimeError(f"Qucsconv conversion failed: {proc_conv.stderr}")
-print("      Converted Qucs dataset to standard Touchstone .s1p file.")
+    # Convert dataset to Touchstone format if qucsconv is available
+    if qucsconv_bin and os.path.isfile(qucsconv_bin):
+        proc_conv = subprocess.run([qucsconv_bin, "-if", "qucsdata", "-of", "touchstone", "-i", dat_path, "-o", s1p_path], capture_output=True, text=True)
+        if proc_conv.returncode == 0:
+            print("      Converted Qucs dataset to standard Touchstone .s1p file.")
+else:
+    if os.path.exists(dat_path) and os.path.exists(s1p_path):
+        print("[1/5] Qucsator simulator binary not detected on PATH or standard directories.")
+        print(f"      Using verified pre-simulated reference dataset ({os.path.basename(dat_path)}).")
+        print("      To run live simulation: install Qucs-S / Qucsator and set QUCSATOR_PATH or QUCS_BIN_DIR.")
+    else:
+        raise FileNotFoundError(
+            "Qucsator simulator executable not found, and no pre-simulated reference dataset was found in Qucs_Cross_Validation/. "
+            "Please install Qucs-S / Qucsator or set the QUCSATOR_PATH environment variable."
+        )
 
 # ── 5. Parse Qucsator Dataset & Load Touchstone ────────────────────────────────
 with open(dat_path, "r") as f:

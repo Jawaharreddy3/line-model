@@ -14,7 +14,7 @@
 A comprehensive, rigorous quality-assurance audit was conducted on the **RF LINE DOCTOR** transmission-line simulation, fault diagnostics, and impedance-matching platform. All remaining technical discrepancies, numerical tolerances, classification boundary issues, abstention challenge validations, and documentation synchronizations have been implemented and verified.
 
 ### Key Quality & Verification Metrics:
-- **Automated Regression Suite:** **169 tests passed** in **1.63 seconds** with **0 failures** and **0 warnings** (`pytest`).
+- **Automated Regression Suite:** **176 tests passed** in **7.12 seconds** with **0 failures** and **0 warnings** (`pytest`).
 - **Physical Diagnostic Classification Accuracy:** **99.58%** (239 / 240 correct) across all 6 physical scenarios (`healthy`, `mismatch`, `open`, `short`, `series_L`, `shunt_C`) on a randomized held-out Monte Carlo test set with complex noise $\sigma = 0.02$.
 - **Classifier Abstention Recall (`unknown`):** **98.57%** (69 / 70 challenge cases correctly rejected) across a dedicated 7-category challenge suite (U1 through U7).
 - **Physical Dataset Coverage:** **100.00%** (240 / 240 valid physical lines diagnosed with **0.00% false abstentions**).
@@ -40,7 +40,7 @@ A comprehensive, rigorous quality-assurance audit was conducted on the **RF LINE
 | **F. Quarter-Wave Impedance Matching Studio** | Pozar single-section $\lambda/4$ transformer synthesis ($Z_t = \sqrt{Z_0 R_L}$), complex load rejection, 20 dB return loss passband evaluation. | **PASS** | `matching.py`, `tests/test_matching.py`; exact cancellation ($\Gamma = 0, \text{VSWR} = 1.0, \text{RL} = \infty$) verified at $f_0$; 7/7 tests pass. |
 | **G. Continuous Integration (CI)** | Automated GitHub Actions workflow on `main` branch across Python 3.10, 3.11, 3.12, 3.13; running pytest, validation lab, and reproducible examples. | **PASS** | `.github/workflows/tests.yml` created with checkout, multi-python matrix, caching, pip install, pytest, validation lab, and example execution. |
 | **H. Independent Cross-Validation (Qucs-S)** | Verification of Touchstone $S_{11}$ simulation against Qucsator RF circuit simulator engine; zero synthetic data. | **PASS** | `Qucs_Cross_Validation/`; max discrepancy $|\Delta S_{11}| < 8.23 \times 10^{-14}$; genuine Qucsator netlist and Touchstone `.s1p` verified. |
-| **I. Documentation & Academic Integrity** | Honest academic framing ("educational virtual prototype"); accurate repository tree; synchronized test metrics; no claims of unperformed hardware measurements. | **PASS** | `README.md`, `TECHNICAL_DOCUMENTATION.md`, `docs/validation.md`, `docs/final_software_verification_report.md` fully synchronized to 169 tests and current validation numbers. |
+| **I. Documentation & Academic Integrity** | Honest academic framing ("educational virtual prototype"); accurate repository tree; synchronized test metrics; no claims of unperformed hardware measurements. | **PASS** | `README.md`, `TECHNICAL_DOCUMENTATION.md`, `docs/validation.md`, `docs/final_software_verification_report.md` fully synchronized to 176 tests and current validation numbers. |
 
 ---
 
@@ -139,7 +139,7 @@ A comprehensive, rigorous quality-assurance audit was conducted on the **RF LINE
 ### 3.9 Component I: Documentation & Academic Integrity
 - Repository structure cleaned: redundant and temporary files removed, active test files consolidated into `tests/`.
 - Academic framing: explicitly documented as an "Educational Virtual Transmission-Line Simulator" for university microwave engineering; no false claims of physical VNA hardware measurements or fabricated experimental results.
-- `README.md`, `TECHNICAL_DOCUMENTATION.md`, `docs/validation.md`, and `docs/final_software_verification_report.md` completely synchronized to current test suite metrics (169 passed tests, 99.58% accuracy, 98.6% abstention recall).
+- `README.md`, `TECHNICAL_DOCUMENTATION.md`, `docs/validation.md`, and `docs/final_software_verification_report.md` completely synchronized to current test suite metrics (176 passed tests, 99.58% accuracy, 98.6% abstention recall).
 
 ---
 

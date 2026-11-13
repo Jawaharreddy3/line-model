@@ -27,12 +27,12 @@
 The full automated regression suite was executed via `python -m pytest -v`:
 
 ```
-======================= 169 passed in 1.55s =======================
+======================= 176 passed in 7.12s =======================
 ```
 
 | Test Module | Test Count | Scope Verified | Result |
 |---|---|---|---|
-| `test_app.py` | 2 | Clean importability of Streamlit application and core pipeline execution | **2 / 2 PASS** |
+| `test_app.py` | 9 | Clean importability of Streamlit application, core pipeline execution, and all 7 navigation views rendered via AppTest | **9 / 9 PASS** |
 | `test_benchmarks.py` | 10 | 10 independent closed-form analytical benchmark suites | **10 / 10 PASS** |
 | `test_classification_labels.py` | 11 | Exhaustive verification of all 5 frozen labels, extreme finite loads, and abstention challenge conditions | **11 / 11 PASS** |
 | `test_consistency.py` | 5 | Cross-coupling & bidirectional consistency tests | **5 / 5 PASS** |
@@ -48,7 +48,7 @@ The full automated regression suite was executed via `python -m pytest -v`:
 | `test_qucs_cross_validation.py` | 1 | Qucsator RF circuit simulator Touchstone S11 cross-validation ($\Delta < 8.23\times 10^{-14}$) | **1 / 1 PASS** |
 | `test_regressions.py` | 5 | Interface compliance & contract regression tests | **5 / 5 PASS** |
 | `test_validation.py` | 3 | Confusion matrix math, classification report generation, location metrics error calculations | **3 / 3 PASS** |
-| **Total** | **169** | **Full system coverage without breaking frozen contracts** | **169 / 169 PASS (100%)** |
+| **Total** | **176** | **Full system coverage without breaking frozen contracts** | **176 / 176 PASS (100%)** |
 
 ---
 
