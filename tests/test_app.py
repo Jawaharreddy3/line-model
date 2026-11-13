@@ -96,8 +96,10 @@ def test_streamlit_app_fault_scenarios(fault_condition):
     app_path = os.path.join(root_dir, "app.py")
     at = AppTest.from_file(app_path, default_timeout=30)
     at.run()
-    at.sidebar.selectbox[0].set_value(fault_condition).run()
-    at.sidebar.button[0].click().run()
+    sb = at.selectbox[0] if len(at.selectbox) > 0 else at.sidebar.selectbox[0]
+    btn = at.button[0] if len(at.button) > 0 else at.sidebar.button[0]
+    sb.set_value(fault_condition).run()
+    btn.click().run()
     assert len(at.exception) == 0, f"Condition '{fault_condition}' raised exceptions: {[e.value for e in at.exception]}"
 
 

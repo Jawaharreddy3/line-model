@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.2.3] - 2026-11-14
+
+### Changed
+- **Right Sidebar Isolation (Navigation Only) & Left-Side Parameters Panel:**
+  - Streamlined the right sidebar (`st.sidebar`) to contain **ONLY** the application header ("RF Line Doctor" title and subtitle), the 5-item navigation radio menu (Simulation, Diagnosis, Fault Location, Impedance Matching, Results), and the subtle horizontal divider, matching the user's cropped layout specification.
+  - Relocated all simulation configuration inputs (Transmission Line Parameters, Frequency Settings, Fault Condition selector, fault discontinuity parameters, noise level, and "Run Simulation" button) into a dedicated left-hand parameters card panel (`col_params`) on the left side of the screen.
+  - Positioned the primary simulation outputs, metric cards, status banner, plots, diagnostic findings, TDR reflectometry, impedance matching studio, and numerical tables in the adjacent main column (`col_sim`) on the left/center.
+  - Prevented duplicate element ID conflicts by explicitly assigning unique keys to input widgets.
+  - Verified across all 183 automated tests with zero failures.
+
+---
+
 ## [2.2.2] - 2026-11-14
 
 ### Changed
