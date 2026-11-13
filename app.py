@@ -61,31 +61,83 @@ html, body, [class*="css"], button, input, select, textarea {
     margin-bottom: 1.25rem;
 }
 
-/* Clean metric cards */
+/* Metric cards responsive grid */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 0.85rem;
+    margin-bottom: 1.25rem;
+    width: 100%;
+}
+
+@media (max-width: 1380px) {
+    .metrics-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .metrics-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Standardized metric card */
 .metric-card {
     background-color: #ffffff;
     border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    padding: 0.9rem 1rem;
-    margin-bottom: 0.75rem;
+    border-radius: 8px;
+    padding: 1rem 1.15rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 114px;
+    height: 100%;
+    box-sizing: border-box;
 }
+
+.metric-card, .metric-card * {
+    word-break: normal !important;
+    overflow-wrap: normal !important;
+    hyphens: none !important;
+}
+
+.metric-card-top {
+    display: flex;
+    flex-direction: column;
+}
+
 .metric-card-label {
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: #64748b;
-    margin-bottom: 0.25rem;
-    letter-spacing: 0.02em;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #475569;
+    margin-bottom: 0.35rem;
+    line-height: 1.35;
+    white-space: normal;
 }
+
 .metric-card-value {
-    font-size: 1.35rem;
+    font-size: 1.65rem;
     font-weight: 700;
     color: #0f172a;
     font-variant-numeric: tabular-nums;
+    line-height: 1.25;
+    margin-bottom: 0.25rem;
+    white-space: normal;
 }
+
 .metric-card-sub {
-    font-size: 0.76rem;
+    font-size: 0.85rem;
     color: #64748b;
-    margin-top: 0.15rem;
+    line-height: 1.35;
+    margin-top: 0.35rem;
+    white-space: normal;
 }
 
 /* Status banner */
@@ -164,6 +216,35 @@ def create_clean_plot(figsize=(5.8, 3.6)):
     ax.yaxis.label.set_color("#0f172a")
     ax.title.set_color("#0f172a")
     return fig, ax
+
+
+# ── Metric Card Rendering Helpers ─────────────────────────────────────────────
+def render_metric_card(label: str, value: str, sub: str = "", value_size: str = None) -> str:
+    """
+    Generate clean, standardized HTML for a single metric card.
+    Uses flexbox column layout to vertically align label, prominent value, and subtext.
+    """
+    val_style = f' style="font-size: {value_size};"' if value_size else ""
+    sub_html = f'<div class="metric-card-sub">{sub}</div>' if sub else ""
+    return f"""<div class="metric-card">
+    <div class="metric-card-top">
+        <div class="metric-card-label">{label}</div>
+        <div class="metric-card-value"{val_style}>{value}</div>
+    </div>
+    {sub_html}
+</div>"""
+
+
+def render_metrics_grid(cards_html_list: list) -> str:
+    """
+    Render a collection of metric cards inside a responsive CSS Grid container.
+    Adapts cleanly from 6 columns on wide screens, to 3 columns on standard laptops/desktops,
+    2 columns on tablets, and 1 column on mobile.
+    """
+    cards_str = "\n".join(cards_html_list)
+    return f"""<div class="metrics-grid">
+{cards_str}
+</div>"""
 
 
 # ── Simulation Runner & Caching ───────────────────────────────────────────────
@@ -430,67 +511,26 @@ if nav_section == "Simulation":
         dist_est = sim["loc_res"].get("dist_ifft_m")
 
         # Metric Cards Layout
-        c1, c2, c3, c4, c5, c6 = st.columns(6)
+        if abs(ref_zin.imag) < 0.05:
+            zin_text = f"{ref_zin.real:.1f}"
+        elif ref_zin.imag >= 0:
+            zin_text = f"{ref_zin.real:.1f} + j{ref_zin.imag:.1f}"
+        else:
+            zin_text = f"{ref_zin.real:.1f} - j{abs(ref_zin.imag):.1f}"
 
-        with c1:
-            st.markdown(f"""
-            <div class="metric-card">
-                <div class="metric-card-label">Condition</div>
-                <div class="metric-card-value" style="font-size: 1.05rem;">{fault_label}</div>
-                <div class="metric-card-sub">Z0 = {sim['Z0']:.1f} Ohms</div>
-            </div>
-            """, unsafe_allow_html=True)
+        dist_text = f"{dist_est:.2f} m" if dist_est is not None else "None"
+        vswr_text = f"{ref_vswr:.2f}" if ref_vswr < 100 else "Infinity" if np.isinf(ref_vswr) else f"{ref_vswr:.1f}"
+        rl_text = f"{ref_rl:.1f} dB" if ref_rl < 100 else "> 100 dB"
 
-        with c2:
-            st.markdown(f"""
-            <div class="metric-card">
-                <div class="metric-card-label">Reflection |Gamma|</div>
-                <div class="metric-card-value">{mean_gamma:.4f}</div>
-                <div class="metric-card-sub">Mean magnitude</div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        with c3:
-            vswr_text = f"{ref_vswr:.2f}" if ref_vswr < 100 else "Infinity" if np.isinf(ref_vswr) else f"{ref_vswr:.1f}"
-            st.markdown(f"""
-            <div class="metric-card">
-                <div class="metric-card-label">VSWR</div>
-                <div class="metric-card-value">{vswr_text}</div>
-                <div class="metric-card-sub">At {freqs_mhz[mid_idx]:.0f} MHz</div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        with c4:
-            rl_text = f"{ref_rl:.1f} dB" if ref_rl < 100 else "> 100 dB"
-            st.markdown(f"""
-            <div class="metric-card">
-                <div class="metric-card-label">Return Loss</div>
-                <div class="metric-card-value">{rl_text}</div>
-                <div class="metric-card-sub">At {freqs_mhz[mid_idx]:.0f} MHz</div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        with c5:
-            zin_text = f"{ref_zin.real:.1f} + j{ref_zin.imag:.1f}" if abs(ref_zin.imag) >= 0.05 else f"{ref_zin.real:.1f}"
-            st.markdown(f"""
-            <div class="metric-card">
-                <div class="metric-card-label">Input Impedance</div>
-                <div class="metric-card-value" style="font-size: 1.05rem;">{zin_text}</div>
-                <div class="metric-card-sub">Ohms at mid-band</div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        with c6:
-            dist_text = f"{dist_est:.2f} m" if dist_est is not None else "None"
-            st.markdown(f"""
-            <div class="metric-card">
-                <div class="metric-card-label">Fault Distance</div>
-                <div class="metric-card-value">{dist_text}</div>
-                <div class="metric-card-sub">From input</div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        st.markdown('<div style="height: 0.5rem;"></div>', unsafe_allow_html=True)
+        cards = [
+            render_metric_card("Condition", fault_label, f"Z0 = {sim['Z0']:.1f} Ohms", value_size="1.4rem"),
+            render_metric_card("Reflection |Gamma|", f"{mean_gamma:.4f}", "Mean magnitude"),
+            render_metric_card("VSWR", vswr_text, f"At {freqs_mhz[mid_idx]:.0f} MHz"),
+            render_metric_card("Return Loss", rl_text, f"At {freqs_mhz[mid_idx]:.0f} MHz"),
+            render_metric_card("Input Impedance", zin_text, "Ohms at mid-band", value_size="1.45rem"),
+            render_metric_card("Fault Distance", dist_text, "From input"),
+        ]
+        st.markdown(render_metrics_grid(cards), unsafe_allow_html=True)
 
         # Engineering Plots Section
         row1_col1, row1_col2 = st.columns(2)

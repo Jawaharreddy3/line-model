@@ -6,6 +6,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.2.1] - 2026-11-14
+
+### Fixed
+- **Simulation Metric Cards Responsiveness & Typography:**
+  - Replaced rigid 6-column layout with a fully responsive CSS Grid (`.metrics-grid`), rendering 6 columns on ultra-wide desktop screens (> 1380px), 3 columns on standard laptops/desktops (769px–1380px), 2 columns on tablets (481px–768px), and 1 column on mobile (<= 480px).
+  - Enforced `word-break: normal !important; overflow-wrap: normal !important; hyphens: none !important;` to eliminate awkward word splitting (e.g. "inductanc / e") and character fragmentation.
+  - Implemented modular, reusable helper functions `render_metric_card` and `render_metrics_grid`.
+  - Standardized visual hierarchy: medium-weight labels (~15px), prominent bold metric values (~26px), and supporting text (~14px).
+  - Fixed complex impedance formatting for negative reactance values (`R - jX` instead of `R + j-X`).
+  - Added dedicated regression test `test_metric_cards_rendering_and_styling`, expanding test suite to 182 passed tests.
+
+---
+
 ## [2.2.0] - 2026-11-14
 
 ### Changed

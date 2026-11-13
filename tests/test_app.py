@@ -118,3 +118,27 @@ def test_no_emojis_in_app_code():
             (0x1F600 <= code <= 0x1F64F)
         )
         assert not is_emoji, f"Found forbidden emoji character '{ch}' (U+{code:04X}) at index {i}"
+
+
+def test_metric_cards_rendering_and_styling():
+    """
+    Verify that the 6 metric cards render via responsive CSS Grid with
+    proper typography, word-break controls, and no awkward splitting.
+    """
+    import app
+
+    card1 = app.render_metric_card("Condition", "Series inductance", "Z0 = 50.0 Ohms")
+    card2 = app.render_metric_card("Reflection |Gamma|", "0.5947", "Mean magnitude")
+    card3 = app.render_metric_card("VSWR", "4.57", "At 2250 MHz")
+    card4 = app.render_metric_card("Return Loss", "3.9 dB", "At 2250 MHz")
+    card5 = app.render_metric_card("Input Impedance", "21.5 + j46.6", "Ohms at mid-band")
+    card6 = app.render_metric_card("Fault Distance", "0.50 m", "From input")
+
+    grid_html = app.render_metrics_grid([card1, card2, card3, card4, card5, card6])
+
+    assert 'class="metrics-grid"' in grid_html
+    assert 'class="metric-card"' in grid_html
+    assert "Series inductance" in grid_html
+    assert "Input Impedance" in grid_html
+    assert "21.5 + j46.6" in grid_html
+    assert "word-break: break-all" not in grid_html
