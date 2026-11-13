@@ -42,9 +42,11 @@ html, body, [class*="css"], button, input, select, textarea {
 
 /* Page container constraints */
 .block-container {
-    padding-top: 1.8rem;
+    padding-top: 1.5rem;
     padding-bottom: 2.5rem;
-    max-width: 1240px;
+    padding-left: 1.8rem;
+    padding-right: 1.8rem;
+    max-width: 1480px;
 }
 
 /* Header styling */
@@ -61,7 +63,7 @@ html, body, [class*="css"], button, input, select, textarea {
     margin-bottom: 1.25rem;
 }
 
-/* Metric cards responsive grid */
+/* Metric cards responsive grids */
 .metrics-grid {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
@@ -69,21 +71,77 @@ html, body, [class*="css"], button, input, select, textarea {
     margin-bottom: 1.25rem;
     width: 100%;
 }
-
-@media (max-width: 1380px) {
+@media (max-width: 1400px) {
     .metrics-grid {
         grid-template-columns: repeat(3, 1fr);
     }
 }
-
 @media (max-width: 768px) {
     .metrics-grid {
         grid-template-columns: repeat(2, 1fr);
     }
 }
-
 @media (max-width: 480px) {
     .metrics-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.metrics-grid-5 {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.85rem;
+    margin-bottom: 1.25rem;
+    width: 100%;
+}
+@media (max-width: 1400px) {
+    .metrics-grid-5 {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+@media (max-width: 768px) {
+    .metrics-grid-5 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+@media (max-width: 480px) {
+    .metrics-grid-5 {
+        grid-template-columns: 1fr;
+    }
+}
+
+.metrics-grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.85rem;
+    margin-bottom: 1.25rem;
+    width: 100%;
+}
+@media (max-width: 1200px) {
+    .metrics-grid-4 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+@media (max-width: 520px) {
+    .metrics-grid-4 {
+        grid-template-columns: 1fr;
+    }
+}
+
+.metrics-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.85rem;
+    margin-bottom: 1.25rem;
+    width: 100%;
+}
+@media (max-width: 900px) {
+    .metrics-grid-3 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+@media (max-width: 550px) {
+    .metrics-grid-3 {
         grid-template-columns: 1fr;
     }
 }
@@ -93,11 +151,11 @@ html, body, [class*="css"], button, input, select, textarea {
     background-color: #ffffff;
     border: 1px solid #e2e8f0;
     border-radius: 8px;
-    padding: 1rem 1.15rem;
+    padding: 0.95rem 1.1rem;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    min-height: 114px;
+    min-height: 110px;
     height: 100%;
     box-sizing: border-box;
 }
@@ -114,29 +172,29 @@ html, body, [class*="css"], button, input, select, textarea {
 }
 
 .metric-card-label {
-    font-size: 0.95rem;
+    font-size: 0.88rem;
     font-weight: 500;
     color: #475569;
-    margin-bottom: 0.35rem;
-    line-height: 1.35;
+    margin-bottom: 0.3rem;
+    line-height: 1.3;
     white-space: normal;
 }
 
 .metric-card-value {
-    font-size: 1.65rem;
+    font-size: 1.55rem;
     font-weight: 700;
     color: #0f172a;
     font-variant-numeric: tabular-nums;
-    line-height: 1.25;
-    margin-bottom: 0.25rem;
-    white-space: normal;
+    line-height: 1.2;
+    margin-bottom: 0.2rem;
+    white-space: nowrap;
 }
 
 .metric-card-sub {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: #64748b;
     line-height: 1.35;
-    margin-top: 0.35rem;
+    margin-top: 0.3rem;
     white-space: normal;
 }
 
@@ -161,6 +219,7 @@ html, body, [class*="css"], button, input, select, textarea {
 .status-card-unknown {
     border-left-color: #64748b;
 }
+
 /* Parameters card on the left */
 .params-card {
     background-color: #f8fafc;
@@ -170,7 +229,6 @@ html, body, [class*="css"], button, input, select, textarea {
     box-sizing: border-box;
     margin-bottom: 1.5rem;
 }
-
 
 .status-title {
     font-size: 1.15rem;
@@ -318,14 +376,12 @@ def render_metric_card(label: str, value: str, sub: str = "", value_size: str = 
 </div>"""
 
 
-def render_metrics_grid(cards_html_list: list) -> str:
+def render_metrics_grid(cards_html_list: list, grid_class: str = "metrics-grid") -> str:
     """
     Render a collection of metric cards inside a responsive CSS Grid container.
-    Adapts cleanly from 6 columns on wide screens, to 3 columns on standard laptops/desktops,
-    2 columns on tablets, and 1 column on mobile.
     """
     cards_str = "\n".join(cards_html_list)
-    return f"""<div class="metrics-grid">
+    return f"""<div class="{grid_class}">
 {cards_str}
 </div>"""
 
@@ -386,7 +442,7 @@ def run_simulation(scenario_key, Z0, length, vf, f_start_mhz, f_stop_mhz, n_poin
     }
 
 
-# ── Sidebar Configuration Panel ───────────────────────────────────────────────
+# ── Sidebar Configuration Panel (Right Side: Navigation Only) ─────────────────
 st.sidebar.markdown('<div class="sidebar-title">RF Line Doctor</div>', unsafe_allow_html=True)
 st.sidebar.markdown('<div class="sidebar-subtitle">Transmission Line Simulation System</div>', unsafe_allow_html=True)
 
@@ -406,19 +462,22 @@ nav_section = st.sidebar.radio(
 )
 
 st.sidebar.markdown('<div style="height: 1px; background: #e2e8f0; margin: 0.8rem 0;"></div>', unsafe_allow_html=True)
+
+
 # ── Main Two-Column Layout: Parameters on Left, Simulation on Right ──────────
-col_params, col_sim = st.columns([1, 2.7], gap="large")
+col_params, col_sim = st.columns([1, 3.2], gap="medium")
 
 with col_params:
     st.markdown('<div class="params-card">', unsafe_allow_html=True)
-    st.markdown('<div class="sidebar-heading" style="margin-top:0;">Transmission Line Parameters</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sidebar-heading" style="margin-top:0;">Line Parameters</div>', unsafe_allow_html=True)
     
     Z0 = st.number_input(
-        "Characteristic Impedance (Ohms)",
+        "Characteristic Impedance Z0 (Ohms)",
         min_value=5.0,
         max_value=1000.0,
         value=50.0,
         step=5.0,
+        key="param_z0",
     )
     
     length = st.number_input(
@@ -427,14 +486,16 @@ with col_params:
         max_value=100.0,
         value=1.0,
         step=0.1,
+        key="param_length",
     )
     
     vf = st.number_input(
-        "Velocity Factor",
+        "Velocity Factor (v/c)",
         min_value=0.01,
         max_value=1.0,
         value=0.66,
         step=0.01,
+        key="param_vf",
     )
     
     st.markdown('<div class="sidebar-heading">Frequency Settings</div>', unsafe_allow_html=True)
@@ -447,6 +508,7 @@ with col_params:
             max_value=50000.0,
             value=500.0,
             step=50.0,
+            key="param_f_start",
         )
     with col_f2:
         f_stop_mhz = st.number_input(
@@ -455,17 +517,19 @@ with col_params:
             max_value=50000.0,
             value=4000.0,
             step=50.0,
+            key="param_f_stop",
         )
     
     n_points = st.number_input(
-        "Number of Points",
+        "Frequency Points",
         min_value=21,
         max_value=2001,
         value=201,
         step=20,
+        key="param_n_points",
     )
     
-    st.markdown('<div class="sidebar-heading">Fault Condition</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sidebar-heading">Line Condition</div>', unsafe_allow_html=True)
     
     FAULT_MAP = {
         "Healthy line": "healthy",
@@ -480,50 +544,56 @@ with col_params:
         "Select Condition",
         list(FAULT_MAP.keys()),
         index=0,
+        key="param_fault_label",
     )
     selected_scenario = FAULT_MAP[fault_label]
     
     fault_args = {}
     if selected_scenario == "mismatch":
         RL = st.number_input(
-            "Load Resistance (Ohms)",
+            "Load Resistance RL (Ohms)",
             min_value=0.1,
             max_value=10000.0,
             value=100.0,
             step=10.0,
+            key="param_rl",
         )
         fault_args["ZL_mismatch"] = RL
     elif selected_scenario == "series_L":
         L_nH = st.number_input(
-            "Inductance (nH)",
+            "Discontinuity Inductance L (nH)",
             min_value=0.01,
             max_value=500.0,
             value=5.0,
             step=0.5,
+            key="param_l",
         )
         d_fault = st.number_input(
-            "Fault Position (m)",
+            "Discontinuity Position (m)",
             min_value=0.01,
             max_value=float(length),
             value=min(0.5, float(length)),
             step=0.05,
+            key="param_fault_pos",
         )
         fault_args["L_val"] = L_nH * 1e-9
         fault_args["fault_pos"] = d_fault
     elif selected_scenario == "shunt_C":
         C_pF = st.number_input(
-            "Capacitance (pF)",
+            "Discontinuity Capacitance C (pF)",
             min_value=0.01,
             max_value=500.0,
             value=2.0,
             step=0.2,
+            key="param_c",
         )
         d_fault = st.number_input(
-            "Fault Position (m)",
+            "Discontinuity Position (m)",
             min_value=0.01,
             max_value=float(length),
             value=min(0.5, float(length)),
             step=0.05,
+            key="param_fault_pos",
         )
         fault_args["C_val"] = C_pF * 1e-12
         fault_args["fault_pos"] = d_fault
@@ -531,12 +601,13 @@ with col_params:
     st.markdown('<div class="sidebar-heading">Measurement Settings</div>', unsafe_allow_html=True)
     
     noise_std = st.number_input(
-        "Noise Level",
+        "Measurement Noise (std dev)",
         min_value=0.0,
         max_value=0.2,
         value=0.0,
         step=0.005,
         format="%.3f",
+        key="param_noise",
     )
     
     run_clicked = st.button("Run Simulation", type="primary", use_container_width=True, key="param_run_btn")
@@ -555,7 +626,8 @@ if Z0 <= 0:
 # Check if simulation should be executed (button clicked or initial load)
 if "sim_data" not in st.session_state or run_clicked:
     if validation_error:
-        st.error(validation_error)
+        with col_sim:
+            st.error(validation_error)
     else:
         st.session_state["sim_data"] = run_simulation(
             selected_scenario,
@@ -573,12 +645,13 @@ if "sim_data" not in st.session_state or run_clicked:
 sim = st.session_state.get("sim_data")
 
 
-# ── PAGE 1: SIMULATION ────────────────────────────────────────────────────────
+# ── PAGE VIEWS (Rendered Inside Main Simulation Column) ───────────────────────
 with col_sim:
+    # ── PAGE 1: SIMULATION ────────────────────────────────────────────────────
     if nav_section == "Simulation":
         st.markdown('<div class="main-title">Transmission Line Simulation</div>', unsafe_allow_html=True)
         st.markdown(
-            '<div class="main-subtitle">Configure a transmission line, select a fault condition and view its simulated response.</div>',
+            '<div class="main-subtitle">Simulate wave propagation, standing waves, and impedance across frequency.</div>',
             unsafe_allow_html=True,
         )
     
@@ -614,14 +687,14 @@ with col_sim:
             rl_text = f"{ref_rl:.1f} dB" if ref_rl < 100 else "> 100 dB"
     
             cards = [
-                render_metric_card("Condition", fault_label, f"Z0 = {sim['Z0']:.1f} Ohms", value_size="1.4rem"),
-                render_metric_card("Reflection |Gamma|", f"{mean_gamma:.4f}", "Mean magnitude"),
+                render_metric_card("Condition", fault_label, f"Z0 = {sim['Z0']:.0f} Ohms", value_size="1.35rem"),
+                render_metric_card("Reflection |Gamma|", f"{mean_gamma:.4f}", "Mean reflection magnitude"),
                 render_metric_card("VSWR", vswr_text, f"At {freqs_mhz[mid_idx]:.0f} MHz"),
                 render_metric_card("Return Loss", rl_text, f"At {freqs_mhz[mid_idx]:.0f} MHz"),
-                render_metric_card("Input Impedance", zin_text, "Ohms at mid-band", value_size="1.45rem"),
-                render_metric_card("Fault Distance", dist_text, "From input"),
+                render_metric_card("Input Impedance", zin_text, "Ohms at mid-band", value_size="1.35rem"),
+                render_metric_card("Fault Distance", dist_text, "From line input"),
             ]
-            st.markdown(render_metrics_grid(cards), unsafe_allow_html=True)
+            st.markdown(render_metrics_grid(cards, "metrics-grid"), unsafe_allow_html=True)
     
             # Engineering Plots Section
             row1_col1, row1_col2 = st.columns(2)
@@ -695,11 +768,11 @@ with col_sim:
                 plt.close(fig_smith)
     
     
-    # ── PAGE 2: DIAGNOSIS ─────────────────────────────────────────────────────────
+    # ── PAGE 2: DIAGNOSIS ─────────────────────────────────────────────────────
     elif nav_section == "Diagnosis":
         st.markdown('<div class="main-title">Fault Diagnosis</div>', unsafe_allow_html=True)
         st.markdown(
-            '<div class="main-subtitle">Automated classification of transmission-line operating state based on reflection characteristics.</div>',
+            '<div class="main-subtitle">Automated detection and classification of line health, terminations, and localized discontinuities.</div>',
             unsafe_allow_html=True,
         )
     
@@ -724,19 +797,19 @@ with col_sim:
     
             # Plain language explanations
             plain_explanations = {
-                "healthy": "The transmission line is terminated in a load closely matching its characteristic impedance. Reflections are negligible and power transfer is optimal.",
-                "open": "The simulation indicates that the far end of the transmission line is disconnected. The signal experiences near-total reflection in phase.",
-                "short": "The simulation indicates a direct electrical short circuit at the line termination. The signal experiences near-total reflection with a 180-degree phase reversal.",
+                "healthy": "The transmission line is terminated in a matched load. Reflections are negligible and energy transmission is optimal.",
+                "open": "The line is severed or terminated in an open circuit. Signals experience near-total in-phase reflection.",
+                "short": "The line is short-circuited at the termination. Signals experience near-total reflection with complete 180-degree phase inversion.",
                 "mismatch": "An impedance discontinuity is present along or at the end of the line, creating standing waves and partial signal reflection.",
-                "unknown": "Measurement signals exhibit ambiguous, highly degraded, or non-passive characteristics that cannot be reliably matched to a known fault model.",
+                "unknown": "Measurement signals exhibit ambiguous or non-passive characteristics that cannot be reliably matched to a known fault model.",
             }
     
             # Suggested actions
             suggested_actions = {
                 "healthy": "No corrective action required. Line is operating at peak transmission efficiency.",
-                "open": "Check the far-end connector, inspect the center conductor pin, and verify mechanical termination integrity.",
+                "open": "Inspect the far-end termination connector, check center pin contact, and verify physical cable continuity.",
                 "short": "Inspect the line for conductor bridging, solder shorts, or damaged dielectric insulation at the load connector.",
-                "mismatch": "Verify the load impedance, inspect intermediate joints, or install a matching network such as a quarter-wave transformer.",
+                "mismatch": "Verify the load impedance, inspect intermediate joints, or install a quarter-wave matching section.",
                 "unknown": "Check instrumentation calibration, verify measurement noise floor, and ensure frequency sweep settings cover the operational band.",
             }
     
@@ -755,35 +828,14 @@ with col_sim:
             </div>
             """, unsafe_allow_html=True)
     
-            col_d1, col_d2, col_d3 = st.columns(3)
-            with col_d1:
-                st.markdown(f"""
-                <div class="metric-card">
-                    <div class="metric-card-label">Classification</div>
-                    <div class="metric-card-value" style="font-size: 1.15rem;">{category}</div>
-                    <div class="metric-card-sub">Frozen contract label</div>
-                </div>
-                """, unsafe_allow_html=True)
+            cards_diag = [
+                render_metric_card("Health State", display_title, "Standardized classification", value_size="1.35rem"),
+                render_metric_card("Physical Condition", subtype.replace('_', ' ').title(), "Identified mechanism", value_size="1.35rem"),
+                render_metric_card("Detection Confidence", confidence.title(), "Diagnostic certainty", value_size="1.35rem"),
+            ]
+            st.markdown(render_metrics_grid(cards_diag, "metrics-grid-3"), unsafe_allow_html=True)
     
-            with col_d2:
-                st.markdown(f"""
-                <div class="metric-card">
-                    <div class="metric-card-label">Fault Subtype</div>
-                    <div class="metric-card-value" style="font-size: 1.15rem;">{subtype}</div>
-                    <div class="metric-card-sub">Physical mechanism</div>
-                </div>
-                """, unsafe_allow_html=True)
-    
-            with col_d3:
-                st.markdown(f"""
-                <div class="metric-card">
-                    <div class="metric-card-label">Confidence</div>
-                    <div class="metric-card-value" style="font-size: 1.15rem;">{confidence.title()}</div>
-                    <div class="metric-card-sub">Diagnostic certainty</div>
-                </div>
-                """, unsafe_allow_html=True)
-    
-            st.markdown('<div style="height: 0.8rem;"></div>', unsafe_allow_html=True)
+            st.markdown('<div style="height: 0.5rem;"></div>', unsafe_allow_html=True)
     
             c_ev, c_act = st.columns(2)
     
@@ -796,30 +848,19 @@ with col_sim:
                 else:
                     gamma_mag = float(np.mean(np.abs(sim['sweep']['gamma'])))
                     st.markdown(f"• Mean reflection magnitude: {gamma_mag:.4f}")
-                    st.markdown(f"• Line length: {sim['length']:.2f} m")
+                    st.markdown(f"• Cable total length: {sim['length']:.2f} m")
                     st.markdown(f"• Characteristic impedance: {sim['Z0']:.1f} Ohms")
     
             with c_act:
-                st.markdown('<div class="sidebar-heading">Suggested Next Step</div>', unsafe_allow_html=True)
+                st.markdown('<div class="sidebar-heading">Recommended Troubleshooting Action</div>', unsafe_allow_html=True)
                 st.markdown(suggested_actions.get(category, "Review line connections and repeat measurement."))
     
-            # Collapsed technical details expander
-            with st.expander("Technical details and rules"):
-                st.markdown(f"**Rules triggered:** {', '.join(getattr(diag_res, 'rules_fired', ['None']))}")
-                features = getattr(diag_res, "features", {})
-                if features:
-                    feat_df = pd.DataFrame([
-                        {"Feature": k, "Value": f"{v:.4f}" if isinstance(v, (int, float)) else str(v)}
-                        for k, v in features.items()
-                    ])
-                    st.dataframe(feat_df, use_container_width=True, hide_index=True)
     
-    
-    # ── PAGE 3: FAULT LOCATION ───────────────────────────────────────────────────
+    # ── PAGE 3: FAULT LOCATION ────────────────────────────────────────────────
     elif nav_section == "Fault Location":
-        st.markdown('<div class="main-title">Fault Location</div>', unsafe_allow_html=True)
+        st.markdown('<div class="main-title">Fault Location (TDR)</div>', unsafe_allow_html=True)
         st.markdown(
-            '<div class="main-subtitle">Localization of line discontinuities using pseudo-Time-Domain Reflectometry (TDR).</div>',
+            '<div class="main-subtitle">Estimate the physical position of discontinuities along the line using time-domain reflectometry.</div>',
             unsafe_allow_html=True,
         )
     
@@ -834,54 +875,26 @@ with col_sim:
             line_len = sim["length"]
             category = str(sim["diag_res"])
     
-            c_l1, c_l2, c_l3, c_l4 = st.columns(4)
+            dist_disp = f"{dist_est:.2f} m" if dist_est is not None else "No Fault Detected"
+            dist_sub = "Distance from line input" if dist_est is not None else "Matched termination"
+            res_cm = range_res_m * 100.0 if range_res_m is not None and np.isfinite(range_res_m) else 0.0
+            unambig_disp = f"{unambig_m:.1f} m" if unambig_m is not None and np.isfinite(unambig_m) else "N/A"
     
-            with c_l1:
-                dist_disp = f"{dist_est:.2f} m" if dist_est is not None else "Not applicable"
-                st.markdown(f"""
-                <div class="metric-card">
-                    <div class="metric-card-label">Estimated Position</div>
-                    <div class="metric-card-value" style="font-size: 1.25rem;">{dist_disp}</div>
-                    <div class="metric-card-sub">From input terminal</div>
-                </div>
-                """, unsafe_allow_html=True)
-    
-            with c_l2:
-                st.markdown(f"""
-                <div class="metric-card">
-                    <div class="metric-card-label">Total Line Length</div>
-                    <div class="metric-card-value">{line_len:.2f} m</div>
-                    <div class="metric-card-sub">Physical line boundary</div>
-                </div>
-                """, unsafe_allow_html=True)
-    
-            with c_l3:
-                res_cm = range_res_m * 100.0 if range_res_m is not None and np.isfinite(range_res_m) else 0.0
-                st.markdown(f"""
-                <div class="metric-card">
-                    <div class="metric-card-label">Range Resolution</div>
-                    <div class="metric-card-value">{res_cm:.2f} cm</div>
-                    <div class="metric-card-sub">Rayleigh limit (vp / 2B)</div>
-                </div>
-                """, unsafe_allow_html=True)
-    
-            with c_l4:
-                unambig_disp = f"{unambig_m:.1f} m" if unambig_m is not None and np.isfinite(unambig_m) else "N/A"
-                st.markdown(f"""
-                <div class="metric-card">
-                    <div class="metric-card-label">Unambiguous Range</div>
-                    <div class="metric-card-value">{unambig_disp}</div>
-                    <div class="metric-card-sub">vp / (2 * delta_f)</div>
-                </div>
-                """, unsafe_allow_html=True)
+            cards_loc = [
+                render_metric_card("Fault Position", dist_disp, dist_sub, value_size="1.4rem"),
+                render_metric_card("Total Line Length", f"{line_len:.2f} m", "Physical cable span"),
+                render_metric_card("Distance Resolution", f"{res_cm:.2f} cm", "Minimum resolvable distance"),
+                render_metric_card("Maximum Range", unambig_disp, "Unambiguous measurement limit"),
+            ]
+            st.markdown(render_metrics_grid(cards_loc, "metrics-grid-4"), unsafe_allow_html=True)
     
             # Status text callout
             if category == "healthy":
-                st.info("The transmission line is matched. No reflection echo was detected along the line.")
+                st.info("The transmission line is matched. No reflection echo was detected along the cable.")
             elif dist_est is not None:
-                st.success(f"An abnormal reflection was detected approximately {dist_est:.2f} metres from the input.")
+                st.success(f"Discontinuity detected approximately {dist_est:.2f} metres from the input connector.")
             else:
-                st.warning("Could not identify a distinct reflection peak along the line.")
+                st.warning("Could not identify a distinct reflection peak along the line span.")
     
             # TDR Impulse Response Plot
             tdr_data = loc_res.get("tdr_data", {})
@@ -891,7 +904,7 @@ with col_sim:
             if len(d_axis) > 0 and len(tdr_mag) > 0:
                 fig_tdr, ax_tdr = create_clean_plot(figsize=(9, 4.0))
     
-                # Restrict plot view to line length + 20% margin
+                # Restrict plot view to line length + 25% margin
                 plot_max_d = min(line_len * 1.35, d_axis[-1])
                 mask = (d_axis >= 0) & (d_axis <= plot_max_d)
     
@@ -899,7 +912,7 @@ with col_sim:
                 max_val = np.max(tdr_mag[mask]) if np.any(mask) and np.max(tdr_mag[mask]) > 0 else 1.0
                 norm_mag = tdr_mag / max_val
     
-                ax_tdr.plot(d_axis[mask], norm_mag[mask], color="#0284c7", linewidth=1.8, label="TDR Impulse Response")
+                ax_tdr.plot(d_axis[mask], norm_mag[mask], color="#0284c7", linewidth=1.8, label="TDR Reflection Profile")
     
                 # Mark estimated fault position
                 if dist_est is not None and dist_est <= plot_max_d:
@@ -908,9 +921,9 @@ with col_sim:
                 # Mark total line length
                 ax_tdr.axvline(line_len, color="#475569", linestyle=":", linewidth=1.2, label=f"Line End ({line_len:.2f} m)")
     
-                ax_tdr.set_title("Pseudo-TDR Reflection Profile along Transmission Line")
+                ax_tdr.set_title("Time-Domain Reflection Profile (Echo Magnitude vs Distance)")
                 ax_tdr.set_xlabel("Distance from Input (m)")
-                ax_tdr.set_ylabel("Normalized Response Amplitude")
+                ax_tdr.set_ylabel("Normalized Reflection Amplitude")
                 ax_tdr.set_xlim(0, plot_max_d)
                 ax_tdr.set_ylim(-0.05, 1.15)
                 ax_tdr.legend(loc="upper right", framealpha=0.9)
@@ -919,11 +932,11 @@ with col_sim:
                 plt.close(fig_tdr)
     
     
-    # ── PAGE 4: IMPEDANCE MATCHING ────────────────────────────────────────────────
+    # ── PAGE 4: IMPEDANCE MATCHING ────────────────────────────────────────────
     elif nav_section == "Impedance Matching":
-        st.markdown('<div class="main-title">Impedance Matching</div>', unsafe_allow_html=True)
+        st.markdown('<div class="main-title">Impedance Matching Studio</div>', unsafe_allow_html=True)
         st.markdown(
-            '<div class="main-subtitle">The quarter-wave transformer reduces reflections by matching the load to the transmission line at the selected design frequency.</div>',
+            '<div class="main-subtitle">Design a quarter-wave transformer section to eliminate reflections and restore power transfer.</div>',
             unsafe_allow_html=True,
         )
     
@@ -962,52 +975,15 @@ with col_sim:
             lt_mm = lt_m * 1000.0
             bw_mhz = matching_res["bandwidth_hz"] / 1e6
     
-            # Output Metric Cards
-            c_o1, c_o2, c_o3, c_o4, c_o5 = st.columns(5)
-            with c_o1:
-                st.markdown(f"""
-                <div class="metric-card">
-                    <div class="metric-card-label">Transformer Zt</div>
-                    <div class="metric-card-value">{Zt:.2f} Ohms</div>
-                    <div class="metric-card-sub">sqrt(Z0 * RL)</div>
-                </div>
-                """, unsafe_allow_html=True)
-    
-            with c_o2:
-                st.markdown(f"""
-                <div class="metric-card">
-                    <div class="metric-card-label">Physical Length</div>
-                    <div class="metric-card-value">{lt_mm:.1f} mm</div>
-                    <div class="metric-card-sub">lambda / 4 ({lt_m:.4f} m)</div>
-                </div>
-                """, unsafe_allow_html=True)
-    
-            with c_o3:
-                st.markdown(f"""
-                <div class="metric-card">
-                    <div class="metric-card-label">VSWR at f0</div>
-                    <div class="metric-card-value">1.00</div>
-                    <div class="metric-card-sub">Ideal match at {match_f0:.0f} MHz</div>
-                </div>
-                """, unsafe_allow_html=True)
-    
-            with c_o4:
-                st.markdown(f"""
-                <div class="metric-card">
-                    <div class="metric-card-label">Return Loss at f0</div>
-                    <div class="metric-card-value">&gt; 100 dB</div>
-                    <div class="metric-card-sub">Total cancellation</div>
-                </div>
-                """, unsafe_allow_html=True)
-    
-            with c_o5:
-                st.markdown(f"""
-                <div class="metric-card">
-                    <div class="metric-card-label">Usable Bandwidth</div>
-                    <div class="metric-card-value">{bw_mhz:.1f} MHz</div>
-                    <div class="metric-card-sub">Where RL &gt;= 20 dB</div>
-                </div>
-                """, unsafe_allow_html=True)
+            # Output Metric Cards using responsive 5-card grid
+            cards_match = [
+                render_metric_card("Transformer Zt", f"{Zt:.1f} Ohms", "Quarter-wave characteristic impedance", value_size="1.4rem"),
+                render_metric_card("Section Length", f"{lt_mm:.1f} mm", "Quarter-wavelength physical length", value_size="1.4rem"),
+                render_metric_card("Matched VSWR", "1.00", f"Target match at {match_f0:.0f} MHz"),
+                render_metric_card("Matched Return Loss", "> 100 dB", "Near-zero reflected power"),
+                render_metric_card("20 dB Bandwidth", f"{bw_mhz:.1f} MHz", "Passband with return loss >= 20 dB", value_size="1.4rem"),
+            ]
+            st.markdown(render_metrics_grid(cards_match, "metrics-grid-5"), unsafe_allow_html=True)
     
             st.markdown('<div style="height: 0.5rem;"></div>', unsafe_allow_html=True)
     
@@ -1021,8 +997,8 @@ with col_sim:
     
             with p_col1:
                 fig_m1, ax_m1 = create_clean_plot()
-                ax_m1.plot(f_plot_mhz, before_rl, color="#dc2626", linestyle="--", linewidth=1.5, label="Before Matching (Unmatched)")
-                ax_m1.plot(f_plot_mhz, after_rl, color="#059669", linewidth=2.0, label="After Matching (Quarter-Wave)")
+                ax_m1.plot(f_plot_mhz, before_rl, color="#dc2626", linestyle="--", linewidth=1.5, label="Unmatched Line")
+                ax_m1.plot(f_plot_mhz, after_rl, color="#059669", linewidth=2.0, label="Quarter-Wave Matched")
                 ax_m1.axhline(20.0, color="#0284c7", linestyle=":", linewidth=1.0, label="20 dB Threshold")
                 ax_m1.axvline(match_f0, color="#64748b", linestyle=":", linewidth=0.8)
                 ax_m1.set_title("Return Loss: Before vs After Matching")
@@ -1036,8 +1012,8 @@ with col_sim:
     
             with p_col2:
                 fig_m2, ax_m2 = create_clean_plot()
-                ax_m2.plot(f_plot_mhz, before_vswr, color="#dc2626", linestyle="--", linewidth=1.5, label="Before Matching (Unmatched)")
-                ax_m2.plot(f_plot_mhz, after_vswr, color="#059669", linewidth=2.0, label="After Matching (Quarter-Wave)")
+                ax_m2.plot(f_plot_mhz, before_vswr, color="#dc2626", linestyle="--", linewidth=1.5, label="Unmatched Line")
+                ax_m2.plot(f_plot_mhz, after_vswr, color="#059669", linewidth=2.0, label="Quarter-Wave Matched")
                 ax_m2.axhline(1.0, color="#94a3b8", linestyle=":", linewidth=1.0)
                 ax_m2.axhline(1.5, color="#d97706", linestyle=":", linewidth=1.0, label="VSWR = 1.5")
                 ax_m2.axvline(match_f0, color="#64748b", linestyle=":", linewidth=0.8)
@@ -1050,15 +1026,26 @@ with col_sim:
                 st.pyplot(fig_m2, use_container_width=True)
                 plt.close(fig_m2)
     
+            # Matching Summary Table
+            st.markdown('<div class="sidebar-heading" style="margin-top: 1rem;">Transformer Design Summary</div>', unsafe_allow_html=True)
+            f_low = matching_res.get("f_low_hz", 0.0) / 1e6
+            f_high = matching_res.get("f_high_hz", 0.0) / 1e6
+            summary_df = pd.DataFrame([
+                {"Design Parameter": "Required Line Impedance", "Value": f"{Zt:.2f} Ohms", "Description": "Characteristic impedance of the quarter-wave line section"},
+                {"Design Parameter": "Physical Section Length", "Value": f"{lt_mm:.1f} mm", "Description": f"Quarter-wavelength at design frequency {match_f0:.0f} MHz"},
+                {"Design Parameter": "Matched 20 dB Passband", "Value": f"{f_low:.1f} - {f_high:.1f} MHz", "Description": f"Bandwidth of {bw_mhz:.1f} MHz achieving return loss >= 20 dB"},
+            ])
+            st.dataframe(summary_df, use_container_width=True, hide_index=True)
+    
         except Exception as e:
             st.error(f"Quarter-wave matching calculation error: {str(e)}")
     
     
-    # ── PAGE 5: RESULTS ───────────────────────────────────────────────────────────
+    # ── PAGE 5: RESULTS ───────────────────────────────────────────────────────
     elif nav_section == "Results":
-        st.markdown('<div class="main-title">Simulation Results</div>', unsafe_allow_html=True)
+        st.markdown('<div class="main-title">Simulation Results & Data Export</div>', unsafe_allow_html=True)
         st.markdown(
-            '<div class="main-subtitle">Tabular numerical data and configuration summary for the active simulation.</div>',
+            '<div class="main-subtitle">Inspect frequency-point calculation records, evaluate summary metrics, and export data to CSV.</div>',
             unsafe_allow_html=True,
         )
     
@@ -1075,55 +1062,26 @@ with col_sim:
             # Build clean formatted DataFrame
             results_df = pd.DataFrame({
                 "Frequency (MHz)": np.round(f_arr / 1e6, 2),
-                "S11 Magnitude": np.round(np.abs(gamma_arr), 4),
-                "S11 Phase (deg)": np.round(np.angle(gamma_arr, deg=True), 2),
+                "Reflection |Gamma|": np.round(np.abs(gamma_arr), 4),
+                "Reflection Phase (deg)": np.round(np.angle(gamma_arr, deg=True), 2),
                 "Input Resistance (Ohms)": np.round(zin_arr.real, 2),
                 "Input Reactance (Ohms)": np.round(zin_arr.imag, 2),
                 "VSWR": np.round(np.where(np.isinf(vswr_arr), 9999.0, vswr_arr), 2),
                 "Return Loss (dB)": np.round(np.where(np.isinf(rl_arr), 999.0, rl_arr), 2),
             })
     
-            # Summary Metrics Row
-            s_col1, s_col2, s_col3, s_col4 = st.columns(4)
-            with s_col1:
-                st.markdown(f"""
-                <div class="metric-card">
-                    <div class="metric-card-label">Total Points</div>
-                    <div class="metric-card-value">{len(results_df)}</div>
-                    <div class="metric-card-sub">{sim['f_start_mhz']:.0f} to {sim['f_stop_mhz']:.0f} MHz</div>
-                </div>
-                """, unsafe_allow_html=True)
+            finite_vswr = vswr_arr[np.isfinite(vswr_arr)]
+            min_v = f"{np.min(finite_vswr):.2f}" if len(finite_vswr) > 0 else "N/A"
+            finite_rl = rl_arr[np.isfinite(rl_arr)]
+            max_rl = f"{np.max(finite_rl):.1f} dB" if len(finite_rl) > 0 else "N/A"
     
-            with s_col2:
-                st.markdown(f"""
-                <div class="metric-card">
-                    <div class="metric-card-label">Mean |Gamma|</div>
-                    <div class="metric-card-value">{np.mean(np.abs(gamma_arr)):.4f}</div>
-                    <div class="metric-card-sub">Sweep average</div>
-                </div>
-                """, unsafe_allow_html=True)
-    
-            with s_col3:
-                finite_vswr = vswr_arr[np.isfinite(vswr_arr)]
-                min_v = f"{np.min(finite_vswr):.2f}" if len(finite_vswr) > 0 else "N/A"
-                st.markdown(f"""
-                <div class="metric-card">
-                    <div class="metric-card-label">Min VSWR</div>
-                    <div class="metric-card-value">{min_v}</div>
-                    <div class="metric-card-sub">Best matching point</div>
-                </div>
-                """, unsafe_allow_html=True)
-    
-            with s_col4:
-                finite_rl = rl_arr[np.isfinite(rl_arr)]
-                max_rl = f"{np.max(finite_rl):.1f} dB" if len(finite_rl) > 0 else "N/A"
-                st.markdown(f"""
-                <div class="metric-card">
-                    <div class="metric-card-label">Max Return Loss</div>
-                    <div class="metric-card-value">{max_rl}</div>
-                    <div class="metric-card-sub">Peak return loss</div>
-                </div>
-                """, unsafe_allow_html=True)
+            cards_res = [
+                render_metric_card("Total Frequency Points", f"{len(results_df)}", f"{sim['f_start_mhz']:.0f} to {sim['f_stop_mhz']:.0f} MHz"),
+                render_metric_card("Mean Reflection", f"{np.mean(np.abs(gamma_arr)):.4f}", "Average |Gamma| across band"),
+                render_metric_card("Minimum VSWR", min_v, "Best matching point"),
+                render_metric_card("Peak Return Loss", max_rl, "Maximum return loss across band"),
+            ]
+            st.markdown(render_metrics_grid(cards_res, "metrics-grid-4"), unsafe_allow_html=True)
     
             st.markdown('<div style="height: 0.5rem;"></div>', unsafe_allow_html=True)
     
@@ -1137,6 +1095,7 @@ with col_sim:
                 data=csv_data,
                 file_name=f"rf_line_doctor_{sim['scenario']}_results.csv",
                 mime="text/csv",
+                type="primary",
             )
     
             # Tabular Display

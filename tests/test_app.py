@@ -171,3 +171,20 @@ def test_right_sidebar_layout_styling():
     assert "transform: scaleX(-1) !important;" in content
     assert '[data-testid="stExpandSidebarButton"]' in content
 
+
+def test_no_technical_details_rendered():
+    """
+    Verify that the Technical Details expander, internal rules triggered,
+    and diagnostic debug features are completely removed from app rendering.
+    """
+    root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    app_path = os.path.join(root_dir, "app.py")
+    with open(app_path, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    assert "Technical details and rules" not in content
+    assert "Rules triggered" not in content
+    assert "rules_fired" not in content
+    assert "st.expander" not in content
+
+
