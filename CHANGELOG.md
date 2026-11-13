@@ -6,6 +6,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.2.0] - 2026-11-14
+
+### Changed
+- **Complete Website Simplification & UI Redesign:** Redesigned the Streamlit application from a theory-heavy academic interface into a streamlined, results-focused 5-page simulation tool:
+  - Page 1: **Simulation** (Primary interactive workspace with 6 physical conditions, conditional inputs, 6 key metric cards, 5 publication-ready plots including Smith chart).
+  - Page 2: **Diagnosis** (Plain-language fault classification preserving all 5 public labels, subtype, confidence, measured evidence, and actionable troubleshooting steps).
+  - Page 3: **Fault Location** (Physical TDR localization showing estimated distance, range resolution, unambiguous range, and impulse reflection profile).
+  - Page 4: **Impedance Matching** (Practical quarter-wave transformer design with design frequency optimization, bandwidth calculations, and before/after comparison plots).
+  - Page 5: **Results** (Searchable and sortable numerical table with CSV export and simulation parameters summary).
+- **Zero-Emoji Policy:** Completely removed all emojis, decorative symbols, animated badges, and all-caps styling from the UI, buttons, alerts, and navigation.
+- **Clean Light Theme:** Configured a modern, light interface (`#ffffff` / `#f8fafc` background, dark slate `#0f172a` text, subtle `#e2e8f0` borders) in `.streamlit/config.toml` and custom CSS.
+- **Test Suite Expansion:** Expanded automated regression suite to 181 tests (including 14 comprehensive Streamlit headless AppTests and zero-emoji verification).
+
+---
+
 ## [2.1.0] - 2026-11-14
 
 ### Added
