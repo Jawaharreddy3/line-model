@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.2.2] - 2026-11-14
+
+### Changed
+- **Right-Side Navigation Sidebar Layout:**
+  - Repositioned the entire Streamlit navigation sidebar to the **right edge of the screen** on desktop views (`flex-direction: row-reverse !important` on `stAppViewContainer`), with main application content on the left.
+  - Preserved full sidebar height, vertical alignment, width, typography, light theme (`#f8fafc` background, `#e2e8f0` left border), and clean zero-emoji styling.
+  - Maintained the top "RF Line Doctor" title, subtitle, and all 5 navigation radio options in strict vertical order: Simulation, Diagnosis, Fault Location, Impedance Matching, Results.
+  - Positioned the sidebar collapse/expand controls on the top-right corner with flipped chevron indicators matching right-side collapse behavior.
+  - Added dedicated regression test `test_right_sidebar_layout_styling` verifying right-side layout rules, expanding automated test suite to 183 passed tests.
+
+---
+
 ## [2.2.1] - 2026-11-14
 
 ### Fixed
